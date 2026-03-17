@@ -1,11 +1,10 @@
 'use client';
 
-
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { format, parseISO, isValid } from 'date-fns';
 import { S } from '@/lib/strings';
 import { DateMode } from '@/types/filter.types';
 
@@ -20,6 +19,30 @@ interface DateRangePickerProps {
   onDateToChange: (date: string | null) => void;
 }
 
+function toDate(value: string | null): Date | null {
+  if (!value) return null;
+  const d = parseISO(value);
+  return isValid(d) ? d : null;
+}
+
+function fromDate(date: Date | null): string | null {
+  if (!date || !isValid(date)) return null;
+  return format(date, 'yyyy-MM-dd');
+}
+
+const pickerSlotProps = {
+  textField: {
+    size: 'small' as const,
+    fullWidth: true,
+    sx: {
+      '& .MuiOutlinedInput-root': {
+        fontFamily: 'var(--font-mono)',
+        fontSize: '0.8125rem',
+      },
+    },
+  },
+};
+
 export default function DateRangePicker({
   dateMode,
   dateSingle,
@@ -29,7 +52,7 @@ export default function DateRangePicker({
   onDateSingleChange,
   onDateFromChange,
   onDateToChange,
-}: DateRangePickerProps) {
+}: Readonly<DateRangePickerProps>) {
   const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: string | null) => {
     if (newMode === null) {
       onDateModeChange(null);
@@ -69,56 +92,28 @@ export default function DateRangePicker({
       </ToggleButtonGroup>
 
       {dateMode === 'single' && (
-        <TextField
-          type="date"
-          size="small"
-          fullWidth
-          value={dateSingle ?? ''}
-          onChange={(e) => onDateSingleChange(e.target.value || null)}
-          InputLabelProps={{ shrink: true }}
-          inputProps={{ 'aria-label': S.FILTER_DATE_SINGLE }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.8125rem',
-            },
-          }}
+        <DatePicker
+          value={toDate(dateSingle)}
+          onChange={(date) => onDateSingleChange(fromDate(date))}
+          slotProps={pickerSlotProps}
         />
       )}
 
       {dateMode === 'range' && (
         <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
-          <TextField
-            type="date"
-            size="small"
-            fullWidth
+          <DatePicker
             label={S.FILTER_DATE_FROM}
-            value={dateFrom ?? ''}
-            onChange={(e) => onDateFromChange(e.target.value || null)}
-            InputLabelProps={{ shrink: true }}
-            inputProps={{ 'aria-label': S.FILTER_DATE_FROM }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.8125rem',
-              },
-            }}
+            value={toDate(dateFrom)}
+            onChange={(date) => onDateFromChange(fromDate(date))}
+            maxDate={toDate(dateTo) ?? undefined}
+            slotProps={pickerSlotProps}
           />
-          <TextField
-            type="date"
-            size="small"
-            fullWidth
+          <DatePicker
             label={S.FILTER_DATE_TO}
-            value={dateTo ?? ''}
-            onChange={(e) => onDateToChange(e.target.value || null)}
-            InputLabelProps={{ shrink: true }}
-            inputProps={{ 'aria-label': S.FILTER_DATE_TO }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.8125rem',
-              },
-            }}
+            value={toDate(dateTo)}
+            onChange={(date) => onDateToChange(fromDate(date))}
+            minDate={toDate(dateFrom) ?? undefined}
+            slotProps={pickerSlotProps}
           />
         </Box>
       )}

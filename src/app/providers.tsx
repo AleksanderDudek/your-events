@@ -4,13 +4,16 @@ import { useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { pl } from 'date-fns/locale';
 import { theme } from '@/styles/theme';
 
 interface ProvidersProps {
   children: React.ReactNode;
 }
 
-export default function Providers({ children }: ProvidersProps) {
+export default function Providers({ children }: Readonly<ProvidersProps>) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -28,8 +31,10 @@ export default function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
+        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={pl}>
+          <CssBaseline />
+          {children}
+        </LocalizationProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

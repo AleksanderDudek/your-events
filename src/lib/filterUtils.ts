@@ -26,6 +26,9 @@ function parseSourceTypes(value: string | null): SourceType[] {
 }
 
 function parseDateMode(params: URLSearchParams): DateMode {
+  const mode = params.get('dateMode');
+  if (mode === 'single' || mode === 'range') return mode;
+  // fallback: infer from values (e.g. URL shared without explicit dateMode)
   const single = params.get('dateSingle');
   const from = params.get('dateFrom');
   const to = params.get('dateTo');
@@ -59,12 +62,12 @@ function parseBoolean(value: string | null): boolean {
 }
 
 function parsePage(value: string | null): number {
-  const num = parseInt(value ?? '', 10);
-  return isNaN(num) || num < 1 ? DEFAULT_PAGE : num;
+  const num = Number.parseInt(value ?? '', 10);
+  return Number.isNaN(num) || num < 1 ? DEFAULT_PAGE : num;
 }
 
 function parsePageSize(value: string | null): PageSize {
-  const num = parseInt(value ?? '', 10);
+  const num = Number.parseInt(value ?? '', 10);
   return VALID_PAGE_SIZES.has(num) ? (num as PageSize) : DEFAULT_PAGE_SIZE;
 }
 
@@ -114,25 +117,28 @@ export function parseFiltersFromParams(
   };
 }
 
+function setIfTruthy(params: URLSearchParams, key: string, value: string | null | undefined): void {
+  if (value) params.set(key, value);
+}
+
 export function filtersToSearchParams(filters: Partial<EventFilters>): URLSearchParams {
   const params = new URLSearchParams();
 
-  if (filters.search) params.set('search', filters.search);
+  setIfTruthy(params, 'search', filters.search);
   if (filters.categories?.length) params.set('categories', filters.categories.join(','));
   if (filters.sourceTypes?.length) params.set('sourceTypes', filters.sourceTypes.join(','));
-  if (filters.dateSingle) params.set('dateSingle', filters.dateSingle);
-  if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
-  if (filters.dateTo) params.set('dateTo', filters.dateTo);
-  if (filters.hourFrom) params.set('hourFrom', filters.hourFrom);
-  if (filters.hourTo) params.set('hourTo', filters.hourTo);
-  if (filters.ageGroup) params.set('ageGroup', filters.ageGroup);
-  if (filters.level) params.set('level', filters.level);
+  setIfTruthy(params, 'dateMode', filters.dateMode);
+  setIfTruthy(params, 'dateSingle', filters.dateSingle);
+  setIfTruthy(params, 'dateFrom', filters.dateFrom);
+  setIfTruthy(params, 'dateTo', filters.dateTo);
+  setIfTruthy(params, 'hourFrom', filters.hourFrom);
+  setIfTruthy(params, 'hourTo', filters.hourTo);
+  setIfTruthy(params, 'ageGroup', filters.ageGroup);
+  setIfTruthy(params, 'level', filters.level);
   if (filters.freeOnly) params.set('freeOnly', 'true');
   if (filters.hideUnavailable) params.set('hideUnavailable', 'true');
   if (filters.page && filters.page !== DEFAULT_PAGE) params.set('page', String(filters.page));
-  if (filters.pageSize && filters.pageSize !== DEFAULT_PAGE_SIZE) {
-    params.set('pageSize', String(filters.pageSize));
-  }
+  if (filters.pageSize && filters.pageSize !== DEFAULT_PAGE_SIZE) params.set('pageSize', String(filters.pageSize));
   if (filters.viewMode && filters.viewMode !== 'grid') params.set('viewMode', filters.viewMode);
 
   return params;
