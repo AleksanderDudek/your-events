@@ -30,6 +30,7 @@ import {
 } from '@/lib/filterUtils';
 import {
   CATEGORY_GROUPS,
+  CATEGORY_LABELS,
   SOURCE_TYPE_LABELS,
   AGE_GROUP_LABELS,
   SKILL_LEVEL_LABELS,
@@ -154,17 +155,7 @@ export default function FilterPanel() {
                     }
                     label={
                       <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
-                        {CATEGORY_GROUPS.flatMap((g) => g.categories).includes(cat)
-                          ? (
-                              CATEGORY_GROUPS.find((g) => g.categories.includes(cat))
-                                ?.categories.indexOf(cat) === 0
-                                ? group.label
-                                : cat
-                                    .replace(/^.*?-/, '')
-                                    .replace(/-/g, ' ')
-                                    .replace(/^\w/, (c) => c.toUpperCase())
-                            )
-                          : cat}
+                        {CATEGORY_LABELS[cat]}
                       </Typography>
                     }
                     sx={{ m: 0, mr: 1 }}
