@@ -1,0 +1,32 @@
+{
+  "name": "your-events",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "mock": "cd mock-server && npm start"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^5.18.0",
+    "@mui/material": "^5.18.0",
+    "@tanstack/react-query": "^5.90.21",
+    "date-fns": "^4.1.0",
+    "next": "^14.2.15",
+    "sass": "^1.98.0",
+    "zod": "^4.3.6"
+  }
+}

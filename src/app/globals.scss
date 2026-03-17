@@ -1,0 +1,44 @@
+@use '../styles/tokens';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background: radial-gradient(
+      ellipse 80% 40% at 50% -10%,
+      rgba(244, 162, 40, 0.06) 0%,
+      transparent 60%
+    ),
+    var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-body), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: rgba(244, 162, 40, 0.3);
+  color: var(--color-text-primary);
+}

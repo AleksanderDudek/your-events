@@ -1,0 +1,3343 @@
+{
+  "events": [
+    {
+      "id": "evt-001",
+      "name": "Hip Hop Choreo",
+      "description": "Zajecia choreograficzne inspirowane stylami hip hop, r'n'b i street dance.",
+      "categories": [
+        "dance",
+        "dance-hip-hop"
+      ],
+      "tags": [
+        "open-level",
+        "solo",
+        "choreography"
+      ],
+      "date": "2026-03-01",
+      "startTime": "08:00",
+      "endTime": "09:00",
+      "location": {
+        "name": "Kimama Dance Studio",
+        "address": "ul. Bohaterow Warszawy 57, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 35,
+        "currency": "PLN",
+        "description": "35 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Weronika Jaskiewicz",
+      "capacity": 20,
+      "url": "https://example.com/events/evt-001",
+      "sourceName": "Kimama Dance Studio",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-002",
+      "name": "Bachata Sensual",
+      "description": "Bachata sensual dla par i singli.",
+      "categories": [
+        "dance",
+        "dance-bachata",
+        "dance-sensual"
+      ],
+      "tags": [
+        "partner",
+        "latin",
+        "sensual"
+      ],
+      "date": "2026-03-11",
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "location": {
+        "name": "Salsa Libre Szczecin",
+        "address": "ul. Jagiellonska 90, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 40,
+        "currency": "PLN",
+        "description": "40 zl"
+      },
+      "ageGroup": "adults",
+      "level": "intermediate",
+      "instructor": "Marcin Kowalski",
+      "capacity": 24,
+      "url": "https://example.com/events/evt-002",
+      "sourceName": "Salsa Libre Szczecin",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-003",
+      "name": "Salsa Cubana",
+      "description": "Podstawy salsy kubanskiej.",
+      "categories": [
+        "dance",
+        "dance-salsa"
+      ],
+      "tags": [
+        "partner",
+        "latin",
+        "cuban"
+      ],
+      "date": "2026-03-21",
+      "startTime": "09:30",
+      "endTime": "11:00",
+      "location": {
+        "name": "Salsa Libre Szczecin",
+        "address": "ul. Jagiellonska 90, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 40,
+        "currency": "PLN",
+        "description": "40 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "Ana Rodriguez",
+      "capacity": 30,
+      "url": "https://example.com/events/evt-003",
+      "sourceName": "Salsa Libre Szczecin",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-004",
+      "name": "Kizomba Fundamentals",
+      "description": "Wprowadzenie do kizomby.",
+      "categories": [
+        "dance",
+        "dance-kizomba"
+      ],
+      "tags": [
+        "partner",
+        "african",
+        "slow"
+      ],
+      "date": "2026-03-31",
+      "startTime": "10:00",
+      "endTime": "11:30",
+      "location": {
+        "name": "Kimama Dance Studio",
+        "address": "ul. Bohaterow Warszawy 57, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 35,
+        "currency": "PLN",
+        "description": "35 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "Paulo Santos",
+      "capacity": 20,
+      "url": "https://example.com/events/evt-004",
+      "sourceName": "Kimama Dance Studio",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-005",
+      "name": "Reggaeton Intensive",
+      "description": "Intensywne warsztaty reggaetonu.",
+      "categories": [
+        "dance",
+        "dance-reggaeton"
+      ],
+      "tags": [
+        "solo",
+        "latin",
+        "intensive"
+      ],
+      "date": "2026-04-10",
+      "startTime": "11:00",
+      "endTime": "12:30",
+      "location": {
+        "name": "Kimama Dance Studio",
+        "address": "ul. Bohaterow Warszawy 57, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 45,
+        "currency": "PLN",
+        "description": "45 zl"
+      },
+      "ageGroup": "adults",
+      "level": "intermediate",
+      "instructor": "Carlos Vega",
+      "capacity": 18,
+      "url": "https://example.com/events/evt-005",
+      "sourceName": "Kimama Dance Studio",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "biweekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-006",
+      "name": "Taniec Wspolczesny",
+      "description": "Ekspresyjny taniec wspolczesny.",
+      "categories": [
+        "dance",
+        "dance-contemporary"
+      ],
+      "tags": [
+        "solo",
+        "expression",
+        "floor-work"
+      ],
+      "date": "2026-04-20",
+      "startTime": "14:00",
+      "endTime": "15:30",
+      "location": {
+        "name": "Kimama Dance Studio",
+        "address": "ul. Bohaterow Warszawy 57, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 35,
+        "currency": "PLN",
+        "description": "35 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Marta Nowak",
+      "capacity": 16,
+      "url": "https://example.com/events/evt-006",
+      "sourceName": "Kimama Dance Studio",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-007",
+      "name": "Balet dla Doroslych",
+      "description": "Podstawy baletu klasycznego dla doroslych.",
+      "categories": [
+        "dance",
+        "dance-ballet"
+      ],
+      "tags": [
+        "classical",
+        "technique",
+        "barre"
+      ],
+      "date": "2026-04-30",
+      "startTime": "16:00",
+      "endTime": "17:30",
+      "location": {
+        "name": "Kimama Dance Studio",
+        "address": "ul. Bohaterow Warszawy 57, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 40,
+        "currency": "PLN",
+        "description": "40 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "Katarzyna Wisniewska",
+      "capacity": 15,
+      "url": "https://example.com/events/evt-007",
+      "sourceName": "Kimama Dance Studio",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-008",
+      "name": "Taniec Sensual Ladies",
+      "description": "Taniec zmyslowy dla pan.",
+      "categories": [
+        "dance",
+        "dance-sensual"
+      ],
+      "tags": [
+        "solo",
+        "ladies",
+        "expression"
+      ],
+      "date": "2026-05-10",
+      "startTime": "17:00",
+      "endTime": "18:30",
+      "location": {
+        "name": "Salsa Libre Szczecin",
+        "address": "ul. Jagiellonska 90, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 35,
+        "currency": "PLN",
+        "description": "35 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Natalia Zielinska",
+      "capacity": 20,
+      "url": "https://example.com/events/evt-008",
+      "sourceName": "Salsa Libre Szczecin",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-009",
+      "name": "Hip Hop Kids",
+      "description": "Hip hop dla dzieci 7-12 lat.",
+      "categories": [
+        "dance",
+        "dance-hip-hop",
+        "kids-event"
+      ],
+      "tags": [
+        "kids",
+        "hip-hop",
+        "fun"
+      ],
+      "date": "2026-05-20",
+      "startTime": "17:30",
+      "endTime": "18:30",
+      "location": {
+        "name": "Kimama Dance Studio",
+        "address": "ul. Bohaterow Warszawy 57, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 30,
+        "currency": "PLN",
+        "description": "30 zl"
+      },
+      "ageGroup": "kids",
+      "level": "beginner",
+      "instructor": "Weronika Jaskiewicz",
+      "capacity": 15,
+      "url": "https://example.com/events/evt-009",
+      "sourceName": "Kimama Dance Studio",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "sold_out"
+    },
+    {
+      "id": "evt-010",
+      "name": "Salsa Rueda",
+      "description": "Zaawansowana rueda de casino.",
+      "categories": [
+        "dance",
+        "dance-salsa"
+      ],
+      "tags": [
+        "group",
+        "latin",
+        "rueda"
+      ],
+      "date": "2026-05-30",
+      "startTime": "18:00",
+      "endTime": "19:15",
+      "location": {
+        "name": "Salsa Libre Szczecin",
+        "address": "ul. Jagiellonska 90, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 35,
+        "currency": "PLN",
+        "description": "35 zl"
+      },
+      "ageGroup": "adults",
+      "level": "advanced",
+      "instructor": "Ana Rodriguez",
+      "capacity": 24,
+      "url": "https://example.com/events/evt-010",
+      "sourceName": "Salsa Libre Szczecin",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "cancelled"
+    },
+    {
+      "id": "evt-011",
+      "name": "Zumba",
+      "description": "Energiczne zajecia taneczno-fitness.",
+      "categories": [
+        "fitness",
+        "fitness-zumba",
+        "dance"
+      ],
+      "tags": [
+        "cardio",
+        "multisport"
+      ],
+      "date": "2026-06-09",
+      "startTime": "18:00",
+      "endTime": "19:30",
+      "location": {
+        "name": "Zdrofit Szczecin Kaskada",
+        "address": "al. Niepodleglosci 36, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "all",
+      "level": "open",
+      "instructor": null,
+      "capacity": 25,
+      "url": "https://example.com/events/evt-011",
+      "sourceName": "Zdrofit Kaskada",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-012",
+      "name": "Joga Poranna",
+      "description": "Poranna sesja jogi.",
+      "categories": [
+        "fitness",
+        "fitness-yoga"
+      ],
+      "tags": [
+        "morning",
+        "relax",
+        "mindful"
+      ],
+      "date": "2026-06-19",
+      "startTime": "18:30",
+      "endTime": "20:00",
+      "location": {
+        "name": "Calypso Fitness Szczecin",
+        "address": "ul. Kolumba 86, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Ewa Kaczmarek",
+      "capacity": 20,
+      "url": "https://example.com/events/evt-012",
+      "sourceName": "Calypso Fitness Szczecin",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-013",
+      "name": "Pilates Mat",
+      "description": "Pilates na macie.",
+      "categories": [
+        "fitness",
+        "fitness-pilates"
+      ],
+      "tags": [
+        "core",
+        "posture",
+        "mat"
+      ],
+      "date": "2026-06-29",
+      "startTime": "19:00",
+      "endTime": "20:30",
+      "location": {
+        "name": "Zdrofit Szczecin Kaskada",
+        "address": "al. Niepodleglosci 36, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": null,
+      "capacity": 20,
+      "url": "https://example.com/events/evt-013",
+      "sourceName": "Zdrofit Kaskada",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-014",
+      "name": "CrossFit WOD",
+      "description": "Trening funkcjonalny o wysokiej intensywnosci.",
+      "categories": [
+        "fitness",
+        "fitness-cross"
+      ],
+      "tags": [
+        "strength",
+        "HIIT",
+        "functional"
+      ],
+      "date": "2026-03-09",
+      "startTime": "19:00",
+      "endTime": "21:00",
+      "location": {
+        "name": "CityFit Szczecin Galaxy",
+        "address": "al. Wyzwolenia 18, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "intermediate",
+      "instructor": "Tomasz Adamski",
+      "capacity": 15,
+      "url": "https://example.com/events/evt-014",
+      "sourceName": "CityFit Szczecin Galaxy",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-015",
+      "name": "Tabata Express",
+      "description": "20-sekundowe interwaly maksymalnego wysilku.",
+      "categories": [
+        "fitness",
+        "fitness-tabata"
+      ],
+      "tags": [
+        "HIIT",
+        "express",
+        "cardio"
+      ],
+      "date": "2026-03-19",
+      "startTime": "19:30",
+      "endTime": "21:00",
+      "location": {
+        "name": "Calypso Fitness Szczecin",
+        "address": "ul. Kolumba 86, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": null,
+      "capacity": 30,
+      "url": "https://example.com/events/evt-015",
+      "sourceName": "Calypso Fitness Szczecin",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-016",
+      "name": "Indoor Cycling",
+      "description": "Intensywny trening na rowerze stacjonarnym.",
+      "categories": [
+        "fitness",
+        "fitness-cycling"
+      ],
+      "tags": [
+        "cardio",
+        "cycling",
+        "endurance"
+      ],
+      "date": "2026-03-29",
+      "startTime": "20:00",
+      "endTime": "21:30",
+      "location": {
+        "name": "Zdrofit Szczecin Kaskada",
+        "address": "al. Niepodleglosci 36, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Pawel Dabrowski",
+      "capacity": 20,
+      "url": "https://example.com/events/evt-016",
+      "sourceName": "Zdrofit Kaskada",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-017",
+      "name": "Stretching & Relax",
+      "description": "Rozciaganie i relaksacja po treningu.",
+      "categories": [
+        "fitness",
+        "fitness-stretching"
+      ],
+      "tags": [
+        "stretch",
+        "relax",
+        "flexibility"
+      ],
+      "date": "2026-04-08",
+      "startTime": "20:00",
+      "endTime": "22:00",
+      "location": {
+        "name": "Calypso Fitness Szczecin",
+        "address": "ul. Kolumba 86, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "all",
+      "level": "open",
+      "instructor": null,
+      "capacity": 25,
+      "url": "https://example.com/events/evt-017",
+      "sourceName": "Calypso Fitness Szczecin",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-018",
+      "name": "ABS Attack",
+      "description": "Intensywny trening miesni brzucha.",
+      "categories": [
+        "fitness",
+        "fitness-abs"
+      ],
+      "tags": [
+        "core",
+        "abs",
+        "strength"
+      ],
+      "date": "2026-04-18",
+      "startTime": "17:00",
+      "endTime": "21:00",
+      "location": {
+        "name": "CityFit Szczecin Galaxy",
+        "address": "al. Wyzwolenia 18, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": null,
+      "capacity": 30,
+      "url": "https://example.com/events/evt-018",
+      "sourceName": "CityFit Szczecin Galaxy",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-019",
+      "name": "Body Shape",
+      "description": "Trening modelujacy sylwetke.",
+      "categories": [
+        "fitness",
+        "fitness-shape"
+      ],
+      "tags": [
+        "toning",
+        "full-body",
+        "shape"
+      ],
+      "date": "2026-04-28",
+      "startTime": "08:00",
+      "endTime": "09:00",
+      "location": {
+        "name": "Zdrofit Szczecin Kaskada",
+        "address": "al. Niepodleglosci 36, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": null,
+      "capacity": 25,
+      "url": "https://example.com/events/evt-019",
+      "sourceName": "Zdrofit Kaskada",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "sold_out"
+    },
+    {
+      "id": "evt-020",
+      "name": "Fat Burner HIIT",
+      "description": "Wysoko intensywny trening interwalowy.",
+      "categories": [
+        "fitness",
+        "fitness-fat-burner"
+      ],
+      "tags": [
+        "HIIT",
+        "fat-burn",
+        "cardio"
+      ],
+      "date": "2026-05-08",
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "location": {
+        "name": "Calypso Fitness Szczecin",
+        "address": "ul. Kolumba 86, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "intermediate",
+      "instructor": "Kamil Wojciechowski",
+      "capacity": 20,
+      "url": "https://example.com/events/evt-020",
+      "sourceName": "Calypso Fitness Szczecin",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "cancelled"
+    },
+    {
+      "id": "evt-021",
+      "name": "MMA dla Poczatkujacych",
+      "description": "Wprowadzenie do MMA.",
+      "categories": [
+        "martial-arts",
+        "martial-arts-mma"
+      ],
+      "tags": [
+        "mma",
+        "grappling",
+        "striking"
+      ],
+      "date": "2026-05-18",
+      "startTime": "09:30",
+      "endTime": "11:00",
+      "location": {
+        "name": "Fight Academy Szczecin",
+        "address": "ul. Energetykow 14, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 50,
+        "currency": "PLN",
+        "description": "50 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "Krzysztof Jotko",
+      "capacity": 16,
+      "url": "https://example.com/events/evt-021",
+      "sourceName": "Fight Academy Szczecin",
+      "sourceType": "sports_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-022",
+      "name": "Boks Rekreacyjny",
+      "description": "Rekreacyjny trening bokserski.",
+      "categories": [
+        "martial-arts",
+        "martial-arts-boxing"
+      ],
+      "tags": [
+        "boxing",
+        "cardio",
+        "technique"
+      ],
+      "date": "2026-05-28",
+      "startTime": "10:00",
+      "endTime": "11:30",
+      "location": {
+        "name": "Fight Academy Szczecin",
+        "address": "ul. Energetykow 14, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 45,
+        "currency": "PLN",
+        "description": "45 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Andrzej Fonfara",
+      "capacity": 20,
+      "url": "https://example.com/events/evt-022",
+      "sourceName": "Fight Academy Szczecin",
+      "sourceType": "sports_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-023",
+      "name": "Kickboxing Fitness",
+      "description": "Kickboxing w formie fitness.",
+      "categories": [
+        "martial-arts",
+        "martial-arts-kickboxing"
+      ],
+      "tags": [
+        "kickboxing",
+        "fitness",
+        "striking"
+      ],
+      "date": "2026-06-07",
+      "startTime": "11:00",
+      "endTime": "12:30",
+      "location": {
+        "name": "Fight Academy Szczecin",
+        "address": "ul. Energetykow 14, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 45,
+        "currency": "PLN",
+        "description": "45 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": null,
+      "capacity": 20,
+      "url": "https://example.com/events/evt-023",
+      "sourceName": "Fight Academy Szczecin",
+      "sourceType": "sports_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-024",
+      "name": "MMA Zaawansowane",
+      "description": "Zaawansowany trening MMA.",
+      "categories": [
+        "martial-arts",
+        "martial-arts-mma"
+      ],
+      "tags": [
+        "mma",
+        "sparring",
+        "competition"
+      ],
+      "date": "2026-06-17",
+      "startTime": "14:00",
+      "endTime": "15:30",
+      "location": {
+        "name": "Fight Academy Szczecin",
+        "address": "ul. Energetykow 14, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 60,
+        "currency": "PLN",
+        "description": "60 zl"
+      },
+      "ageGroup": "adults",
+      "level": "advanced",
+      "instructor": "Krzysztof Jotko",
+      "capacity": 12,
+      "url": "https://example.com/events/evt-024",
+      "sourceName": "Fight Academy Szczecin",
+      "sourceType": "sports_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-025",
+      "name": "Boks Juniorow",
+      "description": "Boks dla mlodziezy 12-17 lat.",
+      "categories": [
+        "martial-arts",
+        "martial-arts-boxing",
+        "kids-event"
+      ],
+      "tags": [
+        "kids",
+        "boxing",
+        "discipline"
+      ],
+      "date": "2026-06-27",
+      "startTime": "16:00",
+      "endTime": "17:30",
+      "location": {
+        "name": "Fight Academy Szczecin",
+        "address": "ul. Energetykow 14, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 40,
+        "currency": "PLN",
+        "description": "40 zl"
+      },
+      "ageGroup": "kids",
+      "level": "beginner",
+      "instructor": "Andrzej Fonfara",
+      "capacity": 15,
+      "url": "https://example.com/events/evt-025",
+      "sourceName": "Fight Academy Szczecin",
+      "sourceType": "sports_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-026",
+      "name": "Kickboxing Women",
+      "description": "Kickboxing tylko dla kobiet.",
+      "categories": [
+        "martial-arts",
+        "martial-arts-kickboxing"
+      ],
+      "tags": [
+        "women",
+        "self-defense",
+        "fitness"
+      ],
+      "date": "2026-03-07",
+      "startTime": "17:00",
+      "endTime": "18:30",
+      "location": {
+        "name": "Fight Academy Szczecin",
+        "address": "ul. Energetykow 14, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 45,
+        "currency": "PLN",
+        "description": "45 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "Anna Lewandowska",
+      "capacity": 16,
+      "url": "https://example.com/events/evt-026",
+      "sourceName": "Fight Academy Szczecin",
+      "sourceType": "sports_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-027",
+      "name": "Warsztaty Kuchni Tajskiej",
+      "description": "Poznaj tajniki kuchni tajskiej.",
+      "categories": [
+        "culinary",
+        "culinary-workshop",
+        "culinary-asian"
+      ],
+      "tags": [
+        "cooking",
+        "thai",
+        "small-group"
+      ],
+      "date": "2026-03-17",
+      "startTime": "17:30",
+      "endTime": "18:30",
+      "location": {
+        "name": "Studio Bataty",
+        "address": "ul. Slaska 54, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 310,
+        "currency": "PLN",
+        "description": "310 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 16,
+      "url": "https://example.com/events/evt-027",
+      "sourceName": "Studio Bataty",
+      "sourceType": "culinary_studio",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-028",
+      "name": "Degustacja Win Toskanskich",
+      "description": "Degustacja 8 win z regionu Toskanii.",
+      "categories": [
+        "culinary",
+        "culinary-tasting",
+        "culinary-wine"
+      ],
+      "tags": [
+        "wine",
+        "tasting",
+        "italian"
+      ],
+      "date": "2026-03-27",
+      "startTime": "18:00",
+      "endTime": "19:15",
+      "location": {
+        "name": "Akademia Kulinarna",
+        "address": "ul. Rayskiego 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 180,
+        "currency": "PLN",
+        "description": "180 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": "Sommelier Piotr Grzesiak",
+      "capacity": 12,
+      "url": "https://example.com/events/evt-028",
+      "sourceName": "Akademia Kulinarna",
+      "sourceType": "culinary_studio",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-029",
+      "name": "Warsztaty Sushi",
+      "description": "Naucz sie robic sushi od podstaw.",
+      "categories": [
+        "culinary",
+        "culinary-workshop",
+        "culinary-asian"
+      ],
+      "tags": [
+        "sushi",
+        "japanese",
+        "hands-on"
+      ],
+      "date": "2026-04-06",
+      "startTime": "18:00",
+      "endTime": "19:30",
+      "location": {
+        "name": "Studio Bataty",
+        "address": "ul. Slaska 54, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 280,
+        "currency": "PLN",
+        "description": "280 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 14,
+      "url": "https://example.com/events/evt-029",
+      "sourceName": "Studio Bataty",
+      "sourceType": "culinary_studio",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "sold_out"
+    },
+    {
+      "id": "evt-030",
+      "name": "Kuchnia Indyjska",
+      "description": "Warsztaty kuchni indyjskiej.",
+      "categories": [
+        "culinary",
+        "culinary-workshop",
+        "culinary-asian"
+      ],
+      "tags": [
+        "indian",
+        "spices",
+        "curry"
+      ],
+      "date": "2026-04-16",
+      "startTime": "18:30",
+      "endTime": "20:00",
+      "location": {
+        "name": "Akademia Kulinarna",
+        "address": "ul. Rayskiego 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 260,
+        "currency": "PLN",
+        "description": "260 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 16,
+      "url": "https://example.com/events/evt-030",
+      "sourceName": "Akademia Kulinarna",
+      "sourceType": "culinary_studio",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "cancelled"
+    },
+    {
+      "id": "evt-031",
+      "name": "Degustacja Whisky",
+      "description": "Degustacja 6 single malt scotch whisky.",
+      "categories": [
+        "culinary",
+        "culinary-tasting"
+      ],
+      "tags": [
+        "whisky",
+        "tasting",
+        "scotch"
+      ],
+      "date": "2026-04-26",
+      "startTime": "19:00",
+      "endTime": "20:30",
+      "location": {
+        "name": "Akademia Kulinarna",
+        "address": "ul. Rayskiego 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 220,
+        "currency": "PLN",
+        "description": "220 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": "Bartender Jakub Nowak",
+      "capacity": 10,
+      "url": "https://example.com/events/evt-031",
+      "sourceName": "Akademia Kulinarna",
+      "sourceType": "culinary_studio",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-032",
+      "name": "Warsztaty Pierogow",
+      "description": "Tradycyjne polskie pierogi.",
+      "categories": [
+        "culinary",
+        "culinary-workshop"
+      ],
+      "tags": [
+        "polish",
+        "traditional",
+        "family"
+      ],
+      "date": "2026-05-06",
+      "startTime": "19:00",
+      "endTime": "21:00",
+      "location": {
+        "name": "Studio Bataty",
+        "address": "ul. Slaska 54, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 160,
+        "currency": "PLN",
+        "description": "160 zl"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": 20,
+      "url": "https://example.com/events/evt-032",
+      "sourceName": "Studio Bataty",
+      "sourceType": "culinary_studio",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-033",
+      "name": "Wieczor z Winem Francuskim",
+      "description": "Wieczor degustacyjny - wina z Bordeaux i Burgundii.",
+      "categories": [
+        "culinary",
+        "culinary-wine",
+        "culinary-tasting"
+      ],
+      "tags": [
+        "wine",
+        "french",
+        "evening"
+      ],
+      "date": "2026-05-16",
+      "startTime": "19:30",
+      "endTime": "21:00",
+      "location": {
+        "name": "Akademia Kulinarna",
+        "address": "ul. Rayskiego 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 200,
+        "currency": "PLN",
+        "description": "200 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": "Sommelier Piotr Grzesiak",
+      "capacity": 12,
+      "url": "https://example.com/events/evt-033",
+      "sourceName": "Akademia Kulinarna",
+      "sourceType": "culinary_studio",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-034",
+      "name": "Kuchnia Wietnamska - Pho",
+      "description": "Poznaj sekret idealnego wietnamskiego pho.",
+      "categories": [
+        "culinary",
+        "culinary-workshop",
+        "culinary-asian"
+      ],
+      "tags": [
+        "vietnamese",
+        "pho",
+        "broth"
+      ],
+      "date": "2026-05-26",
+      "startTime": "20:00",
+      "endTime": "21:30",
+      "location": {
+        "name": "Studio Bataty",
+        "address": "ul. Slaska 54, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 240,
+        "currency": "PLN",
+        "description": "240 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 14,
+      "url": "https://example.com/events/evt-034",
+      "sourceName": "Studio Bataty",
+      "sourceType": "culinary_studio",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-035",
+      "name": "Jazz Night - Marcin Wasilewski Trio",
+      "description": "Koncert Marcin Wasilewski Trio.",
+      "categories": [
+        "concert",
+        "concert-jazz"
+      ],
+      "tags": [
+        "jazz",
+        "trio",
+        "piano"
+      ],
+      "date": "2026-06-05",
+      "startTime": "20:00",
+      "endTime": "22:00",
+      "location": {
+        "name": "Filharmonia Szczecinska",
+        "address": "ul. Malopolska 48, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 90,
+        "currency": "PLN",
+        "description": "90 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 400,
+      "url": "https://example.com/events/evt-035",
+      "sourceName": "Filharmonia Szczecinska",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-036",
+      "name": "Rock Covers Night",
+      "description": "Wieczor coverow rockowych.",
+      "categories": [
+        "concert",
+        "concert-rock"
+      ],
+      "tags": [
+        "rock",
+        "covers",
+        "live"
+      ],
+      "date": "2026-06-15",
+      "startTime": "17:00",
+      "endTime": "21:00",
+      "location": {
+        "name": "Klub 13 Muz",
+        "address": "pl. Zolnierza Polskiego 2, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 50,
+        "currency": "PLN",
+        "description": "50 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 200,
+      "url": "https://example.com/events/evt-036",
+      "sourceName": "Klub 13 Muz",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-037",
+      "name": "Koncert Muzyki Klasycznej - Chopin",
+      "description": "Recital fortepianowy z utworami Chopina.",
+      "categories": [
+        "concert",
+        "concert-classical"
+      ],
+      "tags": [
+        "classical",
+        "chopin",
+        "piano"
+      ],
+      "date": "2026-06-25",
+      "startTime": "08:00",
+      "endTime": "09:00",
+      "location": {
+        "name": "Filharmonia Szczecinska",
+        "address": "ul. Malopolska 48, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 70,
+        "currency": "PLN",
+        "description": "70 zl"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": 500,
+      "url": "https://example.com/events/evt-037",
+      "sourceName": "Filharmonia Szczecinska",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-038",
+      "name": "Hip Hop Live: Szczecin MCs",
+      "description": "Wieczor hip hopowy z lokalnymi artystami.",
+      "categories": [
+        "concert",
+        "concert-hip-hop"
+      ],
+      "tags": [
+        "hip-hop",
+        "rap",
+        "local"
+      ],
+      "date": "2026-03-05",
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "location": {
+        "name": "Piwnica Kany",
+        "address": "pl. Lotnikow 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 35,
+        "currency": "PLN",
+        "description": "35 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 150,
+      "url": "https://example.com/events/evt-038",
+      "sourceName": "Piwnica Kany",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-039",
+      "name": "Jazz Jam Session",
+      "description": "Otwarta jam session jazzowa.",
+      "categories": [
+        "concert",
+        "concert-jazz"
+      ],
+      "tags": [
+        "jazz",
+        "jam",
+        "improv"
+      ],
+      "date": "2026-03-15",
+      "startTime": "09:30",
+      "endTime": "11:00",
+      "location": {
+        "name": "Piwnica Kany",
+        "address": "pl. Lotnikow 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 25,
+        "currency": "PLN",
+        "description": "25 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 80,
+      "url": "https://example.com/events/evt-039",
+      "sourceName": "Piwnica Kany",
+      "sourceType": "cultural_event",
+      "isRecurring": true,
+      "recurrenceRule": "monthly",
+      "imageUrl": null,
+      "status": "sold_out"
+    },
+    {
+      "id": "evt-040",
+      "name": "Acoustic Indie Night",
+      "description": "Wieczor akustycznych koncertow indie.",
+      "categories": [
+        "concert"
+      ],
+      "tags": [
+        "indie",
+        "acoustic",
+        "singer-songwriter"
+      ],
+      "date": "2026-03-25",
+      "startTime": "10:00",
+      "endTime": "11:30",
+      "location": {
+        "name": "Klub 13 Muz",
+        "address": "pl. Zolnierza Polskiego 2, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 30,
+        "currency": "PLN",
+        "description": "30 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 120,
+      "url": "https://example.com/events/evt-040",
+      "sourceName": "Klub 13 Muz",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "cancelled"
+    },
+    {
+      "id": "evt-041",
+      "name": "Orkiestra Symfoniczna - Beethoven",
+      "description": "V i VII Symfonia Beethovena.",
+      "categories": [
+        "concert",
+        "concert-classical"
+      ],
+      "tags": [
+        "classical",
+        "beethoven",
+        "symphony"
+      ],
+      "date": "2026-04-04",
+      "startTime": "11:00",
+      "endTime": "12:30",
+      "location": {
+        "name": "Filharmonia Szczecinska",
+        "address": "ul. Malopolska 48, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 80,
+        "currency": "PLN",
+        "description": "80 zl"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": 500,
+      "url": "https://example.com/events/evt-041",
+      "sourceName": "Filharmonia Szczecinska",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-042",
+      "name": "Blues & Soul Evening",
+      "description": "Wieczor muzyki blues i soul.",
+      "categories": [
+        "concert"
+      ],
+      "tags": [
+        "blues",
+        "soul",
+        "evening"
+      ],
+      "date": "2026-04-14",
+      "startTime": "14:00",
+      "endTime": "15:30",
+      "location": {
+        "name": "Piwnica Kany",
+        "address": "pl. Lotnikow 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 40,
+        "currency": "PLN",
+        "description": "40 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 80,
+      "url": "https://example.com/events/evt-042",
+      "sourceName": "Piwnica Kany",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-043",
+      "name": "Electro Swing Party",
+      "description": "Electro swing party.",
+      "categories": [
+        "concert",
+        "social-event"
+      ],
+      "tags": [
+        "electro-swing",
+        "party",
+        "dance"
+      ],
+      "date": "2026-04-24",
+      "startTime": "16:00",
+      "endTime": "17:30",
+      "location": {
+        "name": "Klub 13 Muz",
+        "address": "pl. Zolnierza Polskiego 2, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 45,
+        "currency": "PLN",
+        "description": "45 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 200,
+      "url": "https://example.com/events/evt-043",
+      "sourceName": "Klub 13 Muz",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-044",
+      "name": "Rock Symfoniczny",
+      "description": "Rockowe hity w aranzacji symfonicznej.",
+      "categories": [
+        "concert",
+        "concert-rock",
+        "concert-classical"
+      ],
+      "tags": [
+        "rock",
+        "symphony",
+        "crossover"
+      ],
+      "date": "2026-05-04",
+      "startTime": "17:00",
+      "endTime": "18:30",
+      "location": {
+        "name": "Filharmonia Szczecinska",
+        "address": "ul. Malopolska 48, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 110,
+        "currency": "PLN",
+        "description": "110 zl"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": 500,
+      "url": "https://example.com/events/evt-044",
+      "sourceName": "Filharmonia Szczecinska",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-045",
+      "name": "Spektakl: Wesele",
+      "description": "Wesele Wyspianskiego w nowoczesnej reinterpretacji.",
+      "categories": [
+        "theatre"
+      ],
+      "tags": [
+        "theatre",
+        "classic",
+        "polish"
+      ],
+      "date": "2026-05-14",
+      "startTime": "17:30",
+      "endTime": "18:30",
+      "location": {
+        "name": "Teatr Wspolczesny",
+        "address": "ul. Waly Chrobrego 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 65,
+        "currency": "PLN",
+        "description": "65 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 300,
+      "url": "https://example.com/events/evt-045",
+      "sourceName": "Teatr Wspolczesny",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-046",
+      "name": "Stand-up: Noc Komedii",
+      "description": "Wieczor stand-up comedy.",
+      "categories": [
+        "standup"
+      ],
+      "tags": [
+        "comedy",
+        "standup",
+        "live"
+      ],
+      "date": "2026-05-24",
+      "startTime": "18:00",
+      "endTime": "19:15",
+      "location": {
+        "name": "Klub 13 Muz",
+        "address": "pl. Zolnierza Polskiego 2, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 45,
+        "currency": "PLN",
+        "description": "45 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 150,
+      "url": "https://example.com/events/evt-046",
+      "sourceName": "Klub 13 Muz",
+      "sourceType": "facebook_event",
+      "isRecurring": true,
+      "recurrenceRule": "monthly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-047",
+      "name": "Wystawa: Sztuka Wspolczesna",
+      "description": "Wystawa sztuki wspolczesnej.",
+      "categories": [
+        "exhibition"
+      ],
+      "tags": [
+        "art",
+        "contemporary",
+        "exhibition"
+      ],
+      "date": "2026-06-03",
+      "startTime": "18:00",
+      "endTime": "19:30",
+      "location": {
+        "name": "Zamek Ksiazat Pomorskich",
+        "address": "ul. Korsarzy 34, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 20,
+        "currency": "PLN",
+        "description": "20 zl"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": null,
+      "url": "https://example.com/events/evt-047",
+      "sourceName": "Zamek Ksiazat Pomorskich",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-048",
+      "name": "Spektakl: Proces",
+      "description": "Adaptacja Procesu Franza Kafki.",
+      "categories": [
+        "theatre"
+      ],
+      "tags": [
+        "theatre",
+        "kafka",
+        "drama"
+      ],
+      "date": "2026-06-13",
+      "startTime": "18:30",
+      "endTime": "20:00",
+      "location": {
+        "name": "Teatr Wspolczesny",
+        "address": "ul. Waly Chrobrego 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 60,
+        "currency": "PLN",
+        "description": "60 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 250,
+      "url": "https://example.com/events/evt-048",
+      "sourceName": "Teatr Wspolczesny",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-049",
+      "name": "Stand-up Open Mic",
+      "description": "Otwarty mikrofon stand-upowy.",
+      "categories": [
+        "standup"
+      ],
+      "tags": [
+        "open-mic",
+        "comedy",
+        "amateur"
+      ],
+      "date": "2026-06-23",
+      "startTime": "19:00",
+      "endTime": "20:30",
+      "location": {
+        "name": "Piwnica Kany",
+        "address": "pl. Lotnikow 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 15,
+        "currency": "PLN",
+        "description": "15 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 60,
+      "url": "https://example.com/events/evt-049",
+      "sourceName": "Piwnica Kany",
+      "sourceType": "facebook_event",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "sold_out"
+    },
+    {
+      "id": "evt-050",
+      "name": "Wystawa Fotografii: Szczecin Noca",
+      "description": "Cykl fotografii nocnych Szczecina.",
+      "categories": [
+        "exhibition"
+      ],
+      "tags": [
+        "photography",
+        "night",
+        "szczecin"
+      ],
+      "date": "2026-03-03",
+      "startTime": "19:00",
+      "endTime": "21:00",
+      "location": {
+        "name": "Zamek Ksiazat Pomorskich",
+        "address": "ul. Korsarzy 34, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 15,
+        "currency": "PLN",
+        "description": "15 zl"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": null,
+      "url": "https://example.com/events/evt-050",
+      "sourceName": "Zamek Ksiazat Pomorskich",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "cancelled"
+    },
+    {
+      "id": "evt-051",
+      "name": "Teatr Improwizacji",
+      "description": "Improwizowany spektakl komediowy.",
+      "categories": [
+        "theatre",
+        "standup"
+      ],
+      "tags": [
+        "improv",
+        "comedy",
+        "interactive"
+      ],
+      "date": "2026-03-13",
+      "startTime": "19:30",
+      "endTime": "21:00",
+      "location": {
+        "name": "Klub 13 Muz",
+        "address": "pl. Zolnierza Polskiego 2, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 30,
+        "currency": "PLN",
+        "description": "30 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 100,
+      "url": "https://example.com/events/evt-051",
+      "sourceName": "Klub 13 Muz",
+      "sourceType": "facebook_event",
+      "isRecurring": true,
+      "recurrenceRule": "biweekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-052",
+      "name": "Spektakl: Maly Ksiaze",
+      "description": "Maly Ksiaze dla dzieci od 5 lat.",
+      "categories": [
+        "theatre",
+        "kids-event"
+      ],
+      "tags": [
+        "kids",
+        "fairy-tale",
+        "classic"
+      ],
+      "date": "2026-03-23",
+      "startTime": "20:00",
+      "endTime": "21:30",
+      "location": {
+        "name": "Teatr Wspolczesny",
+        "address": "ul. Waly Chrobrego 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 35,
+        "currency": "PLN",
+        "description": "35 zl"
+      },
+      "ageGroup": "kids",
+      "level": null,
+      "instructor": null,
+      "capacity": 200,
+      "url": "https://example.com/events/evt-052",
+      "sourceName": "Teatr Wspolczesny",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-053",
+      "name": "Wystawa: Design z Pomorza",
+      "description": "Przeglad najlepszych projektow designu.",
+      "categories": [
+        "exhibition"
+      ],
+      "tags": [
+        "design",
+        "local",
+        "craft"
+      ],
+      "date": "2026-04-02",
+      "startTime": "20:00",
+      "endTime": "22:00",
+      "location": {
+        "name": "Zamek Ksiazat Pomorskich",
+        "address": "ul. Korsarzy 34, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 10,
+        "currency": "PLN",
+        "description": "10 zl"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": null,
+      "url": "https://example.com/events/evt-053",
+      "sourceName": "Zamek Ksiazat Pomorskich",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-054",
+      "name": "Stand-up Gala",
+      "description": "Gala stand-upowa z czolowymi komikami.",
+      "categories": [
+        "standup"
+      ],
+      "tags": [
+        "standup",
+        "gala",
+        "headliner"
+      ],
+      "date": "2026-04-12",
+      "startTime": "17:00",
+      "endTime": "21:00",
+      "location": {
+        "name": "Klub 13 Muz",
+        "address": "pl. Zolnierza Polskiego 2, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 65,
+        "currency": "PLN",
+        "description": "65 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 200,
+      "url": "https://example.com/events/evt-054",
+      "sourceName": "Klub 13 Muz",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-055",
+      "name": "Warsztaty Garncarskie",
+      "description": "Warsztaty ceramiki na kole garncarskim.",
+      "categories": [
+        "workshop"
+      ],
+      "tags": [
+        "pottery",
+        "hands-on",
+        "creative"
+      ],
+      "date": "2026-04-22",
+      "startTime": "08:00",
+      "endTime": "09:00",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 120,
+        "currency": "PLN",
+        "description": "120 zl"
+      },
+      "ageGroup": "all",
+      "level": "beginner",
+      "instructor": "Jan Gorski",
+      "capacity": 10,
+      "url": "https://example.com/events/evt-055",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-056",
+      "name": "Warsztaty Kaligrafii",
+      "description": "Podstawy kaligrafii piorem.",
+      "categories": [
+        "workshop"
+      ],
+      "tags": [
+        "calligraphy",
+        "art",
+        "lettering"
+      ],
+      "date": "2026-05-02",
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 90,
+        "currency": "PLN",
+        "description": "90 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "Karolina Maj",
+      "capacity": 12,
+      "url": "https://example.com/events/evt-056",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-057",
+      "name": "Warsztaty Fotografii Ulicznej",
+      "description": "Spacer fotograficzny po Szczecinie.",
+      "categories": [
+        "workshop"
+      ],
+      "tags": [
+        "photography",
+        "street",
+        "urban"
+      ],
+      "date": "2026-05-12",
+      "startTime": "09:30",
+      "endTime": "11:00",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 80,
+        "currency": "PLN",
+        "description": "80 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Maciej Zielinski",
+      "capacity": 15,
+      "url": "https://example.com/events/evt-057",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-058",
+      "name": "Turniej Siatkowki Plazowej",
+      "description": "Amatorski turniej siatkowki plazowej.",
+      "categories": [
+        "sports-event"
+      ],
+      "tags": [
+        "volleyball",
+        "beach",
+        "tournament"
+      ],
+      "date": "2026-05-22",
+      "startTime": "10:00",
+      "endTime": "11:30",
+      "location": {
+        "name": "Hala Netto Arena",
+        "address": "ul. Szafera 3/5/7, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": null,
+      "capacity": 64,
+      "url": "https://example.com/events/evt-058",
+      "sourceName": "Hala Netto Arena",
+      "sourceType": "sports_club",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-059",
+      "name": "Bieg Nocny Szczecin",
+      "description": "Nocny bieg 5km i 10km ulicami Szczecina.",
+      "categories": [
+        "sports-event"
+      ],
+      "tags": [
+        "running",
+        "night",
+        "5k"
+      ],
+      "date": "2026-06-01",
+      "startTime": "11:00",
+      "endTime": "12:30",
+      "location": {
+        "name": "Hala Netto Arena",
+        "address": "ul. Szafera 3/5/7, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 50,
+        "currency": "PLN",
+        "description": "50 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": null,
+      "capacity": 500,
+      "url": "https://example.com/events/evt-059",
+      "sourceName": "Hala Netto Arena",
+      "sourceType": "sports_club",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "sold_out"
+    },
+    {
+      "id": "evt-060",
+      "name": "Festyn Rodzinny",
+      "description": "Festyn rodzinny na dziedzincu Zamku.",
+      "categories": [
+        "kids-event",
+        "social-event"
+      ],
+      "tags": [
+        "family",
+        "kids",
+        "outdoor"
+      ],
+      "date": "2026-06-11",
+      "startTime": "14:00",
+      "endTime": "15:30",
+      "location": {
+        "name": "Zamek Ksiazat Pomorskich",
+        "address": "ul. Korsarzy 34, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "kids",
+      "level": null,
+      "instructor": null,
+      "capacity": null,
+      "url": "https://example.com/events/evt-060",
+      "sourceName": "Zamek Ksiazat Pomorskich",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "cancelled"
+    },
+    {
+      "id": "evt-061",
+      "name": "Potancowka Retro",
+      "description": "Potancowka w stylu retro lat 60. i 70.",
+      "categories": [
+        "social-event",
+        "dance"
+      ],
+      "tags": [
+        "retro",
+        "social-dance",
+        "fun"
+      ],
+      "date": "2026-06-21",
+      "startTime": "16:00",
+      "endTime": "17:30",
+      "location": {
+        "name": "Zamek Ksiazat Pomorskich",
+        "address": "ul. Korsarzy 34, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 20,
+        "currency": "PLN",
+        "description": "20 zl"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": 200,
+      "url": "https://example.com/events/evt-061",
+      "sourceName": "Zamek Ksiazat Pomorskich",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-062",
+      "name": "Warsztaty Rysunku",
+      "description": "Warsztaty rysunku z modelem.",
+      "categories": [
+        "workshop"
+      ],
+      "tags": [
+        "drawing",
+        "life-model",
+        "art"
+      ],
+      "date": "2026-03-01",
+      "startTime": "17:00",
+      "endTime": "18:30",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 100,
+        "currency": "PLN",
+        "description": "100 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Prof. Halina Kowalczyk",
+      "capacity": 12,
+      "url": "https://example.com/events/evt-062",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-063",
+      "name": "Taneczny Brunch",
+      "description": "Niedzielny brunch z muzyka latynoska.",
+      "categories": [
+        "social-event",
+        "dance"
+      ],
+      "tags": [
+        "brunch",
+        "social",
+        "latin"
+      ],
+      "date": "2026-03-11",
+      "startTime": "17:30",
+      "endTime": "18:30",
+      "location": {
+        "name": "Salsa Libre Szczecin",
+        "address": "ul. Jagiellonska 90, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 60,
+        "currency": "PLN",
+        "description": "60 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 50,
+      "url": "https://example.com/events/evt-063",
+      "sourceName": "Salsa Libre Szczecin",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-064",
+      "name": "Joga dla Seniorow",
+      "description": "Delikatna joga dla osob starszych.",
+      "categories": [
+        "fitness",
+        "fitness-yoga"
+      ],
+      "tags": [
+        "seniors",
+        "gentle",
+        "therapeutic"
+      ],
+      "date": "2026-03-21",
+      "startTime": "18:00",
+      "endTime": "19:15",
+      "location": {
+        "name": "Calypso Fitness Szczecin",
+        "address": "ul. Kolumba 86, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "seniors",
+      "level": "beginner",
+      "instructor": "Ewa Kaczmarek",
+      "capacity": 15,
+      "url": "https://example.com/events/evt-064",
+      "sourceName": "Calypso Fitness Szczecin",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-065",
+      "name": "Turniej Szachowy",
+      "description": "Otwarty turniej szachowy.",
+      "categories": [
+        "sports-event"
+      ],
+      "tags": [
+        "chess",
+        "tournament",
+        "strategy"
+      ],
+      "date": "2026-03-31",
+      "startTime": "18:00",
+      "endTime": "19:30",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 10,
+        "currency": "PLN",
+        "description": "10 zl"
+      },
+      "ageGroup": "all",
+      "level": "open",
+      "instructor": null,
+      "capacity": 32,
+      "url": "https://example.com/events/evt-065",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-066",
+      "name": "Warsztaty Bizuterii",
+      "description": "Stworz wlasna bizuterie z kamieni.",
+      "categories": [
+        "workshop"
+      ],
+      "tags": [
+        "jewelry",
+        "craft",
+        "handmade"
+      ],
+      "date": "2026-04-10",
+      "startTime": "18:30",
+      "endTime": "20:00",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 130,
+        "currency": "PLN",
+        "description": "130 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "Magdalena Kwiatkowska",
+      "capacity": 8,
+      "url": "https://example.com/events/evt-066",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-067",
+      "name": "Zumba Kids",
+      "description": "Zumba dla dzieci 6-10 lat.",
+      "categories": [
+        "fitness",
+        "fitness-zumba",
+        "kids-event"
+      ],
+      "tags": [
+        "kids",
+        "dance",
+        "fun"
+      ],
+      "date": "2026-04-20",
+      "startTime": "19:00",
+      "endTime": "20:30",
+      "location": {
+        "name": "Zdrofit Szczecin Kaskada",
+        "address": "al. Niepodleglosci 36, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "kids",
+      "level": "open",
+      "instructor": null,
+      "capacity": 20,
+      "url": "https://example.com/events/evt-067",
+      "sourceName": "Zdrofit Kaskada",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-068",
+      "name": "Wieczor Planszowek",
+      "description": "Wieczor z grami planszowymi.",
+      "categories": [
+        "social-event"
+      ],
+      "tags": [
+        "board-games",
+        "social",
+        "evening"
+      ],
+      "date": "2026-04-30",
+      "startTime": "19:00",
+      "endTime": "21:00",
+      "location": {
+        "name": "Piwnica Kany",
+        "address": "pl. Lotnikow 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 40,
+      "url": "https://example.com/events/evt-068",
+      "sourceName": "Piwnica Kany",
+      "sourceType": "facebook_event",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-069",
+      "name": "Warsztaty Komiksu",
+      "description": "Warsztaty tworzenia komiksu.",
+      "categories": [
+        "workshop",
+        "kids-event"
+      ],
+      "tags": [
+        "comics",
+        "drawing",
+        "storytelling"
+      ],
+      "date": "2026-05-10",
+      "startTime": "19:30",
+      "endTime": "21:00",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 60,
+        "currency": "PLN",
+        "description": "60 zl"
+      },
+      "ageGroup": "kids",
+      "level": "open",
+      "instructor": "Adam Pekalski",
+      "capacity": 15,
+      "url": "https://example.com/events/evt-069",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "sold_out"
+    },
+    {
+      "id": "evt-070",
+      "name": "Trening Funkcjonalny Outdoor",
+      "description": "Trening funkcjonalny na swiezym powietrzu.",
+      "categories": [
+        "fitness",
+        "fitness-cross"
+      ],
+      "tags": [
+        "outdoor",
+        "functional",
+        "group"
+      ],
+      "date": "2026-05-20",
+      "startTime": "20:00",
+      "endTime": "21:30",
+      "location": {
+        "name": "Hala Netto Arena",
+        "address": "ul. Szafera 3/5/7, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 20,
+        "currency": "PLN",
+        "description": "20 zl"
+      },
+      "ageGroup": "adults",
+      "level": "intermediate",
+      "instructor": "Kamil Wojciechowski",
+      "capacity": 25,
+      "url": "https://example.com/events/evt-070",
+      "sourceName": "Hala Netto Arena",
+      "sourceType": "sports_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "cancelled"
+    },
+    {
+      "id": "evt-071",
+      "name": "Warsztaty Makramy",
+      "description": "Stworz dekoracyjna makrame scienna.",
+      "categories": [
+        "workshop"
+      ],
+      "tags": [
+        "macrame",
+        "craft",
+        "boho"
+      ],
+      "date": "2026-05-30",
+      "startTime": "20:00",
+      "endTime": "22:00",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 110,
+        "currency": "PLN",
+        "description": "110 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "Olga Pawlak",
+      "capacity": 10,
+      "url": "https://example.com/events/evt-071",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-072",
+      "name": "Pokaz Filmowy Plenerowy",
+      "description": "Bezplatny pokaz filmowy na dziedzincu.",
+      "categories": [
+        "social-event"
+      ],
+      "tags": [
+        "film",
+        "outdoor",
+        "free"
+      ],
+      "date": "2026-06-09",
+      "startTime": "17:00",
+      "endTime": "21:00",
+      "location": {
+        "name": "Zamek Ksiazat Pomorskich",
+        "address": "ul. Korsarzy 34, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": 300,
+      "url": "https://example.com/events/evt-072",
+      "sourceName": "Zamek Ksiazat Pomorskich",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-073",
+      "name": "Maraton Jogi",
+      "description": "Calodzienny maraton jogi.",
+      "categories": [
+        "fitness",
+        "fitness-yoga",
+        "social-event"
+      ],
+      "tags": [
+        "yoga",
+        "marathon",
+        "all-day"
+      ],
+      "date": "2026-06-19",
+      "startTime": "08:00",
+      "endTime": "09:00",
+      "location": {
+        "name": "Calypso Fitness Szczecin",
+        "address": "ul. Kolumba 86, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 80,
+        "currency": "PLN",
+        "description": "80 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Ewa Kaczmarek",
+      "capacity": 40,
+      "url": "https://example.com/events/evt-073",
+      "sourceName": "Calypso Fitness Szczecin",
+      "sourceType": "fitness_club",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-074",
+      "name": "Warsztaty Origami",
+      "description": "Warsztaty origami dla dzieci i doroslych.",
+      "categories": [
+        "workshop",
+        "kids-event"
+      ],
+      "tags": [
+        "origami",
+        "paper",
+        "craft"
+      ],
+      "date": "2026-06-29",
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 40,
+        "currency": "PLN",
+        "description": "40 zl"
+      },
+      "ageGroup": "all",
+      "level": "beginner",
+      "instructor": null,
+      "capacity": 20,
+      "url": "https://example.com/events/evt-074",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-075",
+      "name": "Mecz Koszykowki: King Szczecin",
+      "description": "Mecz ligowy druzyny King Szczecin.",
+      "categories": [
+        "sports-event"
+      ],
+      "tags": [
+        "basketball",
+        "match",
+        "live"
+      ],
+      "date": "2026-03-09",
+      "startTime": "09:30",
+      "endTime": "11:00",
+      "location": {
+        "name": "Hala Netto Arena",
+        "address": "ul. Szafera 3/5/7, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 40,
+        "currency": "PLN",
+        "description": "40 zl"
+      },
+      "ageGroup": "all",
+      "level": null,
+      "instructor": null,
+      "capacity": 3000,
+      "url": "https://example.com/events/evt-075",
+      "sourceName": "Hala Netto Arena",
+      "sourceType": "sports_club",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-076",
+      "name": "Latin Social Night",
+      "description": "Wieczor tancow latynoskich.",
+      "categories": [
+        "social-event",
+        "dance",
+        "dance-salsa",
+        "dance-bachata"
+      ],
+      "tags": [
+        "latin",
+        "social",
+        "dance-floor"
+      ],
+      "date": "2026-03-19",
+      "startTime": "10:00",
+      "endTime": "11:30",
+      "location": {
+        "name": "Salsa Libre Szczecin",
+        "address": "ul. Jagiellonska 90, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 25,
+        "currency": "PLN",
+        "description": "25 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 100,
+      "url": "https://example.com/events/evt-076",
+      "sourceName": "Salsa Libre Szczecin",
+      "sourceType": "dance_studio",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-077",
+      "name": "Warsztaty Latte Art",
+      "description": "Podstawy latte art.",
+      "categories": [
+        "culinary",
+        "culinary-workshop"
+      ],
+      "tags": [
+        "coffee",
+        "latte-art",
+        "barista"
+      ],
+      "date": "2026-03-29",
+      "startTime": "11:00",
+      "endTime": "12:30",
+      "location": {
+        "name": "Akademia Kulinarna",
+        "address": "ul. Rayskiego 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 150,
+        "currency": "PLN",
+        "description": "150 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": null,
+      "capacity": 8,
+      "url": "https://example.com/events/evt-077",
+      "sourceName": "Akademia Kulinarna",
+      "sourceType": "culinary_studio",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-078",
+      "name": "Trening Biegowy C25K",
+      "description": "Program biegowy od zera do 5 km.",
+      "categories": [
+        "sports-event"
+      ],
+      "tags": [
+        "running",
+        "c25k",
+        "beginner"
+      ],
+      "date": "2026-04-08",
+      "startTime": "14:00",
+      "endTime": "15:30",
+      "location": {
+        "name": "Hala Netto Arena",
+        "address": "ul. Szafera 3/5/7, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "Marta Szymanska",
+      "capacity": 30,
+      "url": "https://example.com/events/evt-078",
+      "sourceName": "Hala Netto Arena",
+      "sourceType": "sports_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "few_spots"
+    },
+    {
+      "id": "evt-079",
+      "name": "Warsztaty Ceramiki Raku",
+      "description": "Unikalna technika wypalania ceramiki raku.",
+      "categories": [
+        "workshop"
+      ],
+      "tags": [
+        "raku",
+        "ceramics",
+        "fire"
+      ],
+      "date": "2026-04-18",
+      "startTime": "10:00",
+      "endTime": "14:00",
+      "location": {
+        "name": "Centrum Kultury Eureka",
+        "address": "ul. Dworcowa 11, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 180,
+        "currency": "PLN",
+        "description": "180 zl"
+      },
+      "ageGroup": "adults",
+      "level": "open",
+      "instructor": "Jan Gorski",
+      "capacity": 8,
+      "url": "https://example.com/events/evt-079",
+      "sourceName": "Centrum Kultury Eureka",
+      "sourceType": "cultural_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-080",
+      "name": "Pilates z Pilka",
+      "description": "Pilates z wykorzystaniem pilki gimnastycznej.",
+      "categories": [
+        "fitness",
+        "fitness-pilates"
+      ],
+      "tags": [
+        "pilates",
+        "ball",
+        "core"
+      ],
+      "date": "2026-04-20",
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "location": {
+        "name": "Zdrofit Szczecin Kaskada",
+        "address": "al. Niepodleglosci 36, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Wliczone w karnet"
+      },
+      "ageGroup": "adults",
+      "level": "intermediate",
+      "instructor": null,
+      "capacity": 18,
+      "url": "https://example.com/events/evt-080",
+      "sourceName": "Zdrofit Kaskada",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-081",
+      "name": "Wieczor Poezji",
+      "description": "Wieczor autorski mlodych poetow ze Szczecina.",
+      "categories": [
+        "social-event"
+      ],
+      "tags": [
+        "poetry",
+        "literature",
+        "evening"
+      ],
+      "date": "2026-05-08",
+      "startTime": "19:00",
+      "endTime": "21:00",
+      "location": {
+        "name": "Piwnica Kany",
+        "address": "pl. Lotnikow 3, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 15,
+        "currency": "PLN",
+        "description": "15 zl"
+      },
+      "ageGroup": "adults",
+      "level": null,
+      "instructor": null,
+      "capacity": 50,
+      "url": "https://example.com/events/evt-081",
+      "sourceName": "Piwnica Kany",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-082",
+      "name": "Warsztaty DJ-skie",
+      "description": "Nauka miksowania na kontrolerach DJ.",
+      "categories": [
+        "workshop"
+      ],
+      "tags": [
+        "dj",
+        "mixing",
+        "electronic"
+      ],
+      "date": "2026-05-15",
+      "startTime": "16:00",
+      "endTime": "19:00",
+      "location": {
+        "name": "Klub 13 Muz",
+        "address": "pl. Zolnierza Polskiego 2, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 200,
+        "currency": "PLN",
+        "description": "200 zl"
+      },
+      "ageGroup": "adults",
+      "level": "beginner",
+      "instructor": "DJ Krysiek",
+      "capacity": 6,
+      "url": "https://example.com/events/evt-082",
+      "sourceName": "Klub 13 Muz",
+      "sourceType": "facebook_event",
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "imageUrl": null,
+      "status": "active"
+    },
+    {
+      "id": "evt-083",
+      "name": "Joga w Parku",
+      "description": "Poranna joga na swiezym powietrzu w Parku Kasprowicza.",
+      "categories": [
+        "fitness",
+        "fitness-yoga",
+        "social-event"
+      ],
+      "tags": [
+        "outdoor",
+        "morning",
+        "free"
+      ],
+      "date": "2026-06-01",
+      "startTime": "07:30",
+      "endTime": "08:30",
+      "location": {
+        "name": "Park Kasprowicza",
+        "address": "Park Kasprowicza, Szczecin",
+        "city": "Szczecin"
+      },
+      "price": {
+        "amount": 0,
+        "currency": "PLN",
+        "description": "Bezplatne"
+      },
+      "ageGroup": "all",
+      "level": "open",
+      "instructor": "Ewa Kaczmarek",
+      "capacity": 50,
+      "url": "https://example.com/events/evt-083",
+      "sourceName": "Calypso Fitness Szczecin",
+      "sourceType": "fitness_club",
+      "isRecurring": true,
+      "recurrenceRule": "weekly",
+      "imageUrl": null,
+      "status": "active"
+    }
+  ],
+  "categories": [
+    {
+      "id": "dance",
+      "label": "Taniec"
+    },
+    {
+      "id": "dance-hip-hop",
+      "label": "Hip Hop"
+    },
+    {
+      "id": "dance-bachata",
+      "label": "Bachata"
+    },
+    {
+      "id": "dance-salsa",
+      "label": "Salsa"
+    },
+    {
+      "id": "dance-kizomba",
+      "label": "Kizomba"
+    },
+    {
+      "id": "dance-reggaeton",
+      "label": "Reggaeton"
+    },
+    {
+      "id": "dance-contemporary",
+      "label": "Taniec wspolczesny"
+    },
+    {
+      "id": "dance-ballet",
+      "label": "Balet"
+    },
+    {
+      "id": "dance-sensual",
+      "label": "Taniec zmyslowy"
+    },
+    {
+      "id": "fitness",
+      "label": "Fitness"
+    },
+    {
+      "id": "fitness-yoga",
+      "label": "Joga"
+    },
+    {
+      "id": "fitness-pilates",
+      "label": "Pilates"
+    },
+    {
+      "id": "fitness-zumba",
+      "label": "Zumba"
+    },
+    {
+      "id": "fitness-cross",
+      "label": "Crossfit"
+    },
+    {
+      "id": "fitness-tabata",
+      "label": "Tabata"
+    },
+    {
+      "id": "fitness-cycling",
+      "label": "Cycling"
+    },
+    {
+      "id": "fitness-stretching",
+      "label": "Stretching"
+    },
+    {
+      "id": "fitness-abs",
+      "label": "Brzuszki"
+    },
+    {
+      "id": "fitness-shape",
+      "label": "Shape"
+    },
+    {
+      "id": "fitness-fat-burner",
+      "label": "Fat Burner"
+    },
+    {
+      "id": "martial-arts",
+      "label": "Sztuki walki"
+    },
+    {
+      "id": "martial-arts-mma",
+      "label": "MMA"
+    },
+    {
+      "id": "martial-arts-boxing",
+      "label": "Boks"
+    },
+    {
+      "id": "martial-arts-kickboxing",
+      "label": "Kickboxing"
+    },
+    {
+      "id": "culinary",
+      "label": "Kulinarne"
+    },
+    {
+      "id": "culinary-workshop",
+      "label": "Warsztaty kulinarne"
+    },
+    {
+      "id": "culinary-tasting",
+      "label": "Degustacja"
+    },
+    {
+      "id": "culinary-wine",
+      "label": "Wino"
+    },
+    {
+      "id": "culinary-asian",
+      "label": "Kuchnia azjatycka"
+    },
+    {
+      "id": "concert",
+      "label": "Koncert"
+    },
+    {
+      "id": "concert-jazz",
+      "label": "Jazz"
+    },
+    {
+      "id": "concert-rock",
+      "label": "Rock"
+    },
+    {
+      "id": "concert-classical",
+      "label": "Muzyka klasyczna"
+    },
+    {
+      "id": "concert-hip-hop",
+      "label": "Hip Hop (koncert)"
+    },
+    {
+      "id": "theatre",
+      "label": "Teatr"
+    },
+    {
+      "id": "standup",
+      "label": "Stand-up"
+    },
+    {
+      "id": "exhibition",
+      "label": "Wystawa"
+    },
+    {
+      "id": "workshop",
+      "label": "Warsztaty"
+    },
+    {
+      "id": "kids-event",
+      "label": "Dla dzieci"
+    },
+    {
+      "id": "sports-event",
+      "label": "Sport"
+    },
+    {
+      "id": "social-event",
+      "label": "Spotkanie"
+    }
+  ],
+  "sources": [
+    {
+      "id": "dance_studio",
+      "label": "Szkola tanca"
+    },
+    {
+      "id": "fitness_club",
+      "label": "Klub fitness"
+    },
+    {
+      "id": "culinary_studio",
+      "label": "Studio kulinarne"
+    },
+    {
+      "id": "cultural_event",
+      "label": "Wydarzenie kulturalne"
+    },
+    {
+      "id": "facebook_event",
+      "label": "Facebook"
+    },
+    {
+      "id": "sports_club",
+      "label": "Klub sportowy"
+    },
+    {
+      "id": "other",
+      "label": "Inne"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+@use '../../../styles/mixins' as *;
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 16px;
+
+  @include sm {
+    padding: 24px;
+  }
+
+  @include md {
+    flex-direction: row;
+    padding: 32px;
+    gap: 32px;
+  }
+}
+
+.results {
+  flex: 1;
+  min-width: 0;
+}
+
+.resultsHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  @include sm {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chipBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.body {
+  min-height: 300px;
+}
