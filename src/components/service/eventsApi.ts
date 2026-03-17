@@ -19,7 +19,16 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
-function buildEventsQueryString(filters: EventFilters): string {
+function hasClientSideFilters(filters: EventFilters): boolean {
+  return (
+    filters.categories.length > 0 ||
+    filters.sourceTypes.length > 0 ||
+    filters.hideUnavailable ||
+    !!(filters.dateMode && (filters.hourFrom || filters.hourTo))
+  );
+}
+
+function buildEventsQueryString(filters: EventFilters, skipPagination = false): string {
   const params = new URLSearchParams();
 
   if (filters.search) {
@@ -47,8 +56,11 @@ function buildEventsQueryString(filters: EventFilters): string {
     params.set('price.amount', '0');
   }
 
-  params.set('_page', String(filters.page));
-  params.set('_limit', String(filters.pageSize));
+  if (!skipPagination) {
+    params.set('_page', String(filters.page));
+    params.set('_limit', String(filters.pageSize));
+  }
+
   params.set('_sort', 'date,startTime');
   params.set('_order', 'asc,asc');
 
@@ -56,30 +68,24 @@ function buildEventsQueryString(filters: EventFilters): string {
 }
 
 function clientFilterEvent(event: Event, filters: EventFilters): boolean {
-  if (filters.categories.length > 0) {
-    const hasMatch = filters.categories.some((cat) => event.categories.includes(cat));
-    if (!hasMatch) return false;
+  if (filters.categories.length > 0 && !filters.categories.some((cat) => event.categories.includes(cat))) {
+    return false;
   }
-
-  if (filters.sourceTypes.length > 0) {
-    if (!filters.sourceTypes.includes(event.sourceType)) return false;
+  if (filters.sourceTypes.length > 0 && !filters.sourceTypes.includes(event.sourceType)) {
+    return false;
   }
-
-  if (filters.hideUnavailable) {
-    if (event.status === 'cancelled' || event.status === 'sold_out') return false;
+  if (filters.hideUnavailable && (event.status === 'cancelled' || event.status === 'sold_out')) {
+    return false;
   }
-
-  if (filters.hourFrom && filters.dateMode) {
-    if (event.startTime < filters.hourFrom) return false;
+  if (filters.dateMode && filters.hourFrom && event.startTime < filters.hourFrom) {
+    return false;
   }
-  if (filters.hourTo && filters.dateMode) {
-    if (event.startTime > filters.hourTo) return false;
+  if (filters.dateMode && filters.hourTo && event.startTime > filters.hourTo) {
+    return false;
   }
-
-  if (filters.freeOnly) {
-    if (event.price.amount !== 0 && event.price.amount !== null) return false;
+  if (filters.freeOnly && event.price.amount !== 0 && event.price.amount !== null) {
+    return false;
   }
-
   return true;
 }
 
@@ -87,7 +93,8 @@ export async function fetchEvents(
   filters: EventFilters
 ): Promise<{ events: Event[]; total: number }> {
   const baseUrl = getBaseUrl();
-  const query = buildEventsQueryString(filters);
+  const clientFilters = hasClientSideFilters(filters);
+  const query = buildEventsQueryString(filters, clientFilters);
   const url = `${baseUrl}/events?${query}`;
 
   let response: Response;
@@ -98,11 +105,19 @@ export async function fetchEvents(
   }
 
   const events = await handleResponse<Event[]>(response);
-  const totalHeader = response.headers.get('X-Total-Count');
-  const serverTotal = totalHeader ? parseInt(totalHeader, 10) : events.length;
-
   const filtered = events.filter((event) => clientFilterEvent(event, filters));
 
+  if (clientFilters) {
+    // Client-side filters are active — paginate the filtered result manually
+    const start = (filters.page - 1) * filters.pageSize;
+    return {
+      events: filtered.slice(start, start + filters.pageSize),
+      total: filtered.length,
+    };
+  }
+
+  const totalHeader = response.headers.get('X-Total-Count');
+  const serverTotal = totalHeader ? Number.parseInt(totalHeader, 10) : events.length;
   return {
     events: filtered,
     total: serverTotal,
