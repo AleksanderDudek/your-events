@@ -11,16 +11,6 @@ const nextConfig = {
   experimental: {
     typedRoutes: true,
   },
-  async rewrites() {
-    return process.env.NODE_ENV === 'development'
-      ? [
-          {
-            source: '/api/:path*',
-            destination: 'http://localhost:3001/api/:path*',
-          },
-        ]
-      : [];
-  },
   async headers() {
     return [
       {
