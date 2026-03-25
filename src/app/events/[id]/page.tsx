@@ -8,12 +8,13 @@ import { NotFoundError } from '@/lib/utils';
 import EventDetailLoading from './loading';
 
 interface EventDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function generateMetadata({ params }: EventDetailPageProps): Promise<Metadata> {
   try {
-    const event = await fetchEvent(params.id);
+    const { id } = await params;
+    const event = await fetchEvent(id);
     return {
       title: `${event.name} — ${event.date}`,
       description: event.description.slice(0, 160),
@@ -72,10 +73,11 @@ async function EventDetailContent({ id }: { id: string }) {
   );
 }
 
-export default function EventDetailPage({ params }: EventDetailPageProps) {
+export default async function EventDetailPage({ params }: EventDetailPageProps) {
+  const { id } = await params;
   return (
     <Suspense fallback={<EventDetailLoading />}>
-      <EventDetailContent id={params.id} />
+      <EventDetailContent id={id} />
     </Suspense>
   );
 }

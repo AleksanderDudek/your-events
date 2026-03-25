@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src/",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -14,19 +14,32 @@
     "mock": "cd mock-server && npm start"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest-axe": "^3.5.9",
     "@types/node": "25.5.0",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.35"
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^10.1.0",
+    "eslint-config-next": "^16.2.1",
+    "jest-axe": "^10.0.0",
+    "jsdom": "^29.0.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.1"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^5.18.0",
-    "@mui/material": "^5.18.0",
-    "@mui/x-date-pickers": "^7.29.4",
-    "@tanstack/react-query": "^5.90.21",
+    "@mui/icons-material": "^7.3.9",
+    "@mui/material": "^7.3.9",
+    "@mui/x-date-pickers": "^8.27.2",
+    "@tanstack/react-query": "^5.95.2",
     "date-fns": "^4.1.0",
-    "next": "^14.2.15",
+    "next": "^16.2.1",
     "sass": "^1.98.0",
     "zod": "^4.3.6"
   }

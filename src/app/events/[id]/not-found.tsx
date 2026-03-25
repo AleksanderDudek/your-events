@@ -1,7 +1,6 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import Link from 'next/link';
 import EventIcon from '@mui/icons-material/Event';
 
 export default function EventNotFound() {
@@ -25,7 +24,7 @@ export default function EventNotFound() {
         Wydarzenie mogło zostać usunięte lub link jest nieprawidłowy.
       </Typography>
       <Button
-        component={Link}
+        component="a"
         href="/events"
         variant="contained"
         color="primary"

@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import DateRangePicker from './DateRangePicker';
 
 const defaultProps = {
-  dateMode: null as const,
+  dateMode: null,
   dateSingle: null,
   dateFrom: null,
   dateTo: null,
