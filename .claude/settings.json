@@ -4,7 +4,19 @@
       "Bash(pnpm add *)",
       "Bash(pnpm lint *)",
       "Bash(pnpm type-check *)",
-      "Bash(pnpm test *)"
+      "Bash(pnpm test *)",
+      "Bash(node -e \"const c = require\\('./node_modules/eslint-config-next/core-web-vitals.js'\\); const rules = c.rules || {}; console.log\\(Object.keys\\(rules\\).filter\\(r => r.startsWith\\('react/'\\)\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(find /Users/pl2mac0030/Documents/your-events/node_modules/.pnpm/eslint-config-next*/node_modules/eslint-config-next -name \"core-web-vitals*\")",
+      "Bash(node -e ' *)",
+      "Bash(pnpm exec *)",
+      "Bash(xargs -I{} sh -c 'jq -r \"select\\(.message.content != null\\) | .message.content[] | select\\(.type == \\\\\"tool_use\\\\\" and .name == \\\\\"Bash\\\\\"\\) | .input.command\" {} 2>/dev/null')",
+      "Bash(grep -v \"^$\")",
+      "Bash(awk '{print $1, $2}')",
+      "Bash(chmod +x /Users/pl2mac0030/Documents/your-events/.husky/pre-push)",
+      "Bash(git commit -m ' *)"
+    ],
+    "additionalDirectories": [
+      "/Users/pl2mac0030/Documents/your-events/.husky"
     ]
   }
 }
