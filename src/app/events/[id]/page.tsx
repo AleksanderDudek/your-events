@@ -4,11 +4,19 @@ import { notFound } from 'next/navigation';
 import { fetchEvent } from '@/components/service/eventsApi';
 import EventDetailView from '@/components/views/EventDetailView/EventDetailView';
 import { NotFoundError } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 import EventDetailLoading from './loading';
 
+export const dynamicParams = false;
+
+export async function generateStaticParams() {
+  const { data } = await supabase.from('events').select('id');
+  return (data ?? []).map((row: { id: number }) => ({ id: String(row.id) }));
+}
+
 interface EventDetailPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<Readonly<{ id: string }>>;
 }
 
 export async function generateMetadata({ params }: EventDetailPageProps): Promise<Metadata> {
@@ -26,7 +34,7 @@ export async function generateMetadata({ params }: EventDetailPageProps): Promis
   }
 }
 
-async function EventDetailContent({ id }: { id: string }) {
+async function EventDetailContent({ id }: Readonly<{ id: string }>) {
   let event;
   try {
     event = await fetchEvent(id);
