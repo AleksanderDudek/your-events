@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -20,38 +20,63 @@ import ErrorState from '@/components/ui/ErrorState/ErrorState';
 import { filtersToSearchParams, getDefaultFilters, countActiveFilters } from '@/lib/filterUtils';
 import { CATEGORY_LABELS, SOURCE_TYPE_LABELS, PAGE_SIZE_OPTIONS } from '@/lib/constants';
 import { S } from '@/lib/strings';
-import { PageSize, ViewMode } from '@/types/filter.types';
+import { PageSize, ViewMode, EventFilters } from '@/types/filter.types';
+import { Event } from '@/types/event.types';
 import styles from './EventsListView.module.scss';
+
+function renderBody({
+  events,
+  isLoading,
+  filters,
+  clearAll,
+}: {
+  events: Event[];
+  isLoading: boolean;
+  filters: EventFilters;
+  clearAll: () => void;
+}) {
+  if (events.length === 0 && !isLoading) {
+    return <EmptyState onClear={countActiveFilters(filters) > 0 ? clearAll : undefined} />;
+  }
+  return filters.viewMode === 'grid' ? <EventGrid events={events} /> : <EventList events={events} />;
+}
 
 export default function EventsListView() {
   const { events, total, isLoading, isError, isFetching, refetch, filters } = useEvents();
   const router = useRouter();
+  const [, startTransition] = useTransition();
+
+  const navigate = useCallback(
+    (params: URLSearchParams) => {
+      startTransition(() => {
+        router.push(`/events?${params.toString()}`);
+      });
+    },
+    [router]
+  );
 
   const updateFilter = useCallback(
     (updates: Record<string, unknown>) => {
       const newFilters = { ...filters, ...updates, page: 1 };
-      const params = filtersToSearchParams(newFilters);
-      router.push(`/events?${params.toString()}`);
+      navigate(filtersToSearchParams(newFilters));
     },
-    [filters, router]
+    [filters, navigate]
   );
 
   const updatePagination = useCallback(
     (updates: Record<string, unknown>) => {
       const newFilters = { ...filters, ...updates };
-      const params = filtersToSearchParams(newFilters);
-      router.push(`/events?${params.toString()}`);
+      navigate(filtersToSearchParams(newFilters));
     },
-    [filters, router]
+    [filters, navigate]
   );
 
   const clearAll = useCallback(() => {
     const defaults = getDefaultFilters();
     defaults.viewMode = filters.viewMode;
     defaults.pageSize = filters.pageSize;
-    const params = filtersToSearchParams(defaults);
-    router.push(`/events?${params.toString()}`);
-  }, [filters.viewMode, filters.pageSize, router]);
+    navigate(filtersToSearchParams(defaults));
+  }, [filters.viewMode, filters.pageSize, navigate]);
 
   const activeChips: { key: string; label: string }[] = [];
   if (filters.search) {
@@ -155,13 +180,7 @@ export default function EventsListView() {
         )}
 
         <Box className={styles.body}>
-          {events.length === 0 && !isLoading ? (
-            <EmptyState onClear={countActiveFilters(filters) > 0 ? clearAll : undefined} />
-          ) : filters.viewMode === 'grid' ? (
-            <EventGrid events={events} />
-          ) : (
-            <EventList events={events} />
-          )}
+          {renderBody({ events, isLoading, filters, clearAll })}
         </Box>
 
         <AppPagination

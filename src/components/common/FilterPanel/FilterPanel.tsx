@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -49,12 +49,15 @@ export default function FilterPanel() {
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [, startTransition] = useTransition();
 
   const updateFilters = useCallback(
     (updates: Partial<EventFilters>) => {
       const newFilters = { ...filters, ...updates, page: 1 };
       const params = filtersToSearchParams(newFilters);
-      router.push(`/events?${params.toString()}`);
+      startTransition(() => {
+        router.push(`/events?${params.toString()}`);
+      });
     },
     [filters, router]
   );
@@ -64,7 +67,9 @@ export default function FilterPanel() {
     defaults.viewMode = filters.viewMode;
     defaults.pageSize = filters.pageSize;
     const params = filtersToSearchParams(defaults);
-    router.push(`/events?${params.toString()}`);
+    startTransition(() => {
+      router.push(`/events?${params.toString()}`);
+    });
   }, [filters.viewMode, filters.pageSize, router]);
 
   const handleCategoryToggle = useCallback(

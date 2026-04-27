@@ -79,7 +79,11 @@ export async function fetchEvents(
 ): Promise<{ events: Event[]; total: number }> {
   const from = (filters.page - 1) * filters.pageSize;
   const to = from + filters.pageSize - 1;
-  const needsClientFilter = filters.freeOnly;
+
+  // Category filter cannot be pushed to DB because the DB stores raw scraped strings
+  // (e.g. "Kategoria:Muzyka | Jazz", "Od podstaw") while filters.categories holds
+  // normalised EventCategory values.  Filtering happens client-side after mapRow().
+  const needsClientFilter = filters.freeOnly || filters.categories.length > 0;
 
   let query = supabase.from('events').select('*', { count: 'exact' });
 
@@ -87,7 +91,6 @@ export async function fetchEvents(
   if (filters.dateSingle) query = query.eq('date', filters.dateSingle);
   if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
   if (filters.dateTo) query = query.lte('date', filters.dateTo);
-  if (filters.categories.length > 0) query = query.in('category', filters.categories);
   if (filters.hideUnavailable) query = query.neq('status', 'cancelled').neq('status', 'sold_out');
   if (filters.dateMode && filters.hourFrom) query = query.gte('time_start', filters.hourFrom);
   if (filters.dateMode && filters.hourTo) query = query.lte('time_start', filters.hourTo);
@@ -100,17 +103,24 @@ export async function fetchEvents(
 
   const mapped = (data as SupabaseEventRow[] ?? []).map(mapRow);
 
-  if (needsClientFilter) {
-    const filtered = mapped.filter(
-      (e) => e.price.amount === 0 || e.price.amount === null
-    );
-    return {
-      events: filtered.slice(from, to + 1),
-      total: filtered.length,
-    };
+  if (!needsClientFilter) {
+    return { events: mapped, total: count ?? 0 };
   }
 
-  return { events: mapped, total: count ?? 0 };
+  const filtered = applyClientFilters(mapped, filters);
+  return { events: filtered.slice(from, to + 1), total: filtered.length };
+}
+
+function applyClientFilters(events: Event[], filters: EventFilters): Event[] {
+  let result = events;
+  if (filters.categories.length > 0) {
+    const selected = new Set(filters.categories);
+    result = result.filter((e) => e.categories.some((cat) => selected.has(cat)));
+  }
+  if (filters.freeOnly) {
+    result = result.filter((e) => e.price.amount === 0 || e.price.amount === null);
+  }
+  return result;
 }
 
 export async function fetchEvent(id: string): Promise<Event> {
