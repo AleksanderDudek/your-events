@@ -1,4 +1,4 @@
-import { Event, EventCategory, EventStatus, CategoryItem, SourceItem } from '@/types/event.types';
+import { Event, EventCategory, CategoryItem, SourceItem, EventStatus } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
 import { CATEGORY_LABELS, SOURCE_TYPE_LABELS } from '@/lib/constants';
@@ -33,6 +33,12 @@ function parsePriceAmount(price: string): number | null {
   return match ? Number.parseInt(match[0], 10) : null;
 }
 
+const VALID_STATUSES = new Set<EventStatus>(['active', 'cancelled', 'sold_out', 'few_spots']);
+
+function mapStatus(status: string): EventStatus {
+  return VALID_STATUSES.has(status as EventStatus) ? (status as EventStatus) : 'active';
+}
+
 function mapRow(row: SupabaseEventRow): Event {
   return {
     id: String(row.id),
@@ -63,7 +69,7 @@ function mapRow(row: SupabaseEventRow): Event {
     isRecurring: false,
     recurrenceRule: null,
     imageUrl: null,
-    status: (row.status as EventStatus) || 'active',
+    status: mapStatus(row.status),
   };
 }
 
