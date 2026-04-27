@@ -3,6 +3,7 @@ import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
 import { CATEGORY_LABELS, SOURCE_TYPE_LABELS } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
+import { mapCategories } from '@/lib/categoryMapping';
 
 interface SupabaseEventRow {
   id: number;
@@ -44,7 +45,7 @@ function mapRow(row: SupabaseEventRow): Event {
     id: String(row.id),
     name: row.name,
     description: row.description,
-    categories: row.category ? [row.category as EventCategory] : [],
+    categories: mapCategories(row.source, row.category, row.name),
     tags: [],
     date: row.date,
     startTime: row.time_start,
