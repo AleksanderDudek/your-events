@@ -90,7 +90,7 @@ export default function FilterPanel() {
   const filterContent = (
     <Box className={styles.content} aria-label={S.FILTER_TITLE} role="search">
       <Box className={styles.header}>
-        <Typography variant="h6" sx={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+        <Typography variant="h6" component="p" sx={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>
           {S.FILTER_TITLE}
         </Typography>
         {activeCount > 0 && (
@@ -117,7 +117,7 @@ export default function FilterPanel() {
             color="primary"
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
               {S.FILTER_CATEGORIES}
             </Typography>
           </Badge>
@@ -177,7 +177,7 @@ export default function FilterPanel() {
             color="primary"
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
               {S.FILTER_SOURCE}
             </Typography>
           </Badge>
@@ -215,7 +215,7 @@ export default function FilterPanel() {
             color="primary"
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
               {S.FILTER_DATE}
             </Typography>
           </Badge>
@@ -244,7 +244,7 @@ export default function FilterPanel() {
             color="primary"
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
               {S.FILTER_HOUR}
             </Typography>
           </Badge>
@@ -270,7 +270,7 @@ export default function FilterPanel() {
             color="primary"
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
               {S.FILTER_AGE}
             </Typography>
           </Badge>
@@ -309,7 +309,7 @@ export default function FilterPanel() {
             color="primary"
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
               {S.FILTER_LEVEL}
             </Typography>
           </Badge>
@@ -342,7 +342,7 @@ export default function FilterPanel() {
 
       {/* Additional filters */}
       <Box className={styles.section}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography variant="subtitle2" component="p" sx={{ fontWeight: 600, mb: 1 }}>
           Dodatkowe
         </Typography>
         <FormControlLabel

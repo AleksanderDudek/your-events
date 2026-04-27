@@ -109,7 +109,7 @@ export default function EventsListView() {
                   updateFilter({ pageSize: Number(e.target.value) as PageSize })
                 }
                 sx={{ fontSize: '0.8125rem' }}
-                aria-label={S.PAGE_SIZE_LABEL}
+                SelectDisplayProps={{ 'aria-label': S.PAGE_SIZE_LABEL }}
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <MenuItem key={size} value={size}>

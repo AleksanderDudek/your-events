@@ -26,7 +26,7 @@ describe('HourRangePicker', () => {
 
   it('disables inputs when disabled prop is true', () => {
     render(<HourRangePicker {...defaultProps} disabled />);
-    expect(screen.getByLabelText('Godzina Od')).toBeDisabled();
-    expect(screen.getByLabelText('Godzina Do')).toBeDisabled();
+    expect(screen.getByLabelText('Godzina Od')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByLabelText('Godzina Do')).toHaveAttribute('aria-disabled', 'true');
   });
 });

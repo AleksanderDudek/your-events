@@ -93,6 +93,7 @@ export default function DateRangePicker({
 
       {dateMode === 'single' && (
         <DatePicker
+          label={S.FILTER_DATE_SINGLE}
           value={toDate(dateSingle)}
           onChange={(date) => onDateSingleChange(fromDate(date))}
           slotProps={pickerSlotProps}

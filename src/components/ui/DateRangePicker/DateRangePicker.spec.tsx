@@ -1,8 +1,15 @@
 import { render, screen } from '@testing-library/react';
-
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi } from 'vitest';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import DateRangePicker from './DateRangePicker';
+
+function WithLocalization({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>{children}</LocalizationProvider>
+  );
+}
 
 const defaultProps = {
   dateMode: null,
@@ -29,13 +36,21 @@ describe('DateRangePicker', () => {
   });
 
   it('shows single date input when mode is single', () => {
-    render(<DateRangePicker {...defaultProps} dateMode="single" />);
-    expect(screen.getByLabelText('Jeden dzień')).toBeInTheDocument();
+    render(
+      <WithLocalization>
+        <DateRangePicker {...defaultProps} dateMode="single" />
+      </WithLocalization>
+    );
+    expect(screen.getAllByLabelText('Jeden dzień').length).toBeGreaterThan(0);
   });
 
   it('shows range inputs when mode is range', () => {
-    render(<DateRangePicker {...defaultProps} dateMode="range" />);
-    expect(screen.getByLabelText('Od')).toBeInTheDocument();
-    expect(screen.getByLabelText('Do')).toBeInTheDocument();
+    render(
+      <WithLocalization>
+        <DateRangePicker {...defaultProps} dateMode="range" />
+      </WithLocalization>
+    );
+    expect(screen.getAllByLabelText('Od').length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText('Do').length).toBeGreaterThan(0);
   });
 });

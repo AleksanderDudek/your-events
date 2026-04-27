@@ -24,7 +24,7 @@ const mockEvent: Event = {
   instructor: 'Weronika Jaśkiewicz',
   capacity: 20,
   url: 'https://kimama.pl/plan-zajec/',
-  sourceName: 'Kimama Dance Studio',
+  sourceName: 'Kimama',
   sourceType: 'dance_studio',
   isRecurring: true,
   recurrenceRule: 'weekly',

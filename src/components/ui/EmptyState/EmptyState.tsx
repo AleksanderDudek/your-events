@@ -15,7 +15,7 @@ export default function EmptyState({ onClear }: EmptyStateProps) {
   return (
     <Box className={styles.container} role="status">
       <SearchOffIcon className={styles.icon} sx={{ fontSize: 64, color: 'var(--color-text-muted)' }} />
-      <Typography variant="h5" className={styles.title} sx={{ color: 'var(--color-text-primary)' }}>
+      <Typography variant="h5" component="p" className={styles.title} sx={{ color: 'var(--color-text-primary)' }}>
         {S.EMPTY_TITLE}
       </Typography>
       <Typography variant="body2" className={styles.subtitle} sx={{ color: 'var(--color-text-secondary)' }}>
