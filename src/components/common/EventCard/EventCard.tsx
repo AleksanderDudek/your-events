@@ -35,9 +35,10 @@ function getGradient(id: string): string {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const maxChips = 3;
-  const visibleCategories = event.categories.slice(0, maxChips);
-  const extraCount = event.categories.length - maxChips;
+  const chips = [event.categoryMain, event.categorySub].filter(Boolean);
+  const maxChips = 2;
+  const visibleCategories = chips.slice(0, maxChips);
+  const extraCount = chips.length - maxChips;
 
   return (
     <Link href={`/events/${event.id}`} className={styles.link}>

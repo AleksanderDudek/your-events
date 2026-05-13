@@ -20,7 +20,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { EventCategory, SourceType, AgeGroup, SkillLevel } from '@/types/event.types';
+import { SourceType, AgeGroup, SkillLevel } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import {
   parseFiltersFromParams,
@@ -29,8 +29,7 @@ import {
   getDefaultFilters,
 } from '@/lib/filterUtils';
 import {
-  CATEGORY_GROUPS,
-  CATEGORY_LABELS,
+  CATEGORY_MAIN_VALUES,
   SOURCE_TYPE_LABELS,
   AGE_GROUP_LABELS,
   SKILL_LEVEL_LABELS,
@@ -73,7 +72,7 @@ export default function FilterPanel() {
   }, [filters.viewMode, filters.pageSize, router]);
 
   const handleCategoryToggle = useCallback(
-    (category: EventCategory) => {
+    (category: string) => {
       const cats = filters.categories.includes(category)
         ? filters.categories.filter((c) => c !== category)
         : [...filters.categories, category];
@@ -128,47 +127,31 @@ export default function FilterPanel() {
           </Badge>
         </AccordionSummary>
         <AccordionDetails>
-          {CATEGORY_GROUPS.map((group) => (
-            <Box key={group.label} sx={{ mb: 1.5 }}>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: 'var(--color-text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  display: 'block',
-                  mb: 0.5,
-                }}
-              >
-                {group.label}
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {group.categories.map((cat) => (
-                  <FormControlLabel
-                    key={cat}
-                    control={
-                      <Checkbox
-                        size="small"
-                        checked={filters.categories.includes(cat)}
-                        onChange={() => handleCategoryToggle(cat)}
-                        sx={{
-                          color: 'var(--color-border)',
-                          '&.Mui-checked': { color: 'var(--color-accent-primary)' },
-                          padding: '4px',
-                        }}
-                      />
-                    }
-                    label={
-                      <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
-                        {CATEGORY_LABELS[cat]}
-                      </Typography>
-                    }
-                    sx={{ m: 0, mr: 1 }}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {CATEGORY_MAIN_VALUES.map((cat) => (
+              <FormControlLabel
+                key={cat}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={filters.categories.includes(cat)}
+                    onChange={() => handleCategoryToggle(cat)}
+                    sx={{
+                      color: 'var(--color-border)',
+                      '&.Mui-checked': { color: 'var(--color-accent-primary)' },
+                      padding: '4px',
+                    }}
                   />
-                ))}
-              </Box>
-            </Box>
-          ))}
+                }
+                label={
+                  <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
+                    {cat}
+                  </Typography>
+                }
+                sx={{ m: 0, mr: 1 }}
+              />
+            ))}
+          </Box>
         </AccordionDetails>
       </Accordion>
 

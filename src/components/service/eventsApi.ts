@@ -1,43 +1,45 @@
-import { Event, EventCategory, CategoryItem, SourceItem, EventStatus } from '@/types/event.types';
+import { Event, CategoryItem, SourceItem } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
-import { CATEGORY_LABELS, SOURCE_TYPE_LABELS } from '@/lib/constants';
+import { CATEGORY_MAIN_VALUES, SOURCE_TYPE_LABELS } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
-import { mapCategories } from '@/lib/categoryMapping';
 
 interface SupabaseEventRow {
   id: number;
   event_key: string;
   source: string;
+  sources: string;
   venue: string;
   date: string;
-  day: string;
   time_start: string;
   time_end: string;
   duration_min: number | null;
   name: string;
-  category: string;
-  trainer: string;
-  availability: string;
-  room: string;
-  price: string;
   description: string;
   url: string;
-  status: string;
+  all_urls: string;
+  category_main: string;
+  category_sub: string;
+  price: number | null;
+  price_max: number | null;
+  price_label: string;
+  is_free: boolean;
+  lat: number | null;
+  lng: number | null;
+  scraped_at: string;
+  updated_at: string;
 }
 
-function parsePriceAmount(price: string): number | null {
-  if (!price) return null;
-  const lower = price.toLowerCase();
-  if (lower.includes('bezpłat') || lower.includes('gratis') || lower.trim() === '0') return 0;
-  const match = /\d+/.exec(price);
-  return match ? Number.parseInt(match[0], 10) : null;
-}
-
-const VALID_STATUSES = new Set<EventStatus>(['active', 'cancelled', 'sold_out', 'few_spots']);
-
-function mapStatus(status: string): EventStatus {
-  return VALID_STATUSES.has(status as EventStatus) ? (status as EventStatus) : 'active';
+function parsePriceAmount(row: SupabaseEventRow): number | null {
+  if (row.is_free) return 0;
+  if (row.price !== null) return row.price;
+  if (row.price_label) {
+    const lower = row.price_label.toLowerCase();
+    if (lower.includes('darmowe') || lower.includes('bezpłat') || lower.includes('gratis') || lower.trim() === '0') return 0;
+    const match = /\d+/.exec(row.price_label);
+    if (match) return Number.parseInt(match[0], 10);
+  }
+  return null;
 }
 
 function mapRow(row: SupabaseEventRow): Event {
@@ -45,24 +47,27 @@ function mapRow(row: SupabaseEventRow): Event {
     id: String(row.id),
     name: row.name,
     description: row.description,
-    categories: mapCategories(row.source, row.category, row.name),
+    categoryMain: row.category_main,
+    categorySub: row.category_sub ?? '',
     tags: [],
     date: row.date,
     startTime: row.time_start,
     endTime: row.time_end,
     location: {
       name: row.venue,
-      address: row.room,
-      city: '',
+      address: '',
+      city: 'Szczecin',
+      lat: row.lat,
+      lng: row.lng,
     },
     price: {
-      amount: parsePriceAmount(row.price),
+      amount: parsePriceAmount(row),
       currency: 'PLN',
-      description: row.price,
+      description: row.price_label,
     },
     ageGroup: null,
     level: null,
-    instructor: row.trainer || null,
+    instructor: null,
     capacity: null,
     url: row.url,
     sourceName: row.source,
@@ -70,7 +75,7 @@ function mapRow(row: SupabaseEventRow): Event {
     isRecurring: false,
     recurrenceRule: null,
     imageUrl: null,
-    status: mapStatus(row.status),
+    status: 'active',
   };
 }
 
@@ -80,18 +85,15 @@ export async function fetchEvents(
   const from = (filters.page - 1) * filters.pageSize;
   const to = from + filters.pageSize - 1;
 
-  // Category filter cannot be pushed to DB because the DB stores raw scraped strings
-  // (e.g. "Kategoria:Muzyka | Jazz", "Od podstaw") while filters.categories holds
-  // normalised EventCategory values.  Filtering happens client-side after mapRow().
-  const needsClientFilter = filters.freeOnly || filters.categories.length > 0;
+  const needsClientFilter = filters.freeOnly;
 
   let query = supabase.from('events').select('*', { count: 'exact' });
 
   if (filters.search) query = query.ilike('name', `%${filters.search}%`);
+  if (filters.categories.length > 0) query = query.in('category_main', filters.categories);
   if (filters.dateSingle) query = query.eq('date', filters.dateSingle);
   if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
   if (filters.dateTo) query = query.lte('date', filters.dateTo);
-  if (filters.hideUnavailable) query = query.neq('status', 'cancelled').neq('status', 'sold_out');
   if (filters.dateMode && filters.hourFrom) query = query.gte('time_start', filters.hourFrom);
   if (filters.dateMode && filters.hourTo) query = query.lte('time_start', filters.hourTo);
 
@@ -112,15 +114,10 @@ export async function fetchEvents(
 }
 
 function applyClientFilters(events: Event[], filters: EventFilters): Event[] {
-  let result = events;
-  if (filters.categories.length > 0) {
-    const selected = new Set(filters.categories);
-    result = result.filter((e) => e.categories.some((cat) => selected.has(cat)));
-  }
   if (filters.freeOnly) {
-    result = result.filter((e) => e.price.amount === 0 || e.price.amount === null);
+    return events.filter((e) => e.price.amount === 0 || e.price.amount === null);
   }
-  return result;
+  return events;
 }
 
 export async function fetchEvent(id: string): Promise<Event> {
@@ -137,10 +134,7 @@ export async function fetchEvent(id: string): Promise<Event> {
 }
 
 export async function fetchCategories(): Promise<CategoryItem[]> {
-  return Object.entries(CATEGORY_LABELS).map(([id, label]) => ({
-    id: id as EventCategory,
-    label,
-  }));
+  return CATEGORY_MAIN_VALUES.map((value) => ({ id: value, label: value }));
 }
 
 export async function fetchSources(): Promise<SourceItem[]> {

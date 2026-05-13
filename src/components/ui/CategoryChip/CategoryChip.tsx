@@ -1,17 +1,15 @@
 'use client';
 
 import Chip from '@mui/material/Chip';
-import { EventCategory } from '@/types/event.types';
-import { CATEGORY_LABELS } from '@/lib/constants';
 
 interface CategoryChipProps {
-  category: EventCategory;
+  category: string;
   onClick?: () => void;
   selected?: boolean;
 }
 
 export default function CategoryChip({ category, onClick, selected }: CategoryChipProps) {
-  const label = CATEGORY_LABELS[category] || category;
+  const label = category;
 
   return (
     <Chip

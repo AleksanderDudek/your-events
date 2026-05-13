@@ -1,8 +1,8 @@
-import { EventCategory, AgeGroup, SkillLevel, SourceType } from '@/types/event.types';
+import { AgeGroup, SkillLevel, SourceType } from '@/types/event.types';
 import { DateMode, EventFilters, PageSize, ViewMode } from '@/types/filter.types';
-import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, CATEGORY_LABELS, SOURCE_TYPE_LABELS } from './constants';
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, CATEGORY_MAIN_VALUES, SOURCE_TYPE_LABELS } from './constants';
 
-const VALID_CATEGORIES = new Set(Object.keys(CATEGORY_LABELS));
+const VALID_CATEGORIES = new Set<string>(CATEGORY_MAIN_VALUES);
 const VALID_SOURCE_TYPES = new Set(Object.keys(SOURCE_TYPE_LABELS));
 const VALID_AGE_GROUPS = new Set(['adults', 'kids', 'seniors', 'all']);
 const VALID_LEVELS = new Set(['beginner', 'intermediate', 'advanced', 'open']);
@@ -11,11 +11,11 @@ const VALID_VIEW_MODES = new Set(['grid', 'row']);
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_REGEX = /^\d{2}:\d{2}$/;
 
-function parseCategories(value: string | null): EventCategory[] {
+function parseCategories(value: string | null): string[] {
   if (!value) return [];
   return value
     .split(',')
-    .filter((c) => VALID_CATEGORIES.has(c)) as EventCategory[];
+    .filter((c) => VALID_CATEGORIES.has(c));
 }
 
 function parseSourceTypes(value: string | null): SourceType[] {

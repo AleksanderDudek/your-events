@@ -62,7 +62,7 @@ export default function EventRow({ event }: EventRowProps) {
 
           <Box className={styles.meta}>
             <Box className={styles.chips}>
-              {event.categories.slice(0, 3).map((cat) => (
+              {[event.categoryMain, event.categorySub].filter(Boolean).map((cat) => (
                 <CategoryChip key={cat} category={cat} />
               ))}
             </Box>

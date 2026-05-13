@@ -1,4 +1,4 @@
-import { AgeGroup, EventCategory, SkillLevel, SourceType } from './event.types';
+import { AgeGroup, SkillLevel, SourceType } from './event.types';
 
 export type DateMode = 'single' | 'range' | null;
 export type PageSize = 15 | 30 | 60;
@@ -6,7 +6,7 @@ export type ViewMode = 'grid' | 'row';
 
 export interface EventFilters {
   search: string;
-  categories: EventCategory[];
+  categories: string[];
   sourceTypes: SourceType[];
   dateMode: DateMode;
   dateSingle: string | null;

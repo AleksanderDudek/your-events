@@ -146,7 +146,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               {S.DETAIL_CATEGORIES}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {event.categories.map((cat) => (
+              {[event.categoryMain, event.categorySub].filter(Boolean).map((cat) => (
                 <CategoryChip key={cat} category={cat} />
               ))}
             </Box>

@@ -18,7 +18,7 @@ import AppPagination from '@/components/common/AppPagination/AppPagination';
 import EmptyState from '@/components/ui/EmptyState/EmptyState';
 import ErrorState from '@/components/ui/ErrorState/ErrorState';
 import { filtersToSearchParams, getDefaultFilters, countActiveFilters } from '@/lib/filterUtils';
-import { CATEGORY_LABELS, SOURCE_TYPE_LABELS, PAGE_SIZE_OPTIONS } from '@/lib/constants';
+import { SOURCE_TYPE_LABELS, PAGE_SIZE_OPTIONS } from '@/lib/constants';
 import { S } from '@/lib/strings';
 import { PageSize, ViewMode, EventFilters } from '@/types/filter.types';
 import { Event } from '@/types/event.types';
@@ -83,7 +83,7 @@ export default function EventsListView() {
     activeChips.push({ key: 'search', label: `"${filters.search}"` });
   }
   filters.categories.forEach((cat) => {
-    activeChips.push({ key: `cat-${cat}`, label: CATEGORY_LABELS[cat] || cat });
+    activeChips.push({ key: `cat-${cat}`, label: cat });
   });
   filters.sourceTypes.forEach((src) => {
     activeChips.push({ key: `src-${src}`, label: SOURCE_TYPE_LABELS[src] || src });

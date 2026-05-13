@@ -15,53 +15,12 @@ export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'open';
 
 export type RecurrenceRule = 'weekly' | 'biweekly' | 'monthly';
 
-export type EventCategory =
-  | 'dance'
-  | 'dance-hip-hop'
-  | 'dance-bachata'
-  | 'dance-salsa'
-  | 'dance-kizomba'
-  | 'dance-reggaeton'
-  | 'dance-contemporary'
-  | 'dance-ballet'
-  | 'dance-sensual'
-  | 'fitness'
-  | 'fitness-yoga'
-  | 'fitness-pilates'
-  | 'fitness-zumba'
-  | 'fitness-cross'
-  | 'fitness-tabata'
-  | 'fitness-cycling'
-  | 'fitness-stretching'
-  | 'fitness-abs'
-  | 'fitness-shape'
-  | 'fitness-fat-burner'
-  | 'martial-arts'
-  | 'martial-arts-mma'
-  | 'martial-arts-boxing'
-  | 'martial-arts-kickboxing'
-  | 'culinary'
-  | 'culinary-workshop'
-  | 'culinary-tasting'
-  | 'culinary-wine'
-  | 'culinary-asian'
-  | 'concert'
-  | 'concert-jazz'
-  | 'concert-rock'
-  | 'concert-classical'
-  | 'concert-hip-hop'
-  | 'theatre'
-  | 'standup'
-  | 'exhibition'
-  | 'workshop'
-  | 'kids-event'
-  | 'sports-event'
-  | 'social-event';
-
 export interface EventLocation {
   name: string;
   address: string;
   city: string;
+  lat: number | null;
+  lng: number | null;
 }
 
 export interface EventPrice {
@@ -74,7 +33,8 @@ export interface Event {
   id: string;
   name: string;
   description: string;
-  categories: EventCategory[];
+  categoryMain: string;
+  categorySub: string;
   tags: string[];
   date: string;
   startTime: string;
@@ -95,7 +55,7 @@ export interface Event {
 }
 
 export interface CategoryItem {
-  id: EventCategory;
+  id: string;
   label: string;
 }
 
