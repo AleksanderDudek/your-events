@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
@@ -11,7 +12,7 @@ import { Event } from '@/types/event.types';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import StatusBadge from '@/components/ui/StatusBadge/StatusBadge';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
-import { formatDateShort, formatTimeRange } from '@/lib/utils';
+import { formatDateShort, formatTimeRange, getCategoryIconPath } from '@/lib/utils';
 import styles from './EventCard.module.scss';
 
 interface EventCardProps {
@@ -49,24 +50,7 @@ export default function EventCard({ event }: EventCardProps) {
         className={styles.card}
       >
         <Box className={styles.imageWrapper}>
-          {event.imageUrl ? (
-            <Image
-              src={event.imageUrl}
-              alt={event.name}
-              fill
-              sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className={styles.image}
-              onError={(e) => {
-                const target = e.currentTarget;
-                target.style.display = 'none';
-              }}
-            />
-          ) : (
-            <Box
-              className={styles.gradient}
-              sx={{ background: getGradient(event.id) }}
-            />
-          )}
+          <ImageWrapper event={event} />
           {event.status !== 'active' && (
             <Box className={styles.statusBadge}>
               <StatusBadge status={event.status} />
@@ -124,5 +108,24 @@ export default function EventCard({ event }: EventCardProps) {
         </CardContent>
       </Card>
     </Link>
+  );
+}
+
+function ImageWrapper({ event }: { event: Event }) {
+  const fallback = getCategoryIconPath(event.categoryMain || 'Inne');
+  const initialSrc = event.imageUrl || fallback;
+  const [src, setSrc] = useState(initialSrc);
+
+  return (
+    <Image
+      src={src}
+      alt={event.name}
+      fill
+      sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      className={styles.image}
+      onError={() => {
+        if (src !== fallback) setSrc(fallback);
+      }}
+    />
   );
 }

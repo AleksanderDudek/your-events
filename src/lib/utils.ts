@@ -78,3 +78,18 @@ export function clamp(value: number, min: number, max: number): number {
 export function totalPages(total: number, pageSize: number): number {
   return Math.max(1, Math.ceil(total / pageSize));
 }
+
+export function slugify(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+export function getCategoryIconPath(category: string): string {
+  const name = category || 'inne';
+  return `/category-icons/${slugify(name)}.svg`;
+}

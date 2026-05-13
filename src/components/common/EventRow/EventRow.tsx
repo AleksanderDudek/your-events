@@ -6,6 +6,8 @@ import Typography from '@mui/material/Typography';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PlaceIcon from '@mui/icons-material/Place';
 import { Event } from '@/types/event.types';
+import Image from 'next/image';
+import { getCategoryIconPath } from '@/lib/utils';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import StatusBadge from '@/components/ui/StatusBadge/StatusBadge';
@@ -54,9 +56,14 @@ export default function EventRow({ event }: EventRowProps) {
 
         <Box className={styles.contentCol}>
           <Box className={styles.topLine}>
-            <Typography variant="subtitle1" component="h3" className={styles.name}>
-              {event.name}
-            </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ width: 48, height: 48, position: 'relative', flex: '0 0 48px' }}>
+                  <Image src={getCategoryIconPath(event.categoryMain || 'Inne')} alt={event.categoryMain} fill sizes="48px" />
+                </Box>
+                <Typography variant="subtitle1" component="h3" className={styles.name}>
+                  {event.name}
+                </Typography>
+              </Box>
             {event.status !== 'active' && <StatusBadge status={event.status} />}
           </Box>
 

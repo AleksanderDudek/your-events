@@ -11,8 +11,6 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
 import Badge from '@mui/material/Badge';
 import Fab from '@mui/material/Fab';
 import Divider from '@mui/material/Divider';
@@ -20,7 +18,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { SourceType, AgeGroup, SkillLevel } from '@/types/event.types';
+import { SourceType } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import {
   parseFiltersFromParams,
@@ -31,8 +29,6 @@ import {
 import {
   CATEGORY_MAIN_VALUES,
   SOURCE_TYPE_LABELS,
-  AGE_GROUP_LABELS,
-  SKILL_LEVEL_LABELS,
 } from '@/lib/constants';
 import { S } from '@/lib/strings';
 import SearchInput from '@/components/ui/SearchInput/SearchInput';
@@ -248,120 +244,7 @@ export default function FilterPanel() {
         </AccordionDetails>
       </Accordion>
 
-      <Divider sx={{ borderColor: 'var(--color-border)' }} />
 
-      {/* Age Group */}
-      <Accordion disableGutters>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
-          <Badge
-            badgeContent={filters.ageGroup ? 1 : undefined}
-            color="primary"
-            sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
-          >
-            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
-              {S.FILTER_AGE}
-            </Typography>
-          </Badge>
-        </AccordionSummary>
-        <AccordionDetails>
-          <RadioGroup
-            value={filters.ageGroup ?? ''}
-            onChange={(e) =>
-              updateFilters({ ageGroup: (e.target.value || null) as AgeGroup | null })
-            }
-          >
-            <FormControlLabel
-              value=""
-              control={<Radio size="small" sx={{ '&.Mui-checked': { color: 'var(--color-accent-primary)' } }} />}
-              label={<Typography variant="body2">{S.AGE_ALL}</Typography>}
-            />
-            {(Object.entries(AGE_GROUP_LABELS) as [AgeGroup, string][]).map(([key, label]) => (
-              <FormControlLabel
-                key={key}
-                value={key}
-                control={<Radio size="small" sx={{ '&.Mui-checked': { color: 'var(--color-accent-primary)' } }} />}
-                label={<Typography variant="body2">{label}</Typography>}
-              />
-            ))}
-          </RadioGroup>
-        </AccordionDetails>
-      </Accordion>
-
-      <Divider sx={{ borderColor: 'var(--color-border)' }} />
-
-      {/* Level */}
-      <Accordion disableGutters>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
-          <Badge
-            badgeContent={filters.level ? 1 : undefined}
-            color="primary"
-            sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
-          >
-            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
-              {S.FILTER_LEVEL}
-            </Typography>
-          </Badge>
-        </AccordionSummary>
-        <AccordionDetails>
-          <RadioGroup
-            value={filters.level ?? ''}
-            onChange={(e) =>
-              updateFilters({ level: (e.target.value || null) as SkillLevel | null })
-            }
-          >
-            <FormControlLabel
-              value=""
-              control={<Radio size="small" sx={{ '&.Mui-checked': { color: 'var(--color-accent-primary)' } }} />}
-              label={<Typography variant="body2">{S.LEVEL_ALL}</Typography>}
-            />
-            {(Object.entries(SKILL_LEVEL_LABELS) as [SkillLevel, string][]).map(([key, label]) => (
-              <FormControlLabel
-                key={key}
-                value={key}
-                control={<Radio size="small" sx={{ '&.Mui-checked': { color: 'var(--color-accent-primary)' } }} />}
-                label={<Typography variant="body2">{label}</Typography>}
-              />
-            ))}
-          </RadioGroup>
-        </AccordionDetails>
-      </Accordion>
-
-      <Divider sx={{ borderColor: 'var(--color-border)' }} />
-
-      {/* Additional filters */}
-      <Box className={styles.section}>
-        <Typography variant="subtitle2" component="p" sx={{ fontWeight: 600, mb: 1 }}>
-          Dodatkowe
-        </Typography>
-        <FormControlLabel
-          control={
-            <Checkbox
-              size="small"
-              checked={filters.freeOnly}
-              onChange={(e) => updateFilters({ freeOnly: e.target.checked })}
-              sx={{
-                color: 'var(--color-border)',
-                '&.Mui-checked': { color: 'var(--color-accent-primary)' },
-              }}
-            />
-          }
-          label={<Typography variant="body2">{S.FILTER_FREE_ONLY}</Typography>}
-        />
-        <FormControlLabel
-          control={
-            <Checkbox
-              size="small"
-              checked={filters.hideUnavailable}
-              onChange={(e) => updateFilters({ hideUnavailable: e.target.checked })}
-              sx={{
-                color: 'var(--color-border)',
-                '&.Mui-checked': { color: 'var(--color-accent-primary)' },
-              }}
-            />
-          }
-          label={<Typography variant="body2">{S.FILTER_HIDE_UNAVAILABLE}</Typography>}
-        />
-      </Box>
     </Box>
   );
 

@@ -88,9 +88,7 @@ export default function EventsListView() {
   filters.sourceTypes.forEach((src) => {
     activeChips.push({ key: `src-${src}`, label: SOURCE_TYPE_LABELS[src] || src });
   });
-  if (filters.freeOnly) {
-    activeChips.push({ key: 'free', label: S.FILTER_FREE_ONLY });
-  }
+
 
   if (isError) {
     return (
@@ -165,8 +163,6 @@ export default function EventsListView() {
                     updateFilter({
                       sourceTypes: filters.sourceTypes.filter((s) => s !== src),
                     });
-                  } else if (chip.key === 'free') {
-                    updateFilter({ freeOnly: false });
                   }
                 }}
                 sx={{
