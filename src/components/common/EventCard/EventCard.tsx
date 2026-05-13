@@ -99,19 +99,30 @@ export default function EventCard({ event }: EventCardProps) {
 
 function ImageWrapper({ event }: { event: Event }) {
   const fallback = getCategoryIconPath(event.categoryMain || 'Inne');
-  const initialSrc = event.imageUrl || fallback;
-  const [src, setSrc] = useState(initialSrc);
+  const [errored, setErrored] = useState(false);
+
+  const primarySrc = event.imageUrl;
 
   return (
-    <Image
-      src={src}
-      alt={event.name}
-      fill
-      sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
-      className={styles.image}
-      onError={() => {
-        if (src !== fallback) setSrc(fallback);
-      }}
-    />
+    <>
+      {primarySrc && !errored ? (
+        <Image
+          src={primarySrc}
+          alt={event.name}
+          fill
+          sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className={styles.image}
+          onError={() => setErrored(true)}
+        />
+      ) : (
+        <Image
+          src={fallback}
+          alt={event.categoryMain || 'Inne'}
+          fill
+          sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className={styles.image}
+        />
+      )}
+    </>
   );
 }
