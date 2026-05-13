@@ -19,21 +19,7 @@ interface EventCardProps {
   event: Event;
 }
 
-const GRADIENT_COLORS = [
-  'linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 50%, #1a1a2e 100%)',
-  'linear-gradient(135deg, #1a2a1a 0%, #2d3b1b 50%, #1a2a1a 100%)',
-  'linear-gradient(135deg, #2a1a1a 0%, #3d2b1b 50%, #2a1a1a 100%)',
-  'linear-gradient(135deg, #1a1a2a 0%, #1b2d3d 50%, #1a1a2a 100%)',
-  'linear-gradient(135deg, #2a2a1a 0%, #3d3b1b 50%, #2a2a1a 100%)',
-];
-
-function getGradient(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return GRADIENT_COLORS[Math.abs(hash) % GRADIENT_COLORS.length];
-}
+// category icons are used as consistent visual fallback
 
 export default function EventCard({ event }: EventCardProps) {
   const chips = [event.categoryMain, event.categorySub].filter(Boolean);
