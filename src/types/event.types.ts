@@ -1,32 +1,19 @@
-export type SourceType =
-  | 'dance_studio'
-  | 'fitness_club'
-  | 'culinary_studio'
-  | 'cultural_event'
-  | 'facebook_event'
-  | 'sports_club'
-  | 'other';
-
-export type EventStatus = 'active' | 'cancelled' | 'sold_out' | 'few_spots';
-
-export type AgeGroup = 'adults' | 'kids' | 'seniors' | 'all';
-
-export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'open';
-
-export type RecurrenceRule = 'weekly' | 'biweekly' | 'monthly';
+// Reflects the actual shape of an events-table row after `mapRow` in
+// eventsApi.ts. Fields the scraper never populates (age group, skill level,
+// instructor, capacity, recurrence, image, status, tags, sourceType) have
+// been removed — re-add them when the data pipeline starts surfacing them.
 
 export interface EventLocation {
   name: string;
-  address: string;
   city: string;
   lat: number | null;
   lng: number | null;
 }
 
 export interface EventPrice {
-  amount: number | null;
+  amount: number | null;     // PLN, or null when unknown / suspect
   currency: string;
-  description: string;
+  label: string;             // raw price_label from the scraper, used as fallback display
 }
 
 export interface Event {
@@ -35,23 +22,15 @@ export interface Event {
   description: string;
   categoryMain: string;
   categorySub: string;
-  tags: string[];
-  date: string;
-  startTime: string;
-  endTime: string;
+  date: string;              // YYYY-MM-DD
+  startTime: string;         // HH:MM
+  endTime: string;           // HH:MM or '' when missing
+  durationMin: number | null;
   location: EventLocation;
   price: EventPrice;
-  ageGroup: AgeGroup | null;
-  level: SkillLevel | null;
-  instructor: string | null;
-  capacity: number | null;
-  url: string;
-  sourceName: string;
-  sourceType: SourceType;
-  isRecurring: boolean;
-  recurrenceRule: RecurrenceRule | null;
-  imageUrl: string | null;
-  status: EventStatus;
+  url: string;               // '' when missing
+  sources: string[];         // 1+ scraper sources that listed this event
+  updatedAt: string | null;  // ISO timestamp; freshness signal
 }
 
 export interface CategoryItem {
@@ -67,9 +46,4 @@ export interface DbCategory {
   icon: string;
   color: string;
   sort_order: number;
-}
-
-export interface SourceItem {
-  id: SourceType;
-  label: string;
 }

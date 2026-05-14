@@ -58,7 +58,50 @@ export function formatMonth(dateStr: string): string {
 }
 
 export function formatTimeRange(startTime: string, endTime: string): string {
-  return `${startTime}–${endTime}`;
+  if (!startTime) return '';
+  if (endTime) return `${startTime}–${endTime}`;
+  return startTime;
+}
+
+// Renders an event's time. Prefers explicit end_time, falls back to a
+// synthesized end derived from duration_min, otherwise just shows the start.
+export function formatEventTime(
+  startTime: string,
+  endTime: string,
+  durationMin: number | null
+): string {
+  if (!startTime) return '';
+  if (endTime) return `${startTime}–${endTime}`;
+  if (durationMin && durationMin > 0) {
+    const synthesized = addMinutes(startTime, durationMin);
+    if (synthesized) return `${startTime}–${synthesized}`;
+  }
+  return startTime;
+}
+
+function addMinutes(hhmm: string, minutes: number): string | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
+  if (!match) return null;
+  const total = Number.parseInt(match[1], 10) * 60 + Number.parseInt(match[2], 10) + minutes;
+  if (Number.isNaN(total)) return null;
+  // Wrap past midnight just in case (some studios list 23:30 + 60 min classes).
+  const wrapped = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
+  const h = Math.floor(wrapped / 60);
+  const m = wrapped % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+// Caps obvious data-quality landmines: some scraped rows store sales-URL
+// digits in `price` (e.g. 196331 for a kupbilecik event id). Anything above
+// this ceiling is treated as garbage and the caller falls back to the
+// price_label or "see description".
+const REALISTIC_PRICE_CEILING_PLN = 5000;
+
+export function isRealisticPrice(amount: number | null): boolean {
+  if (amount === null) return false;
+  if (!Number.isFinite(amount)) return false;
+  if (amount < 0) return false;
+  return amount <= REALISTIC_PRICE_CEILING_PLN;
 }
 
 export function formatPrice(amount: number | null, currency: string): string {

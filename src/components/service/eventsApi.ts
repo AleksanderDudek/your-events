@@ -1,7 +1,6 @@
-import { Event, DbCategory, SourceItem } from '@/types/event.types';
+import { Event, DbCategory } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
-import { SOURCE_TYPE_LABELS } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 
 interface SupabaseEventRow {
@@ -32,6 +31,9 @@ interface SupabaseEventRow {
 
 function parsePriceAmount(row: SupabaseEventRow): number | null {
   if (row.is_free) return 0;
+  // Reject prices parsed from URL fragments (e.g. price=196331 for a
+  // kupbilecik ticket id). isRealisticPrice in the UI also guards.
+  if (row.price_label && /https?:\/\//i.test(row.price_label)) return null;
   if (row.price !== null) return row.price;
   if (row.price_label) {
     const lower = row.price_label.toLowerCase();
@@ -42,6 +44,20 @@ function parsePriceAmount(row: SupabaseEventRow): number | null {
   return null;
 }
 
+function parseSources(raw: string | null | undefined, fallback: string): string[] {
+  if (!raw) return fallback ? [fallback] : [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const cleaned = parsed.filter((s): s is string => typeof s === 'string' && s.length > 0);
+      return cleaned.length > 0 ? cleaned : fallback ? [fallback] : [];
+    }
+  } catch {
+    // sources column is sometimes a bare string, sometimes JSON-encoded array.
+  }
+  return fallback ? [fallback] : [];
+}
+
 function mapRow(row: SupabaseEventRow): Event {
   return {
     id: String(row.id),
@@ -49,13 +65,12 @@ function mapRow(row: SupabaseEventRow): Event {
     description: row.description,
     categoryMain: row.category_main,
     categorySub: row.category_sub ?? '',
-    tags: [],
     date: row.date,
     startTime: row.time_start,
     endTime: row.time_end,
+    durationMin: row.duration_min,
     location: {
       name: row.venue,
-      address: '',
       city: 'Szczecin',
       lat: row.lat,
       lng: row.lng,
@@ -63,19 +78,11 @@ function mapRow(row: SupabaseEventRow): Event {
     price: {
       amount: parsePriceAmount(row),
       currency: 'PLN',
-      description: row.price_label,
+      label: row.price_label ?? '',
     },
-    ageGroup: null,
-    level: null,
-    instructor: null,
-    capacity: null,
-    url: row.url,
-    sourceName: row.source,
-    sourceType: 'other',
-    isRecurring: false,
-    recurrenceRule: null,
-    imageUrl: null,
-    status: 'active',
+    url: row.url ?? '',
+    sources: parseSources(row.sources, row.source),
+    updatedAt: row.updated_at ?? null,
   };
 }
 
@@ -171,9 +178,3 @@ export async function fetchCategories(): Promise<DbCategory[]> {
   return (data ?? []) as DbCategory[];
 }
 
-export async function fetchSources(): Promise<SourceItem[]> {
-  return Object.entries(SOURCE_TYPE_LABELS).map(([id, label]) => ({
-    id: id as keyof typeof SOURCE_TYPE_LABELS,
-    label,
-  }));
-}

@@ -11,9 +11,8 @@ import PlaceIcon from '@mui/icons-material/Place';
 import { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
-import StatusBadge from '@/components/ui/StatusBadge/StatusBadge';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
-import { formatDateShort, formatTimeRange, getCategoryIconPath } from '@/lib/utils';
+import { formatDateShort, formatEventTime, getCategoryIconPath } from '@/lib/utils';
 import styles from './EventCard.module.scss';
 
 interface EventCardProps {
@@ -21,10 +20,12 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const chips = [event.categoryMain, event.categorySub].filter(Boolean);
+  const chips = [event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c));
   const maxChips = 2;
   const visibleCategories = chips.slice(0, maxChips);
   const extraCount = chips.length - maxChips;
+  const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
+  const sourceLabel = event.sources.join(' · ');
 
   return (
     <Link href={`/events/${event.id}`} className={styles.link}>
@@ -36,11 +37,6 @@ export default function EventCard({ event }: EventCardProps) {
       >
         <Box className={styles.imageWrapper}>
           <ImageWrapper event={event} />
-          {event.status !== 'active' && (
-            <Box className={styles.statusBadge}>
-              <StatusBadge status={event.status} />
-            </Box>
-          )}
         </Box>
 
         <CardContent className={styles.content}>
@@ -53,7 +49,8 @@ export default function EventCard({ event }: EventCardProps) {
             className={styles.datetime}
             sx={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}
           >
-            {formatDateShort(event.date)} · {formatTimeRange(event.startTime, event.endTime)}
+            {formatDateShort(event.date)}
+            {time && ` · ${time}`}
           </Typography>
 
           <Box className={styles.location}>
@@ -67,28 +64,34 @@ export default function EventCard({ event }: EventCardProps) {
             </Typography>
           </Box>
 
-          <Box className={styles.chips}>
-            {visibleCategories.map((label) => (
-              <CategoryChip key={label} category={label} />
-            ))}
-            {extraCount > 0 && (
-              <Typography
-                variant="caption"
-                sx={{ color: 'var(--color-text-muted)', alignSelf: 'center' }}
-              >
-                +{extraCount}
-              </Typography>
-            )}
-          </Box>
+          {visibleCategories.length > 0 && (
+            <Box className={styles.chips}>
+              {visibleCategories.map((label) => (
+                <CategoryChip key={label} category={label} />
+              ))}
+              {extraCount > 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'var(--color-text-muted)', alignSelf: 'center' }}
+                >
+                  +{extraCount}
+                </Typography>
+              )}
+            </Box>
+          )}
 
           <Box className={styles.footer}>
             <PriceLabel amount={event.price.amount} currency={event.price.currency} />
-            <Typography
-              variant="caption"
-              sx={{ color: 'var(--color-text-muted)' }}
-            >
-              {event.sourceName}
-            </Typography>
+            {sourceLabel && (
+              <Typography
+                variant="caption"
+                noWrap
+                sx={{ color: 'var(--color-text-muted)', maxWidth: '50%' }}
+                title={sourceLabel}
+              >
+                {sourceLabel}
+              </Typography>
+            )}
           </Box>
         </CardContent>
       </Card>

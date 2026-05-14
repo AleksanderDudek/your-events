@@ -39,10 +39,8 @@ describe('FilterPanel', () => {
   it('shows filter sections', () => {
     render(<FilterPanel />);
     expect(screen.getByText('Kategorie')).toBeInTheDocument();
-    expect(screen.getByText('Źródło')).toBeInTheDocument();
     expect(screen.getByText('Data')).toBeInTheDocument();
     expect(screen.getByText('Godzina')).toBeInTheDocument();
-    // age/level filters removed
   });
 
   it('shows search input', () => {

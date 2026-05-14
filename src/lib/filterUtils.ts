@@ -1,10 +1,6 @@
-import { AgeGroup, SkillLevel, SourceType } from '@/types/event.types';
 import { DateMode, EventFilters, PageSize, ViewMode } from '@/types/filter.types';
-import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, SOURCE_TYPE_LABELS } from './constants';
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from './constants';
 
-const VALID_SOURCE_TYPES = new Set(Object.keys(SOURCE_TYPE_LABELS));
-const VALID_AGE_GROUPS = new Set(['adults', 'kids', 'seniors', 'all']);
-const VALID_LEVELS = new Set(['beginner', 'intermediate', 'advanced', 'open']);
 const VALID_PAGE_SIZES = new Set([15, 30, 60]);
 const VALID_VIEW_MODES = new Set(['grid', 'row']);
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -13,13 +9,6 @@ const TIME_REGEX = /^\d{2}:\d{2}$/;
 function parseCategories(value: string | null): string[] {
   if (!value) return [];
   return value.split(',').filter((c) => c.length > 0);
-}
-
-function parseSourceTypes(value: string | null): SourceType[] {
-  if (!value) return [];
-  return value
-    .split(',')
-    .filter((s) => VALID_SOURCE_TYPES.has(s)) as SourceType[];
 }
 
 function parseDateMode(params: URLSearchParams): DateMode {
@@ -42,16 +31,6 @@ function parseDate(value: string | null): string | null {
 function parseTime(value: string | null): string | null {
   if (!value || !TIME_REGEX.test(value)) return null;
   return value;
-}
-
-function parseAgeGroup(value: string | null): AgeGroup | null {
-  if (!value || !VALID_AGE_GROUPS.has(value)) return null;
-  return value as AgeGroup;
-}
-
-function parseLevel(value: string | null): SkillLevel | null {
-  if (!value || !VALID_LEVELS.has(value)) return null;
-  return value as SkillLevel;
 }
 
 function parseBoolean(value: string | null): boolean {
@@ -97,17 +76,13 @@ export function parseFiltersFromParams(
   return {
     search: get('search') ?? '',
     categories: parseCategories(get('categories')),
-    sourceTypes: parseSourceTypes(get('sourceTypes')),
     dateMode,
     dateSingle: dateMode === 'single' ? parseDate(get('dateSingle')) : null,
     dateFrom: dateMode === 'range' ? parseDate(get('dateFrom')) : null,
     dateTo: dateMode === 'range' ? parseDate(get('dateTo')) : null,
     hourFrom: dateMode ? parseTime(get('hourFrom')) : null,
     hourTo: dateMode ? parseTime(get('hourTo')) : null,
-    ageGroup: parseAgeGroup(get('ageGroup')),
-    level: parseLevel(get('level')),
     freeOnly: parseBoolean(get('freeOnly')),
-    hideUnavailable: parseBoolean(get('hideUnavailable')),
     page: parsePage(get('page')),
     pageSize: parsePageSize(get('pageSize')),
     viewMode: parseViewMode(get('viewMode')),
@@ -123,17 +98,13 @@ export function filtersToSearchParams(filters: Partial<EventFilters>): URLSearch
 
   setIfTruthy(params, 'search', filters.search);
   if (filters.categories?.length) params.set('categories', filters.categories.join(','));
-  if (filters.sourceTypes?.length) params.set('sourceTypes', filters.sourceTypes.join(','));
   setIfTruthy(params, 'dateMode', filters.dateMode);
   setIfTruthy(params, 'dateSingle', filters.dateSingle);
   setIfTruthy(params, 'dateFrom', filters.dateFrom);
   setIfTruthy(params, 'dateTo', filters.dateTo);
   setIfTruthy(params, 'hourFrom', filters.hourFrom);
   setIfTruthy(params, 'hourTo', filters.hourTo);
-  setIfTruthy(params, 'ageGroup', filters.ageGroup);
-  setIfTruthy(params, 'level', filters.level);
   if (filters.freeOnly) params.set('freeOnly', 'true');
-  if (filters.hideUnavailable) params.set('hideUnavailable', 'true');
   if (filters.page && filters.page !== DEFAULT_PAGE) params.set('page', String(filters.page));
   if (filters.pageSize && filters.pageSize !== DEFAULT_PAGE_SIZE) params.set('pageSize', String(filters.pageSize));
   if (filters.viewMode && filters.viewMode !== 'grid') params.set('viewMode', filters.viewMode);
@@ -145,13 +116,9 @@ export function countActiveFilters(filters: EventFilters): number {
   let count = 0;
   if (filters.search) count++;
   if (filters.categories.length) count++;
-  if (filters.sourceTypes.length) count++;
   if (filters.dateMode) count++;
   if (filters.hourFrom || filters.hourTo) count++;
-  if (filters.ageGroup) count++;
-  if (filters.level) count++;
   if (filters.freeOnly) count++;
-  if (filters.hideUnavailable) count++;
   return count;
 }
 
@@ -159,17 +126,13 @@ export function getDefaultFilters(): EventFilters {
   return {
     search: '',
     categories: [],
-    sourceTypes: [],
     dateMode: null,
     dateSingle: null,
     dateFrom: null,
     dateTo: null,
     hourFrom: null,
     hourTo: null,
-    ageGroup: null,
-    level: null,
     freeOnly: false,
-    hideUnavailable: false,
     page: DEFAULT_PAGE,
     pageSize: DEFAULT_PAGE_SIZE,
     viewMode: 'grid',

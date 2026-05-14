@@ -2,21 +2,9 @@
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Chip from '@mui/material/Chip';
 import Link from '@mui/material/Link';
 import { useTranslation } from '@/i18n';
-import { SOURCE_TYPE_LABELS } from '@/lib/constants';
-import { SourceType } from '@/types/event.types';
 import styles from './AppFooter.module.scss';
-
-const SOURCE_CHIPS: SourceType[] = [
-  'dance_studio',
-  'fitness_club',
-  'culinary_studio',
-  'cultural_event',
-  'facebook_event',
-  'sports_club',
-];
 
 export default function AppFooter() {
   const { t } = useTranslation();
@@ -40,30 +28,6 @@ export default function AppFooter() {
           <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
             {t.APP_TAGLINE}
           </Typography>
-        </Box>
-
-        <Box className={styles.col}>
-          <Typography
-            variant="overline"
-            sx={{ color: 'var(--color-text-muted)', mb: 1, display: 'block' }}
-          >
-            {t.FOOTER_SOURCES}
-          </Typography>
-          <Box className={styles.chips}>
-            {SOURCE_CHIPS.map((source) => (
-              <Chip
-                key={source}
-                label={SOURCE_TYPE_LABELS[source]}
-                size="small"
-                variant="outlined"
-                sx={{
-                  borderColor: 'var(--color-border)',
-                  color: 'var(--color-text-secondary)',
-                  fontSize: '0.6875rem',
-                }}
-              />
-            ))}
-          </Box>
         </Box>
 
         <Box className={styles.col}>

@@ -51,13 +51,12 @@ async function EventDetailContent({ id }: Readonly<{ id: string }>) {
     name: event.name,
     description: event.description,
     startDate: `${event.date}T${event.startTime}:00`,
-    endDate: `${event.date}T${event.endTime}:00`,
+    ...(event.endTime && { endDate: `${event.date}T${event.endTime}:00` }),
     location: {
       '@type': 'Place',
       name: event.location.name,
       address: {
         '@type': 'PostalAddress',
-        streetAddress: event.location.address,
         addressLocality: event.location.city,
       },
     },

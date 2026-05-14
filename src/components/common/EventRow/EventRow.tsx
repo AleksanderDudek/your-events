@@ -9,8 +9,7 @@ import { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
-import StatusBadge from '@/components/ui/StatusBadge/StatusBadge';
-import { formatDay, formatMonth, formatTimeRange } from '@/lib/utils';
+import { formatDay, formatEventTime, formatMonth } from '@/lib/utils';
 import styles from './EventRow.module.scss';
 
 interface EventRowProps {
@@ -20,6 +19,8 @@ interface EventRowProps {
 export default function EventRow({ event }: EventRowProps) {
   const { byDisplayName } = useCategories();
   const categoryData = byDisplayName.get(event.categoryMain) ?? byDisplayName.get('Inne');
+  const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
+  const chips = [event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c));
 
   return (
     <Link href={`/events/${event.id}`} className={styles.link}>
@@ -79,26 +80,29 @@ export default function EventRow({ event }: EventRowProps) {
                 {event.name}
               </Typography>
             </Box>
-            {event.status !== 'active' && <StatusBadge status={event.status} />}
           </Box>
 
           <Box className={styles.meta}>
-            <Box className={styles.chips}>
-              {[event.categoryMain, event.categorySub].filter(Boolean).map((label) => (
-                <CategoryChip key={label} category={label} />
-              ))}
-            </Box>
+            {chips.length > 0 && (
+              <Box className={styles.chips}>
+                {chips.map((label) => (
+                  <CategoryChip key={label} category={label} />
+                ))}
+              </Box>
+            )}
             <Box className={styles.locationTime}>
               <PlaceIcon sx={{ fontSize: 14, color: 'var(--color-text-muted)' }} />
               <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
                 {event.location.name}
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)', ml: 1 }}
-              >
-                {formatTimeRange(event.startTime, event.endTime)}
-              </Typography>
+              {time && (
+                <Typography
+                  variant="caption"
+                  sx={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)', ml: 1 }}
+                >
+                  {time}
+                </Typography>
+              )}
             </Box>
           </Box>
 

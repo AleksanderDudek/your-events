@@ -21,9 +21,4 @@ describe('AppFooter', () => {
     expect(screen.getByText(`© ${year} Idź na miasto`)).toBeInTheDocument();
   });
 
-  it('shows source chips', () => {
-    render(<AppFooter />);
-    expect(screen.getByText('Szkoła tańca')).toBeInTheDocument();
-    expect(screen.getByText('Klub fitness')).toBeInTheDocument();
-  });
 });

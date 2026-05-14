@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -11,16 +10,12 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PlaceIcon from '@mui/icons-material/Place';
-import PersonIcon from '@mui/icons-material/Person';
-import GroupIcon from '@mui/icons-material/Group';
-import RepeatIcon from '@mui/icons-material/Repeat';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import MapIcon from '@mui/icons-material/Map';
 import { Event } from '@/types/event.types';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
-import StatusBadge from '@/components/ui/StatusBadge/StatusBadge';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
-import { formatDate, formatTimeRange } from '@/lib/utils';
-import { AGE_GROUP_LABELS, SKILL_LEVEL_LABELS, SOURCE_TYPE_LABELS } from '@/lib/constants';
+import { formatDate, formatEventTime } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import styles from './EventDetailView.module.scss';
 
@@ -46,15 +41,28 @@ function getGradient(id: string): string {
   return GRADIENT_COLORS[Math.abs(hash) % GRADIENT_COLORS.length];
 }
 
+function formatUpdatedAt(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  // Plain calendar date — locale-agnostic and stable, avoids "X minutes ago" libs.
+  return d.toLocaleDateString('pl-PL', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
 export default function EventDetailView({ event }: EventDetailViewProps) {
   const router = useRouter();
   const { t } = useTranslation();
 
-  const recurrenceLabels: Record<string, string> = {
-    weekly: t.RECURRENCE_WEEKLY,
-    biweekly: t.RECURRENCE_BIWEEKLY,
-    monthly: t.RECURRENCE_MONTHLY,
-  };
+  const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
+  const categoryChips = [event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c));
+  const description = event.description.trim();
+  const priceLabel = event.price.label?.trim();
+  const hasMap = event.location.lat !== null && event.location.lng !== null;
+  const mapsUrl = hasMap
+    ? `https://www.google.com/maps/?q=${event.location.lat},${event.location.lng}`
+    : null;
+  const hasUrl = Boolean(event.url);
+  const updatedAt = formatUpdatedAt(event.updatedAt);
 
   return (
     <Box className={styles.container}>
@@ -69,18 +77,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
 
       {/* Hero */}
       <Box className={styles.hero}>
-        {event.imageUrl ? (
-          <Image
-            src={event.imageUrl}
-            alt={event.name}
-            fill
-            sizes="100vw"
-            className={styles.heroImage}
-            priority
-          />
-        ) : (
-          <Box className={styles.heroGradient} sx={{ background: getGradient(event.id) }} />
-        )}
+        <Box className={styles.heroGradient} sx={{ background: getGradient(event.id) }} />
         <Box className={styles.heroOverlay}>
           <Typography
             variant="h3"
@@ -93,17 +90,10 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
         </Box>
       </Box>
 
-      {/* Status banner */}
-      {event.status !== 'active' && (
-        <Box className={styles.statusBanner}>
-          <StatusBadge status={event.status} />
-        </Box>
-      )}
-
       {/* Detail grid */}
       <Box className={styles.detailGrid}>
         <Box className={styles.detailMain}>
-          {/* Date/Time */}
+          {/* Date */}
           <Box className={styles.detailRow}>
             <CalendarTodayIcon className={styles.detailIcon} />
             <Box>
@@ -116,17 +106,20 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             </Box>
           </Box>
 
-          <Box className={styles.detailRow}>
-            <AccessTimeIcon className={styles.detailIcon} />
-            <Box>
-              <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                {t.DETAIL_TIME}
-              </Typography>
-              <Typography variant="body1" sx={{ fontFamily: 'var(--font-mono)' }}>
-                {formatTimeRange(event.startTime, event.endTime)}
-              </Typography>
+          {/* Time */}
+          {time && (
+            <Box className={styles.detailRow}>
+              <AccessTimeIcon className={styles.detailIcon} />
+              <Box>
+                <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
+                  {t.DETAIL_TIME}
+                </Typography>
+                <Typography variant="body1" sx={{ fontFamily: 'var(--font-mono)' }}>
+                  {time}
+                </Typography>
+              </Box>
             </Box>
-          </Box>
+          )}
 
           {/* Location */}
           <Box className={styles.detailRow}>
@@ -136,63 +129,59 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                 {t.DETAIL_LOCATION}
               </Typography>
               <Typography variant="body1">{event.location.name}</Typography>
-              <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
-                {event.location.address}, {event.location.city}
-              </Typography>
+              {event.location.city && (
+                <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
+                  {event.location.city}
+                </Typography>
+              )}
+              {mapsUrl && (
+                <Button
+                  size="small"
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  startIcon={<MapIcon />}
+                  sx={{ mt: 1, textTransform: 'none', color: 'var(--color-accent-primary)' }}
+                >
+                  {t.OPEN_IN_MAPS}
+                </Button>
+              )}
             </Box>
           </Box>
 
           <Divider sx={{ borderColor: 'var(--color-border)', my: 2 }} />
 
           {/* Categories */}
-          <Box className={styles.detailSection}>
-            <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
-              {t.DETAIL_CATEGORIES}
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {[event.categoryMain, event.categorySub].filter(Boolean).map((cat) => (
-                <CategoryChip key={cat} category={cat} />
-              ))}
-            </Box>
-          </Box>
-
-          {/* Tags */}
-          {event.tags.length > 0 && (
+          {categoryChips.length > 0 && (
             <Box className={styles.detailSection}>
               <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
-                {t.DETAIL_TAGS}
+                {t.DETAIL_CATEGORIES}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {event.tags.map((tag) => (
-                  <Chip
-                    key={tag}
-                    label={tag}
-                    size="small"
-                    sx={{
-                      backgroundColor: 'var(--color-bg-elevated)',
-                      color: 'var(--color-text-secondary)',
-                      fontSize: '0.75rem',
-                    }}
-                  />
+                {categoryChips.map((cat) => (
+                  <CategoryChip key={cat} category={cat} />
                 ))}
               </Box>
             </Box>
           )}
 
-          <Divider sx={{ borderColor: 'var(--color-border)', my: 2 }} />
-
-          {/* Description */}
-          <Box className={styles.detailSection}>
-            <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
-              {t.DETAIL_DESCRIPTION}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ color: 'var(--color-text-primary)', lineHeight: 1.8 }}
-            >
-              {event.description}
-            </Typography>
-          </Box>
+          {/* Description — only when present */}
+          {description && (
+            <>
+              <Divider sx={{ borderColor: 'var(--color-border)', my: 2 }} />
+              <Box className={styles.detailSection}>
+                <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
+                  {t.DETAIL_DESCRIPTION}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ color: 'var(--color-text-primary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}
+                >
+                  {description}
+                </Typography>
+              </Box>
+            </>
+          )}
         </Box>
 
         {/* Sidebar info */}
@@ -205,108 +194,63 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               </Typography>
               <Box sx={{ mt: 0.5 }}>
                 <PriceLabel amount={event.price.amount} currency={event.price.currency} />
-                {event.price.description && (
+                {priceLabel && event.price.amount === null && (
                   <Typography variant="caption" display="block" sx={{ color: 'var(--color-text-muted)', mt: 0.5 }}>
-                    {event.price.description}
+                    {priceLabel}
                   </Typography>
                 )}
               </Box>
             </Box>
 
-            {/* Age Group */}
-            {event.ageGroup && (
-              <Box className={styles.infoRow}>
-                <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                  {t.DETAIL_AGE}
-                </Typography>
-                <Typography variant="body2">{AGE_GROUP_LABELS[event.ageGroup]}</Typography>
-              </Box>
-            )}
-
-            {/* Level */}
-            {event.level && (
-              <Box className={styles.infoRow}>
-                <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                  {t.DETAIL_LEVEL}
-                </Typography>
-                <Typography variant="body2">{SKILL_LEVEL_LABELS[event.level]}</Typography>
-              </Box>
-            )}
-
-            {/* Instructor */}
-            {event.instructor && (
-              <Box className={styles.infoRow}>
-                <PersonIcon sx={{ fontSize: 16, color: 'var(--color-text-muted)', mr: 0.5 }} />
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                    {t.DETAIL_INSTRUCTOR}
-                  </Typography>
-                  <Typography variant="body2">{event.instructor}</Typography>
-                </Box>
-              </Box>
-            )}
-
-            {/* Capacity */}
-            {event.capacity && (
-              <Box className={styles.infoRow}>
-                <GroupIcon sx={{ fontSize: 16, color: 'var(--color-text-muted)', mr: 0.5 }} />
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                    {t.DETAIL_CAPACITY}
-                  </Typography>
-                  <Typography variant="body2">{event.capacity}</Typography>
-                </Box>
-              </Box>
-            )}
-
-            {/* Recurrence */}
-            {event.isRecurring && event.recurrenceRule && (
-              <Box className={styles.infoRow}>
-                <RepeatIcon sx={{ fontSize: 16, color: 'var(--color-text-muted)', mr: 0.5 }} />
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                    {t.DETAIL_RECURRENCE}
-                  </Typography>
-                  <Typography variant="body2">
-                    {recurrenceLabels[event.recurrenceRule] || event.recurrenceRule}
-                  </Typography>
-                </Box>
-              </Box>
-            )}
-
             <Divider sx={{ borderColor: 'var(--color-border)', my: 2 }} />
 
-            {/* Source */}
-            <Box className={styles.infoRow}>
-              <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                {t.DETAIL_SOURCE}
-              </Typography>
-              <Typography variant="body2">{event.sourceName}</Typography>
-              <Chip
-                label={SOURCE_TYPE_LABELS[event.sourceType]}
-                size="small"
-                sx={{
-                  mt: 0.5,
-                  backgroundColor: 'var(--color-bg-elevated)',
-                  color: 'var(--color-text-secondary)',
-                  fontSize: '0.6875rem',
-                }}
-              />
-            </Box>
+            {/* Sources */}
+            {event.sources.length > 0 && (
+              <Box className={styles.infoRow}>
+                <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
+                  {t.LISTED_ON}
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {event.sources.map((source) => (
+                    <Chip
+                      key={source}
+                      label={source}
+                      size="small"
+                      sx={{
+                        backgroundColor: 'var(--color-bg-elevated)',
+                        color: 'var(--color-text-secondary)',
+                        fontSize: '0.6875rem',
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
 
-            {/* External Link */}
-            <Button
-              variant="contained"
-              color="primary"
-              href={event.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              endIcon={<OpenInNewIcon />}
-              fullWidth
-              sx={{ mt: 2, minHeight: 44 }}
-            >
-              {t.EXTERNAL_LINK}
-            </Button>
+            {/* External Link — only when the source URL is real */}
+            {hasUrl && (
+              <Button
+                variant="contained"
+                color="primary"
+                href={event.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                endIcon={<OpenInNewIcon />}
+                fullWidth
+                sx={{ mt: 2, minHeight: 44 }}
+              >
+                {t.EXTERNAL_LINK}
+              </Button>
+            )}
+
+            {updatedAt && (
+              <Typography
+                variant="caption"
+                sx={{ color: 'var(--color-text-muted)', display: 'block', mt: 2, textAlign: 'center' }}
+              >
+                {t.LAST_UPDATED(updatedAt)}
+              </Typography>
+            )}
           </Box>
         </Box>
       </Box>

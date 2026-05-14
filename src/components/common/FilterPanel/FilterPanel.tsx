@@ -19,7 +19,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { SourceType } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import {
   parseFiltersFromParams,
@@ -27,7 +26,6 @@ import {
   countActiveFilters,
   getDefaultFilters,
 } from '@/lib/filterUtils';
-import { SOURCE_TYPE_LABELS } from '@/lib/constants';
 import { useTranslation } from '@/i18n';
 import { useCategories } from '@/components/service/useCategories';
 import SearchInput from '@/components/ui/SearchInput/SearchInput';
@@ -87,16 +85,6 @@ export default function FilterPanel() {
       updateFilters({ categories: cats });
     },
     [filters.categories, updateFilters]
-  );
-
-  const handleSourceToggle = useCallback(
-    (source: SourceType) => {
-      const sources = filters.sourceTypes.includes(source)
-        ? filters.sourceTypes.filter((s) => s !== source)
-        : [...filters.sourceTypes, source];
-      updateFilters({ sourceTypes: sources });
-    },
-    [filters.sourceTypes, updateFilters]
   );
 
   const filterContent = (
@@ -216,44 +204,6 @@ export default function FilterPanel() {
                 </Box>
               );
             })}
-          </Box>
-        </AccordionDetails>
-      </Accordion>
-
-      <Divider sx={{ borderColor: 'var(--color-border)' }} />
-
-      {/* Source Types */}
-      <Accordion disableGutters>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
-          <Badge
-            badgeContent={filters.sourceTypes.length || undefined}
-            color="primary"
-            sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
-          >
-            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
-              {t.FILTER_SOURCE}
-            </Typography>
-          </Badge>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            {(Object.entries(SOURCE_TYPE_LABELS) as [SourceType, string][]).map(([key, label]) => (
-              <FormControlLabel
-                key={key}
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={filters.sourceTypes.includes(key)}
-                    onChange={() => handleSourceToggle(key)}
-                    sx={{
-                      color: 'var(--color-border)',
-                      '&.Mui-checked': { color: 'var(--color-accent-primary)' },
-                    }}
-                  />
-                }
-                label={<Typography variant="body2">{label}</Typography>}
-              />
-            ))}
           </Box>
         </AccordionDetails>
       </Accordion>

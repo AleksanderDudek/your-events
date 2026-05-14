@@ -19,7 +19,7 @@ import AppPagination from '@/components/common/AppPagination/AppPagination';
 import EmptyState from '@/components/ui/EmptyState/EmptyState';
 import ErrorState from '@/components/ui/ErrorState/ErrorState';
 import { filtersToSearchParams, getDefaultFilters, countActiveFilters } from '@/lib/filterUtils';
-import { SOURCE_TYPE_LABELS, PAGE_SIZE_OPTIONS } from '@/lib/constants';
+import { PAGE_SIZE_OPTIONS } from '@/lib/constants';
 import { useTranslation } from '@/i18n';
 import { PageSize, ViewMode, EventFilters } from '@/types/filter.types';
 import { Event } from '@/types/event.types';
@@ -88,9 +88,9 @@ export default function EventsListView() {
   filters.categories.forEach((cat) => {
     activeChips.push({ key: `cat-${cat}`, label: bySlug.get(cat)?.display_name ?? cat });
   });
-  filters.sourceTypes.forEach((src) => {
-    activeChips.push({ key: `src-${src}`, label: SOURCE_TYPE_LABELS[src] || src });
-  });
+  if (filters.freeOnly) {
+    activeChips.push({ key: 'freeOnly', label: t.FILTER_FREE_ONLY });
+  }
 
 
   if (isError) {
@@ -156,15 +156,11 @@ export default function EventsListView() {
                 size="small"
                 onDelete={() => {
                   if (chip.key === 'search') updateFilter({ search: '' });
+                  else if (chip.key === 'freeOnly') updateFilter({ freeOnly: false });
                   else if (chip.key.startsWith('cat-')) {
                     const cat = chip.key.replace('cat-', '');
                     updateFilter({
                       categories: filters.categories.filter((c) => c !== cat),
-                    });
-                  } else if (chip.key.startsWith('src-')) {
-                    const src = chip.key.replace('src-', '');
-                    updateFilter({
-                      sourceTypes: filters.sourceTypes.filter((s) => s !== src),
                     });
                   }
                 }}
