@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import HomeView from '@/components/views/HomeView/HomeView';
 
 export default function HomePage() {
-  redirect('/events');
+  return <HomeView />;
 }

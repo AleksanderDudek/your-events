@@ -1,0 +1,293 @@
+@use '../../../styles/mixins' as *;
+
+.container {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  overflow: hidden;
+
+  @include sm {
+    padding: 40px 24px 64px;
+  }
+
+  @include md {
+    padding: 56px 32px 80px;
+  }
+}
+
+// Decorative gradient blobs behind the hero — pulled from the category palette.
+.heroBlob,
+.heroBlobTwo {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.heroBlob {
+  top: -120px;
+  left: -80px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, #f472b6 0%, rgba(244, 114, 182, 0) 70%);
+
+  @include md {
+    width: 480px;
+    height: 480px;
+    top: -160px;
+    left: -120px;
+  }
+}
+
+.heroBlobTwo {
+  top: 40px;
+  right: -100px;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, #fbbf24 0%, rgba(251, 191, 36, 0) 70%);
+
+  @include md {
+    width: 420px;
+    height: 420px;
+    top: 80px;
+    right: -140px;
+  }
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin-bottom: 32px;
+
+  @include sm {
+    margin-bottom: 48px;
+  }
+
+  @include md {
+    margin-bottom: 64px;
+  }
+}
+
+.prompt {
+  margin: 0 0 12px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+
+  @include md {
+    font-size: 1rem;
+    margin-bottom: 16px;
+  }
+}
+
+.headline {
+  margin: 0 auto 16px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.5rem, 12vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #ec4899 0%, #f97316 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  max-width: 14ch;
+
+  @include md {
+    margin-bottom: 24px;
+  }
+}
+
+.heroSub {
+  margin: 0 auto;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  max-width: 36rem;
+
+  @include md {
+    font-size: 1.125rem;
+  }
+}
+
+// CTA tiles ------------------------------------------------------------------
+
+.tiles {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+
+  @include sm {
+    gap: 20px;
+  }
+
+  @include md {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 22px 20px;
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: #ffffff;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 200px;
+  box-shadow: var(--shadow-card);
+
+  @include focus-visible;
+
+  @include motion-safe {
+    transition:
+      transform var(--transition-base),
+      box-shadow var(--transition-base);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 1;
+    @include motion-safe {
+      transition: transform var(--transition-slow);
+    }
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-elevated);
+    @include motion-safe {
+      transform: translateY(-4px);
+    }
+    &::before {
+      @include motion-safe {
+        transform: scale(1.06);
+      }
+    }
+    .tileCta {
+      gap: 12px;
+    }
+  }
+
+  @include md {
+    padding: 28px 26px 24px;
+    min-height: 240px;
+  }
+}
+
+.tileNow::before {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.25) 0%, transparent 60%),
+    linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+}
+
+.tileWeekend::before {
+  background:
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.22) 0%, transparent 60%),
+    linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+}
+
+.tileSport::before {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.22) 0%, transparent 60%),
+    linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+}
+
+.tileIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
+  svg {
+    font-size: 26px;
+    color: #ffffff;
+  }
+}
+
+.tileTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.375rem;
+  line-height: 1.15;
+  color: #ffffff;
+
+  @include md {
+    font-size: 1.625rem;
+  }
+}
+
+.tileSub {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.9);
+  flex: 1;
+}
+
+.tileCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: #ffffff;
+
+  @include motion-safe {
+    transition: gap var(--transition-base);
+  }
+}
+
+// "Browse all" secondary action ---------------------------------------------
+
+.browseAll {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+
+  @include md {
+    margin-top: 48px;
+  }
+}
+
+.browseAllButton {
+  min-height: 44px;
+  padding: 8px 24px !important;
+  border-color: var(--color-border-strong) !important;
+  color: var(--color-text-primary) !important;
+  font-weight: 600 !important;
+
+  &:hover {
+    border-color: var(--color-accent-primary) !important;
+    background-color: var(--color-accent-tint-soft) !important;
+  }
+}

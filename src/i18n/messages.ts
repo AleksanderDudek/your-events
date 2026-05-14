@@ -95,6 +95,19 @@ const pl = {
   OPEN_IN_MAPS: 'Pokaż na mapie',
   LISTED_ON: 'Źródła',
   LAST_UPDATED: (when: string) => `Aktualizacja: ${when}`,
+  HOME_HERO_PROMPT: 'Chcesz zrobić coś fajnego?',
+  HOME_HERO_HEADLINE: 'Idź na miasto',
+  HOME_HERO_SUB: 'Sprawdź, co się dzieje w Szczecinie — teraz, w ten weekend, albo zaplanuj treningi.',
+  HOME_CTA_BROWSE_ALL: 'Przeglądaj wszystkie wydarzenia',
+  HOME_NOW_TITLE: 'Co się dzieje teraz na mieście?',
+  HOME_NOW_SUB: 'Wydarzenia w najbliższe 4 godziny',
+  HOME_NOW_CTA: 'Zobacz teraz',
+  HOME_WEEKEND_TITLE: 'Co się dzieje w ten weekend?',
+  HOME_WEEKEND_SUB: 'Piątek 12:00 — niedziela 23:00',
+  HOME_WEEKEND_CTA: 'Plany na weekend',
+  HOME_SPORT_TITLE: 'Gdzie mogę dzisiaj poćwiczyć?',
+  HOME_SPORT_SUB: 'Zajęcia sportowe od teraz do końca dnia',
+  HOME_SPORT_CTA: 'Znajdź trening',
 };
 
 export type Messages = typeof pl;
@@ -186,6 +199,19 @@ const en: Messages = {
   OPEN_IN_MAPS: 'Open in maps',
   LISTED_ON: 'Sources',
   LAST_UPDATED: (when: string) => `Updated: ${when}`,
+  HOME_HERO_PROMPT: 'Want to do something fun?',
+  HOME_HERO_HEADLINE: 'Go to town',
+  HOME_HERO_SUB: 'See what is happening in Szczecin — right now, this weekend, or plan your workouts.',
+  HOME_CTA_BROWSE_ALL: 'Browse all events',
+  HOME_NOW_TITLE: 'What is happening right now?',
+  HOME_NOW_SUB: 'Events in the next 4 hours',
+  HOME_NOW_CTA: 'See now',
+  HOME_WEEKEND_TITLE: 'What is on this weekend?',
+  HOME_WEEKEND_SUB: 'Friday 12:00 — Sunday 23:00',
+  HOME_WEEKEND_CTA: 'Weekend plans',
+  HOME_SPORT_TITLE: 'Where can I work out today?',
+  HOME_SPORT_SUB: 'Sport sessions from now until end of day',
+  HOME_SPORT_CTA: 'Find a session',
 };
 
 export const messages: Record<Locale, Messages> = { pl, en };
