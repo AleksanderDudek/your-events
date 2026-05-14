@@ -33,7 +33,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
           borderColor: 'var(--color-border)',
           padding: '6px',
           '&.Mui-selected': {
-            backgroundColor: 'rgba(244, 162, 40, 0.15)',
+            backgroundColor: 'var(--color-accent-tint-strong)',
             color: 'var(--color-accent-primary)',
             borderColor: 'var(--color-accent-primary)',
           },

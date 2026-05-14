@@ -169,7 +169,7 @@ export default function EventsListView() {
                   }
                 }}
                 sx={{
-                  backgroundColor: 'rgba(244, 162, 40, 0.12)',
+                  backgroundColor: 'var(--color-accent-tint)',
                   color: 'var(--color-accent-primary)',
                   '& .MuiChip-deleteIcon': { color: 'var(--color-accent-primary)' },
                 }}

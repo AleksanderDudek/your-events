@@ -46,9 +46,11 @@ export default function AppHeader() {
       elevation={0}
       className={styles.header}
       sx={{
-        backgroundColor: 'rgba(15, 15, 19, 0.9)',
+        backgroundColor: 'var(--color-surface-glass)',
         backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         borderBottom: '1px solid var(--color-border)',
+        boxShadow: '0 1px 0 rgba(236, 72, 153, 0.05)',
       }}
     >
       <Toolbar
@@ -127,7 +129,7 @@ export default function AppHeader() {
                         sx={{
                           '&.Mui-selected': {
                             borderRight: '3px solid var(--color-accent-primary)',
-                            backgroundColor: 'rgba(244, 162, 40, 0.08)',
+                            backgroundColor: 'var(--color-accent-tint)',
                           },
                         }}
                       >

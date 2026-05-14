@@ -19,7 +19,7 @@
   }
 
   &:hover {
-    background-color: rgba(244, 162, 40, 0.04);
+    background-color: var(--color-accent-tint-soft);
 
     .chevron svg {
       @include motion-safe {

@@ -31,7 +31,7 @@ export default function LanguageSwitcher() {
           letterSpacing: '0.04em',
           textTransform: 'uppercase',
           '&.Mui-selected': {
-            backgroundColor: 'rgba(244, 162, 40, 0.15)',
+            backgroundColor: 'var(--color-accent-tint-strong)',
             color: 'var(--color-accent-primary)',
             borderColor: 'var(--color-accent-primary)',
           },

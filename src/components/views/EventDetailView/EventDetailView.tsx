@@ -28,11 +28,14 @@ interface EventDetailViewProps {
   event: Event;
 }
 
+// Saturated gradients picked from the category palette so the hero block
+// feels like the icon cards even when no event image is provided.
 const GRADIENT_COLORS = [
-  'linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 50%, #1a1a2e 100%)',
-  'linear-gradient(135deg, #1a2a1a 0%, #2d3b1b 50%, #1a2a1a 100%)',
-  'linear-gradient(135deg, #2a1a1a 0%, #3d2b1b 50%, #2a1a1a 100%)',
-  'linear-gradient(135deg, #1a1a2a 0%, #1b2d3d 50%, #1a1a2a 100%)',
+  'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',  // pink → violet
+  'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)',  // orange → amber
+  'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)',  // cyan → violet
+  'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',  // emerald → cyan
+  'linear-gradient(135deg, #f472b6 0%, #f97316 100%)',  // rose → orange
 ];
 
 function getGradient(id: string): string {
@@ -83,7 +86,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             variant="h3"
             component="h1"
             className={styles.heroTitle}
-            sx={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--color-text-primary)' }}
+            sx={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#ffffff' }}
           >
             {event.name}
           </Typography>

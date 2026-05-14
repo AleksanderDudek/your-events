@@ -28,7 +28,7 @@ export default function CategoryChip({ category, onClick, selected }: CategoryCh
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
-              backgroundColor: selected ? 'primary.dark' : 'rgba(244, 162, 40, 0.1)',
+              backgroundColor: selected ? 'primary.dark' : 'var(--color-accent-tint)',
             }
           : {},
       }}
