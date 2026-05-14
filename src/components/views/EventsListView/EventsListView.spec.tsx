@@ -11,6 +11,18 @@ vi.mock('@mui/material/useMediaQuery', () => ({
   default: () => true,
 }));
 
+vi.mock('@/components/service/useCategories', () => ({
+  useCategories: () => ({
+    categories: [],
+    topLevel: [],
+    bySlug: new Map(),
+    byParent: new Map(),
+    byDisplayName: new Map(),
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
 vi.mock('@/components/service/useEvents', () => ({
   useEvents: () => ({
     events: [],

@@ -1,6 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('@/components/service/useCategories', () => ({
+  useCategories: () => ({
+    categories: [],
+    topLevel: [],
+    bySlug: new Map(),
+    byParent: new Map(),
+    byDisplayName: new Map(),
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
 import EventRow from './EventRow';
 import { Event } from '@/types/event.types';
 

@@ -12,6 +12,18 @@ vi.mock('@mui/material/useMediaQuery', () => ({
   default: () => true,
 }));
 
+vi.mock('@/components/service/useCategories', () => ({
+  useCategories: () => ({
+    categories: [],
+    topLevel: [],
+    bySlug: new Map(),
+    byParent: new Map(),
+    byDisplayName: new Map(),
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
 describe('FilterPanel', () => {
   it('renders without crashing', () => {
     render(<FilterPanel />);

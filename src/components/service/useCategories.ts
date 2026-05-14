@@ -13,7 +13,7 @@ export function useCategories() {
     staleTime: Infinity,
   });
 
-  const categories = (data ?? []) as DbCategory[];
+  const categories = useMemo(() => (data ?? []) as DbCategory[], [data]);
 
   const topLevel = useMemo(
     () => categories.filter(c => c.parent_slug === null),
