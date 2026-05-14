@@ -10,6 +10,7 @@ import FormControl from '@mui/material/FormControl';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useEvents } from '@/components/service/useEvents';
+import { useCategories } from '@/components/service/useCategories';
 import FilterPanel from '@/components/common/FilterPanel/FilterPanel';
 import EventGrid from '@/components/common/EventGrid/EventGrid';
 import EventList from '@/components/common/EventList/EventList';
@@ -43,6 +44,7 @@ function renderBody({
 
 export default function EventsListView() {
   const { events, total, isLoading, isError, isFetching, refetch, filters } = useEvents();
+  const { bySlug } = useCategories();
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -83,7 +85,7 @@ export default function EventsListView() {
     activeChips.push({ key: 'search', label: `"${filters.search}"` });
   }
   filters.categories.forEach((cat) => {
-    activeChips.push({ key: `cat-${cat}`, label: cat });
+    activeChips.push({ key: `cat-${cat}`, label: bySlug.get(cat)?.display_name ?? cat });
   });
   filters.sourceTypes.forEach((src) => {
     activeChips.push({ key: `src-${src}`, label: SOURCE_TYPE_LABELS[src] || src });

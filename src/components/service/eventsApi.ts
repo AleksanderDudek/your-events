@@ -1,7 +1,7 @@
-import { Event, CategoryItem, SourceItem } from '@/types/event.types';
+import { Event, DbCategory, SourceItem } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
-import { CATEGORY_MAIN_VALUES, SOURCE_TYPE_LABELS } from '@/lib/constants';
+import { SOURCE_TYPE_LABELS } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 
 interface SupabaseEventRow {
@@ -79,8 +79,20 @@ function mapRow(row: SupabaseEventRow): Event {
   };
 }
 
+export interface ResolvedCategoryFilter {
+  topLevelMains: string[];
+  subPairs: Array<{ main: string; sub: string }>;
+}
+
+const EMPTY_CATEGORY_FILTER: ResolvedCategoryFilter = { topLevelMains: [], subPairs: [] };
+
+function quoteForOr(value: string): string {
+  return `"${value.replace(/"/g, '\\"')}"`;
+}
+
 export async function fetchEvents(
-  filters: EventFilters
+  filters: EventFilters,
+  categoryFilter: ResolvedCategoryFilter = EMPTY_CATEGORY_FILTER
 ): Promise<{ events: Event[]; total: number }> {
   const from = (filters.page - 1) * filters.pageSize;
   const to = from + filters.pageSize - 1;
@@ -90,7 +102,23 @@ export async function fetchEvents(
   let query = supabase.from('events').select('*', { count: 'exact' });
 
   if (filters.search) query = query.ilike('name', `%${filters.search}%`);
-  if (filters.categories.length > 0) query = query.in('category_main', filters.categories);
+
+  const { topLevelMains, subPairs } = categoryFilter;
+  const hasMains = topLevelMains.length > 0;
+  const hasSubs = subPairs.length > 0;
+  if (hasMains && !hasSubs) {
+    query = query.in('category_main', topLevelMains);
+  } else if (hasSubs) {
+    const orParts: string[] = [];
+    if (hasMains) {
+      orParts.push(`category_main.in.(${topLevelMains.map(quoteForOr).join(',')})`);
+    }
+    for (const { main, sub } of subPairs) {
+      orParts.push(`and(category_main.eq.${quoteForOr(main)},category_sub.eq.${quoteForOr(sub)})`);
+    }
+    query = query.or(orParts.join(','));
+  }
+
   if (filters.dateSingle) query = query.eq('date', filters.dateSingle);
   if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
   if (filters.dateTo) query = query.lte('date', filters.dateTo);
@@ -133,8 +161,14 @@ export async function fetchEvent(id: string): Promise<Event> {
   return mapRow(data as SupabaseEventRow);
 }
 
-export async function fetchCategories(): Promise<CategoryItem[]> {
-  return CATEGORY_MAIN_VALUES.map((value) => ({ id: value, label: value }));
+export async function fetchCategories(): Promise<DbCategory[]> {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('slug, parent_slug, display_name, display_plural, icon, color, sort_order')
+    .eq('is_active', true)
+    .order('sort_order');
+  if (error) throw new ServerError(error.message);
+  return (data ?? []) as DbCategory[];
 }
 
 export async function fetchSources(): Promise<SourceItem[]> {

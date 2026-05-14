@@ -59,6 +59,16 @@ export interface CategoryItem {
   label: string;
 }
 
+export interface DbCategory {
+  slug: string;
+  parent_slug: string | null;
+  display_name: string;
+  display_plural: string;
+  icon: string;
+  color: string;
+  sort_order: number;
+}
+
 export interface SourceItem {
   id: SourceType;
   label: string;

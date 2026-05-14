@@ -9,6 +9,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import PlaceIcon from '@mui/icons-material/Place';
 import { Event } from '@/types/event.types';
+import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import StatusBadge from '@/components/ui/StatusBadge/StatusBadge';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
@@ -18,8 +19,6 @@ import styles from './EventCard.module.scss';
 interface EventCardProps {
   event: Event;
 }
-
-// category icons are used as consistent visual fallback
 
 export default function EventCard({ event }: EventCardProps) {
   const chips = [event.categoryMain, event.categorySub].filter(Boolean);
@@ -69,8 +68,8 @@ export default function EventCard({ event }: EventCardProps) {
           </Box>
 
           <Box className={styles.chips}>
-            {visibleCategories.map((cat) => (
-              <CategoryChip key={cat} category={cat} />
+            {visibleCategories.map((label) => (
+              <CategoryChip key={label} category={label} />
             ))}
             {extraCount > 0 && (
               <Typography
@@ -98,31 +97,38 @@ export default function EventCard({ event }: EventCardProps) {
 }
 
 function ImageWrapper({ event }: { event: Event }) {
-  const fallback = getCategoryIconPath(event.categoryMain || 'Inne');
+  const { byDisplayName } = useCategories();
+  const categoryData = byDisplayName.get(event.categoryMain) ?? byDisplayName.get('Inne');
+  const iconPath = getCategoryIconPath(event.categoryMain || 'inne');
   const [errored, setErrored] = useState(false);
 
-  const primarySrc = event.imageUrl;
+  if (!errored) {
+    return (
+      <Image
+        src={iconPath}
+        alt={categoryData?.display_name ?? event.categoryMain}
+        fill
+        sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        className={styles.image}
+        onError={() => setErrored(true)}
+        unoptimized
+      />
+    );
+  }
 
   return (
-    <>
-      {primarySrc && !errored ? (
-        <Image
-          src={primarySrc}
-          alt={event.name}
-          fill
-          sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className={styles.image}
-          onError={() => setErrored(true)}
-        />
-      ) : (
-        <Image
-          src={fallback}
-          alt={event.categoryMain || 'Inne'}
-          fill
-          sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className={styles.image}
-        />
-      )}
-    </>
+    <Box
+      sx={{
+        width: '100%',
+        height: '100%',
+        bgcolor: categoryData?.color ?? '#6B7280',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '3rem',
+      }}
+    >
+      {categoryData?.icon ?? '●'}
+    </Box>
   );
 }

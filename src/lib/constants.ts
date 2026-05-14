@@ -6,20 +6,6 @@ export const DEFAULT_PAGE_SIZE: PageSize = 15;
 export const PAGE_SIZE_OPTIONS: PageSize[] = [15, 30, 60];
 export const SEARCH_DEBOUNCE_MS = 1500;
 
-export const CATEGORY_MAIN_VALUES = [
-  'Taniec',
-  'Sport i Fitness',
-  'Muzyka',
-  'Film',
-  'Teatr i Widowiska',
-  'Warsztaty',
-  'Edukacja',
-  'Wellness i Duchowość',
-  'Inne',
-] as const;
-
-export type CategoryMain = (typeof CATEGORY_MAIN_VALUES)[number];
-
 export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   dance_studio: 'Szkoła tańca',
   fitness_club: 'Klub fitness',
