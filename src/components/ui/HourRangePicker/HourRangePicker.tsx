@@ -6,7 +6,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Tooltip from '@mui/material/Tooltip';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 
 interface HourRangePickerProps {
   hourFrom: string | null;
@@ -40,6 +40,7 @@ export default function HourRangePicker({
   onHourFromChange,
   onHourToChange,
 }: Readonly<HourRangePickerProps>) {
+  const { t } = useTranslation();
   const fromOptions = hourTo
     ? HOUR_OPTIONS.filter((h) => h <= hourTo)
     : HOUR_OPTIONS;
@@ -51,13 +52,13 @@ export default function HourRangePicker({
   const content = (
     <Box sx={{ display: 'flex', gap: 1, opacity: disabled ? 0.5 : 1 }}>
       <FormControl size="small" fullWidth disabled={disabled}>
-        <InputLabel sx={{ fontSize: '0.8125rem' }}>{S.FILTER_DATE_FROM}</InputLabel>
+        <InputLabel sx={{ fontSize: '0.8125rem' }}>{t.FILTER_DATE_FROM}</InputLabel>
         <Select
           value={hourFrom ?? ''}
-          label={S.FILTER_DATE_FROM}
+          label={t.FILTER_DATE_FROM}
           onChange={(e) => onHourFromChange(e.target.value || null)}
           sx={selectSx}
-          inputProps={{ 'aria-label': `${S.FILTER_HOUR} ${S.FILTER_DATE_FROM}` }}
+          inputProps={{ 'aria-label': `${t.FILTER_HOUR} ${t.FILTER_DATE_FROM}` }}
         >
           <MenuItem value=""><em>—</em></MenuItem>
           {fromOptions.map((h) => (
@@ -69,13 +70,13 @@ export default function HourRangePicker({
       </FormControl>
 
       <FormControl size="small" fullWidth disabled={disabled}>
-        <InputLabel sx={{ fontSize: '0.8125rem' }}>{S.FILTER_DATE_TO}</InputLabel>
+        <InputLabel sx={{ fontSize: '0.8125rem' }}>{t.FILTER_DATE_TO}</InputLabel>
         <Select
           value={hourTo ?? ''}
-          label={S.FILTER_DATE_TO}
+          label={t.FILTER_DATE_TO}
           onChange={(e) => onHourToChange(e.target.value || null)}
           sx={selectSx}
-          inputProps={{ 'aria-label': `${S.FILTER_HOUR} ${S.FILTER_DATE_TO}` }}
+          inputProps={{ 'aria-label': `${t.FILTER_HOUR} ${t.FILTER_DATE_TO}` }}
         >
           <MenuItem value=""><em>—</em></MenuItem>
           {toOptions.map((h) => (
@@ -90,7 +91,7 @@ export default function HourRangePicker({
 
   if (disabled) {
     return (
-      <Tooltip title={S.FILTER_HOUR_DISABLED} placement="top">
+      <Tooltip title={t.FILTER_HOUR_DISABLED} placement="top">
         <Box>{content}</Box>
       </Tooltip>
     );

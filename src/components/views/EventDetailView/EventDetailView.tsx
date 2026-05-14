@@ -21,18 +21,12 @@ import StatusBadge from '@/components/ui/StatusBadge/StatusBadge';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import { formatDate, formatTimeRange } from '@/lib/utils';
 import { AGE_GROUP_LABELS, SKILL_LEVEL_LABELS, SOURCE_TYPE_LABELS } from '@/lib/constants';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 import styles from './EventDetailView.module.scss';
 
 interface EventDetailViewProps {
   event: Event;
 }
-
-const RECURRENCE_LABELS: Record<string, string> = {
-  weekly: S.RECURRENCE_WEEKLY,
-  biweekly: S.RECURRENCE_BIWEEKLY,
-  monthly: S.RECURRENCE_MONTHLY,
-};
 
 const GRADIENT_COLORS = [
   'linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 50%, #1a1a2e 100%)',
@@ -51,6 +45,13 @@ function getGradient(id: string): string {
 
 export default function EventDetailView({ event }: EventDetailViewProps) {
   const router = useRouter();
+  const { t } = useTranslation();
+
+  const recurrenceLabels: Record<string, string> = {
+    weekly: t.RECURRENCE_WEEKLY,
+    biweekly: t.RECURRENCE_BIWEEKLY,
+    monthly: t.RECURRENCE_MONTHLY,
+  };
 
   return (
     <Box className={styles.container}>
@@ -60,7 +61,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
         className={styles.backButton}
         sx={{ color: 'var(--color-text-secondary)', mb: 2, textTransform: 'none' }}
       >
-        {S.BACK}
+        {t.BACK}
       </Button>
 
       {/* Hero */}
@@ -104,7 +105,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             <CalendarTodayIcon className={styles.detailIcon} />
             <Box>
               <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                {S.DETAIL_DATE}
+                {t.DETAIL_DATE}
               </Typography>
               <Typography variant="body1" sx={{ fontFamily: 'var(--font-mono)' }}>
                 {formatDate(event.date)}
@@ -116,7 +117,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             <AccessTimeIcon className={styles.detailIcon} />
             <Box>
               <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                {S.DETAIL_TIME}
+                {t.DETAIL_TIME}
               </Typography>
               <Typography variant="body1" sx={{ fontFamily: 'var(--font-mono)' }}>
                 {formatTimeRange(event.startTime, event.endTime)}
@@ -129,7 +130,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             <PlaceIcon className={styles.detailIcon} />
             <Box>
               <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                {S.DETAIL_LOCATION}
+                {t.DETAIL_LOCATION}
               </Typography>
               <Typography variant="body1">{event.location.name}</Typography>
               <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
@@ -143,7 +144,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
           {/* Categories */}
           <Box className={styles.detailSection}>
             <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
-              {S.DETAIL_CATEGORIES}
+              {t.DETAIL_CATEGORIES}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {[event.categoryMain, event.categorySub].filter(Boolean).map((cat) => (
@@ -156,7 +157,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
           {event.tags.length > 0 && (
             <Box className={styles.detailSection}>
               <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
-                {S.DETAIL_TAGS}
+                {t.DETAIL_TAGS}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {event.tags.map((tag) => (
@@ -180,7 +181,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
           {/* Description */}
           <Box className={styles.detailSection}>
             <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
-              {S.DETAIL_DESCRIPTION}
+              {t.DETAIL_DESCRIPTION}
             </Typography>
             <Typography
               variant="body1"
@@ -197,7 +198,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             {/* Price */}
             <Box className={styles.infoRow}>
               <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                {S.DETAIL_PRICE}
+                {t.DETAIL_PRICE}
               </Typography>
               <Box sx={{ mt: 0.5 }}>
                 <PriceLabel amount={event.price.amount} currency={event.price.currency} />
@@ -213,7 +214,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             {event.ageGroup && (
               <Box className={styles.infoRow}>
                 <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                  {S.DETAIL_AGE}
+                  {t.DETAIL_AGE}
                 </Typography>
                 <Typography variant="body2">{AGE_GROUP_LABELS[event.ageGroup]}</Typography>
               </Box>
@@ -223,7 +224,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             {event.level && (
               <Box className={styles.infoRow}>
                 <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                  {S.DETAIL_LEVEL}
+                  {t.DETAIL_LEVEL}
                 </Typography>
                 <Typography variant="body2">{SKILL_LEVEL_LABELS[event.level]}</Typography>
               </Box>
@@ -235,7 +236,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                 <PersonIcon sx={{ fontSize: 16, color: 'var(--color-text-muted)', mr: 0.5 }} />
                 <Box>
                   <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                    {S.DETAIL_INSTRUCTOR}
+                    {t.DETAIL_INSTRUCTOR}
                   </Typography>
                   <Typography variant="body2">{event.instructor}</Typography>
                 </Box>
@@ -248,7 +249,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                 <GroupIcon sx={{ fontSize: 16, color: 'var(--color-text-muted)', mr: 0.5 }} />
                 <Box>
                   <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                    {S.DETAIL_CAPACITY}
+                    {t.DETAIL_CAPACITY}
                   </Typography>
                   <Typography variant="body2">{event.capacity}</Typography>
                 </Box>
@@ -261,10 +262,10 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                 <RepeatIcon sx={{ fontSize: 16, color: 'var(--color-text-muted)', mr: 0.5 }} />
                 <Box>
                   <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                    {S.DETAIL_RECURRENCE}
+                    {t.DETAIL_RECURRENCE}
                   </Typography>
                   <Typography variant="body2">
-                    {RECURRENCE_LABELS[event.recurrenceRule] || event.recurrenceRule}
+                    {recurrenceLabels[event.recurrenceRule] || event.recurrenceRule}
                   </Typography>
                 </Box>
               </Box>
@@ -275,7 +276,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             {/* Source */}
             <Box className={styles.infoRow}>
               <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                {S.DETAIL_SOURCE}
+                {t.DETAIL_SOURCE}
               </Typography>
               <Typography variant="body2">{event.sourceName}</Typography>
               <Chip
@@ -301,7 +302,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               fullWidth
               sx={{ mt: 2, minHeight: 44 }}
             >
-              {S.EXTERNAL_LINK}
+              {t.EXTERNAL_LINK}
             </Button>
           </Box>
         </Box>

@@ -1,12 +1,14 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import EventsListView from '@/components/views/EventsListView/EventsListView';
-import { S } from '@/lib/strings';
+import { messages, DEFAULT_LOCALE } from '@/i18n';
 import EventsListLoading from './loading';
 
+// Server-side metadata is rendered at build time and can't react to the
+// user's locale choice — default to Polish, matching DEFAULT_LOCALE.
 export const metadata: Metadata = {
-  title: S.META_EVENTS_TITLE,
-  description: S.META_DESCRIPTION,
+  title: messages[DEFAULT_LOCALE].META_EVENTS_TITLE,
+  description: messages[DEFAULT_LOCALE].META_DESCRIPTION,
 };
 
 export default function EventsPage() {

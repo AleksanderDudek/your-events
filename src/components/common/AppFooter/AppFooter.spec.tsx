@@ -18,7 +18,7 @@ describe('AppFooter', () => {
   it('displays copyright with current year', () => {
     render(<AppFooter />);
     const year = new Date().getFullYear();
-    expect(screen.getByText(`© ${year} your-events`)).toBeInTheDocument();
+    expect(screen.getByText(`© ${year} Idź na miasto`)).toBeInTheDocument();
   });
 
   it('shows source chips', () => {

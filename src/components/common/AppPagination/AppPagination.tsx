@@ -11,7 +11,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { PageSize } from '@/types/filter.types';
 import { PAGE_SIZE_OPTIONS } from '@/lib/constants';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 import { totalPages } from '@/lib/utils';
 import styles from './AppPagination.module.scss';
 
@@ -30,6 +30,7 @@ export default function AppPagination({
   onPageChange,
   onPageSizeChange,
 }: AppPaginationProps) {
+  const { t } = useTranslation();
   const muiTheme = useTheme();
   const isSmUp = useMediaQuery(muiTheme.breakpoints.up('sm'));
   const pages = totalPages(total, pageSize);
@@ -49,7 +50,7 @@ export default function AppPagination({
   return (
     <Box className={styles.container}>
       <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
-        {S.RESULTS_PAGE(page, pages)}
+        {t.RESULTS_PAGE(page, pages)}
       </Typography>
 
       <Pagination
@@ -69,12 +70,12 @@ export default function AppPagination({
 
       <FormControl size="small" sx={{ minWidth: 100 }}>
         <InputLabel id="page-size-label" sx={{ fontSize: '0.8125rem' }}>
-          {S.PAGE_SIZE_LABEL}
+          {t.PAGE_SIZE_LABEL}
         </InputLabel>
         <Select
           labelId="page-size-label"
           value={pageSize}
-          label={S.PAGE_SIZE_LABEL}
+          label={t.PAGE_SIZE_LABEL}
           onChange={(e) => onPageSizeChange(Number(e.target.value) as PageSize)}
           sx={{ fontSize: '0.8125rem' }}
         >

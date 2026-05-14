@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Link from '@mui/material/Link';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 import { SOURCE_TYPE_LABELS } from '@/lib/constants';
 import { SourceType } from '@/types/event.types';
 import styles from './AppFooter.module.scss';
@@ -19,6 +19,7 @@ const SOURCE_CHIPS: SourceType[] = [
 ];
 
 export default function AppFooter() {
+  const { t } = useTranslation();
   const year = new Date().getFullYear();
 
   return (
@@ -34,14 +35,10 @@ export default function AppFooter() {
               mb: 0.5,
             }}
           >
-            your
-            <Box component="span" sx={{ color: 'var(--color-accent-primary)', mx: '2px' }}>
-              ·
-            </Box>
-            events
+            {t.APP_NAME}
           </Typography>
           <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
-            {S.APP_TAGLINE}
+            {t.APP_TAGLINE}
           </Typography>
         </Box>
 
@@ -50,7 +47,7 @@ export default function AppFooter() {
             variant="overline"
             sx={{ color: 'var(--color-text-muted)', mb: 1, display: 'block' }}
           >
-            {S.FOOTER_SOURCES}
+            {t.FOOTER_SOURCES}
           </Typography>
           <Box className={styles.chips}>
             {SOURCE_CHIPS.map((source) => (
@@ -76,14 +73,14 @@ export default function AppFooter() {
               underline="hover"
               sx={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}
             >
-              {S.FOOTER_PRIVACY}
+              {t.FOOTER_PRIVACY}
             </Link>
             <Link
               href="#"
               underline="hover"
               sx={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}
             >
-              {S.FOOTER_CONTACT}
+              {t.FOOTER_CONTACT}
             </Link>
           </Box>
         </Box>
@@ -91,7 +88,7 @@ export default function AppFooter() {
 
       <Box className={styles.bottom}>
         <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-          {S.FOOTER_COPYRIGHT(year)}
+          {t.FOOTER_COPYRIGHT(year)}
         </Typography>
       </Box>
     </Box>

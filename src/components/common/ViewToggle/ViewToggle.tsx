@@ -5,7 +5,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import GridViewIcon from '@mui/icons-material/GridView';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import { ViewMode } from '@/types/filter.types';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 
 interface ViewToggleProps {
   value: ViewMode;
@@ -13,6 +13,7 @@ interface ViewToggleProps {
 }
 
 export default function ViewToggle({ value, onChange }: ViewToggleProps) {
+  const { t } = useTranslation();
   const handleChange = (_: React.MouseEvent<HTMLElement>, newMode: ViewMode | null) => {
     if (newMode) {
       onChange(newMode);
@@ -39,10 +40,10 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
         },
       }}
     >
-      <ToggleButton value="grid" aria-label={S.VIEW_GRID} aria-pressed={value === 'grid'}>
+      <ToggleButton value="grid" aria-label={t.VIEW_GRID} aria-pressed={value === 'grid'}>
         <GridViewIcon fontSize="small" />
       </ToggleButton>
-      <ToggleButton value="row" aria-label={S.VIEW_LIST} aria-pressed={value === 'row'}>
+      <ToggleButton value="row" aria-label={t.VIEW_LIST} aria-pressed={value === 'row'}>
         <ViewListIcon fontSize="small" />
       </ToggleButton>
     </ToggleButtonGroup>

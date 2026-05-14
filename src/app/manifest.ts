@@ -1,13 +1,14 @@
 import type { MetadataRoute } from 'next';
+import { messages, DEFAULT_LOCALE } from '@/i18n';
 
 export const dynamic = 'force-static';
 
 export default function manifest(): MetadataRoute.Manifest {
+  const m = messages[DEFAULT_LOCALE];
   return {
-    name: 'your-events',
-    short_name: 'your-events',
-    description:
-      'Odkryj najlepsze wydarzenia w Szczecinie — taniec, fitness, warsztaty kulinarne, koncerty i więcej.',
+    name: m.APP_NAME,
+    short_name: m.APP_NAME,
+    description: m.META_DESCRIPTION,
     start_url: '/your-events/',
     display: 'standalone',
     background_color: '#ffffff',

@@ -6,7 +6,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 import { SEARCH_DEBOUNCE_MS } from '@/lib/constants';
 
 interface SearchInputProps {
@@ -15,6 +15,7 @@ interface SearchInputProps {
 }
 
 export default function SearchInput({ value, onChange }: SearchInputProps) {
+  const { t } = useTranslation();
   const [localValue, setLocalValue] = useState(value);
 
   useEffect(() => {
@@ -41,8 +42,8 @@ export default function SearchInput({ value, onChange }: SearchInputProps) {
       size="small"
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
-      placeholder={S.SEARCH_PLACEHOLDER}
-      aria-label={S.SEARCH_LABEL}
+      placeholder={t.SEARCH_PLACEHOLDER}
+      aria-label={t.SEARCH_LABEL}
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">

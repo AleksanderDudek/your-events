@@ -3,7 +3,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { EventStatus } from '@/types/event.types';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 import styles from './StatusBadge.module.scss';
 
 interface StatusBadgeProps {
@@ -11,31 +11,41 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const STATUS_CONFIG: Record<EventStatus, { label: string; color: string }> = {
-  active: { label: S.STATUS_ACTIVE, color: 'var(--color-status-active)' },
-  few_spots: { label: S.STATUS_FEW, color: 'var(--color-status-few)' },
-  sold_out: { label: S.STATUS_SOLD, color: 'var(--color-status-sold)' },
-  cancelled: { label: S.STATUS_CANCELLED, color: 'var(--color-status-cancelled)' },
+const STATUS_COLOR: Record<EventStatus, string> = {
+  active: 'var(--color-status-active)',
+  few_spots: 'var(--color-status-few)',
+  sold_out: 'var(--color-status-sold)',
+  cancelled: 'var(--color-status-cancelled)',
 };
 
 export default function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = STATUS_CONFIG[status];
+  const { t } = useTranslation();
+
+  const labelByStatus: Record<EventStatus, string> = {
+    active: t.STATUS_ACTIVE,
+    few_spots: t.STATUS_FEW,
+    sold_out: t.STATUS_SOLD,
+    cancelled: t.STATUS_CANCELLED,
+  };
+
+  const color = STATUS_COLOR[status];
+  const label = labelByStatus[status];
 
   return (
     <Box className={`${styles.badge} ${className ?? ''}`} component="span">
       <Box
         component="span"
         className={styles.dot}
-        sx={{ backgroundColor: config.color }}
+        sx={{ backgroundColor: color }}
         aria-hidden="true"
       />
       <Typography
         component="span"
         variant="caption"
         className={styles.label}
-        sx={{ color: config.color }}
+        sx={{ color }}
       >
-        {config.label}
+        {label}
       </Typography>
     </Box>
   );

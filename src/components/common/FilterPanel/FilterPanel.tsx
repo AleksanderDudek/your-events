@@ -28,7 +28,7 @@ import {
   getDefaultFilters,
 } from '@/lib/filterUtils';
 import { SOURCE_TYPE_LABELS } from '@/lib/constants';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 import { useCategories } from '@/components/service/useCategories';
 import SearchInput from '@/components/ui/SearchInput/SearchInput';
 import DateRangePicker from '@/components/ui/DateRangePicker/DateRangePicker';
@@ -40,6 +40,7 @@ export default function FilterPanel() {
   const searchParams = useSearchParams();
   const filters = parseFiltersFromParams(searchParams);
   const activeCount = countActiveFilters(filters);
+  const { t } = useTranslation();
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -99,14 +100,14 @@ export default function FilterPanel() {
   );
 
   const filterContent = (
-    <Box className={styles.content} aria-label={S.FILTER_TITLE} role="search">
+    <Box className={styles.content} aria-label={t.FILTER_TITLE} role="search">
       <Box className={styles.header}>
         <Typography variant="h6" component="p" sx={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>
-          {S.FILTER_TITLE}
+          {t.FILTER_TITLE}
         </Typography>
         {activeCount > 0 && (
           <Button size="small" onClick={clearFilters} sx={{ color: 'var(--color-accent-primary)' }}>
-            {S.FILTER_CLEAR}
+            {t.FILTER_CLEAR}
           </Button>
         )}
       </Box>
@@ -129,7 +130,7 @@ export default function FilterPanel() {
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
             <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
-              {S.FILTER_CATEGORIES}
+              {t.FILTER_CATEGORIES}
             </Typography>
           </Badge>
         </AccordionSummary>
@@ -168,7 +169,7 @@ export default function FilterPanel() {
                       <IconButton
                         size="small"
                         onClick={() => toggleExpanded(cat.slug)}
-                        aria-label={isExp ? 'Zwiń' : 'Rozwiń'}
+                        aria-label={isExp ? t.FILTER_COLLAPSE : t.FILTER_EXPAND}
                         sx={{ color: 'var(--color-text-muted)', mr: 0.5 }}
                       >
                         <ExpandMoreIcon
@@ -230,7 +231,7 @@ export default function FilterPanel() {
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
             <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
-              {S.FILTER_SOURCE}
+              {t.FILTER_SOURCE}
             </Typography>
           </Badge>
         </AccordionSummary>
@@ -268,7 +269,7 @@ export default function FilterPanel() {
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
             <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
-              {S.FILTER_DATE}
+              {t.FILTER_DATE}
             </Typography>
           </Badge>
         </AccordionSummary>
@@ -297,7 +298,7 @@ export default function FilterPanel() {
             sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
           >
             <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
-              {S.FILTER_HOUR}
+              {t.FILTER_HOUR}
             </Typography>
           </Badge>
         </AccordionSummary>
@@ -324,7 +325,7 @@ export default function FilterPanel() {
         color="primary"
         onClick={() => setDrawerOpen(true)}
         className={styles.fab}
-        aria-label={S.FILTER_TRIGGER(activeCount)}
+        aria-label={t.FILTER_TRIGGER(activeCount)}
         sx={{
           position: 'fixed',
           bottom: 24,
@@ -360,7 +361,7 @@ export default function FilterPanel() {
             }}
             sx={{ flex: 1 }}
           >
-            {S.FILTER_CLEAR}
+            {t.FILTER_CLEAR}
           </Button>
           <Button
             variant="contained"
@@ -368,7 +369,7 @@ export default function FilterPanel() {
             onClick={() => setDrawerOpen(false)}
             sx={{ flex: 1 }}
           >
-            {S.FILTER_APPLY}
+            {t.FILTER_APPLY}
           </Button>
         </Box>
       </Drawer>

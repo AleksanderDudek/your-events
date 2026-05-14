@@ -17,19 +17,21 @@ import CloseIcon from '@mui/icons-material/Close';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
+import LanguageSwitcher from './LanguageSwitcher';
 import styles from './AppHeader.module.scss';
-
-const NAV_ITEMS = [
-  { label: S.NAV_HOME, href: '/' as const },
-  { label: S.NAV_EVENTS, href: '/events' as const },
-];
 
 export default function AppHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pathname = usePathname();
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
+  const { t } = useTranslation();
+
+  const navItems = [
+    { label: t.NAV_HOME, href: '/' as const },
+    { label: t.NAV_EVENTS, href: '/events' as const },
+  ];
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -69,20 +71,13 @@ export default function AppHeader() {
               letterSpacing: '-0.01em',
             }}
           >
-            your
-            <Box
-              component="span"
-              sx={{ color: 'var(--color-accent-primary)', mx: '2px' }}
-            >
-              ·
-            </Box>
-            events
+            {t.APP_NAME}
           </Typography>
         </Link>
 
         {isMdUp ? (
-          <Box component="nav" aria-label="Główna nawigacja" className={styles.nav}>
-            {NAV_ITEMS.map((item) => (
+          <Box component="nav" aria-label={t.NAV_MAIN} className={styles.nav}>
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -91,12 +86,14 @@ export default function AppHeader() {
                 {item.label}
               </Link>
             ))}
+            <LanguageSwitcher />
           </Box>
         ) : (
-          <>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <LanguageSwitcher />
             <IconButton
               onClick={() => setDrawerOpen(true)}
-              aria-label="Otwórz menu"
+              aria-label={t.NAV_OPEN_MENU}
               sx={{ color: 'var(--color-text-primary)' }}
             >
               <MenuIcon />
@@ -112,15 +109,15 @@ export default function AppHeader() {
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 1 }}>
                 <IconButton
                   onClick={() => setDrawerOpen(false)}
-                  aria-label="Zamknij menu"
+                  aria-label={t.NAV_CLOSE_MENU}
                   sx={{ color: 'var(--color-text-primary)' }}
                 >
                   <CloseIcon />
                 </IconButton>
               </Box>
-              <Box component="nav" aria-label="Główna nawigacja">
+              <Box component="nav" aria-label={t.NAV_MAIN}>
                 <List>
-                  {NAV_ITEMS.map((item) => (
+                  {navItems.map((item) => (
                     <ListItem key={item.href} disablePadding>
                       <ListItemButton
                         component={Link}
@@ -147,7 +144,7 @@ export default function AppHeader() {
                 </List>
               </Box>
             </Drawer>
-          </>
+          </Box>
         )}
       </Toolbar>
     </AppBar>

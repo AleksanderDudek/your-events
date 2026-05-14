@@ -3,7 +3,7 @@
 import Box from '@mui/material/Box';
 import AppHeader from '@/components/common/AppHeader/AppHeader';
 import AppFooter from '@/components/common/AppFooter/AppFooter';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 import styles from './AppLayout.module.scss';
 
 interface AppLayoutProps {
@@ -11,10 +11,11 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  const { t } = useTranslation();
   return (
     <Box className={styles.layout}>
       <a href="#main-content" className={styles.skipLink}>
-        {S.SKIP_TO_CONTENT}
+        {t.SKIP_TO_CONTENT}
       </a>
       <AppHeader />
       <Box component="main" id="main-content" className={styles.main} tabIndex={-1}>

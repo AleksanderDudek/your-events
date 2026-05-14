@@ -1,23 +1,27 @@
 import type { Metadata } from 'next';
 import Providers from './providers';
 import AppLayout from '@/components/common/AppLayout/AppLayout';
-import { S } from '@/lib/strings';
+import { messages, DEFAULT_LOCALE } from '@/i18n';
 import './globals.scss';
+
+// Server-side metadata is rendered at build time. Locale switching happens
+// in the browser, so the static HTML / SEO tags ship in DEFAULT_LOCALE (pl).
+const m = messages[DEFAULT_LOCALE];
 
 export const metadata: Metadata = {
   title: {
-    default: S.APP_NAME,
-    template: `%s | ${S.APP_NAME}`,
+    default: m.APP_NAME,
+    template: `%s | ${m.APP_NAME}`,
   },
-  description: S.META_DESCRIPTION,
+  description: m.META_DESCRIPTION,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'YourEvents',
+    title: m.APP_NAME,
   },
   openGraph: {
-    title: S.APP_NAME,
-    description: S.META_DESCRIPTION,
+    title: m.APP_NAME,
+    description: m.META_DESCRIPTION,
     locale: 'pl_PL',
     type: 'website',
   },
@@ -29,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pl">
+    <html lang={DEFAULT_LOCALE}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -41,7 +45,7 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/your-events/favicons/favicon.svg" />
         <link rel="shortcut icon" href="/your-events/favicons/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/your-events/favicons/apple-touch-icon.png" />
-        <meta name="apple-mobile-web-app-title" content="YourEvents" />
+        <meta name="apple-mobile-web-app-title" content={m.APP_NAME} />
         <link rel="manifest" href="/your-events/favicons/site.webmanifest" />
         {process.env.NODE_ENV === 'production' && (
           <script

@@ -1,0 +1,45 @@
+'use client';
+
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import { Locale, useTranslation } from '@/i18n';
+
+export default function LanguageSwitcher() {
+  const { locale, setLocale, t } = useTranslation();
+
+  const handleChange = (_: React.MouseEvent<HTMLElement>, next: Locale | null) => {
+    if (next && next !== locale) setLocale(next);
+  };
+
+  return (
+    <ToggleButtonGroup
+      value={locale}
+      exclusive
+      onChange={handleChange}
+      size="small"
+      aria-label={t.LANG_LABEL}
+      sx={{
+        ml: 1,
+        '& .MuiToggleButton-root': {
+          color: 'var(--color-text-muted)',
+          borderColor: 'var(--color-border)',
+          padding: '2px 8px',
+          minWidth: 36,
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.6875rem',
+          fontWeight: 600,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(244, 162, 40, 0.15)',
+            color: 'var(--color-accent-primary)',
+            borderColor: 'var(--color-accent-primary)',
+          },
+        },
+      }}
+    >
+      <ToggleButton value="pl" aria-label={t.LANG_PL}>PL</ToggleButton>
+      <ToggleButton value="en" aria-label={t.LANG_EN}>EN</ToggleButton>
+    </ToggleButtonGroup>
+  );
+}

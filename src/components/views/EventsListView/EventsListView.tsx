@@ -20,7 +20,7 @@ import EmptyState from '@/components/ui/EmptyState/EmptyState';
 import ErrorState from '@/components/ui/ErrorState/ErrorState';
 import { filtersToSearchParams, getDefaultFilters, countActiveFilters } from '@/lib/filterUtils';
 import { SOURCE_TYPE_LABELS, PAGE_SIZE_OPTIONS } from '@/lib/constants';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 import { PageSize, ViewMode, EventFilters } from '@/types/filter.types';
 import { Event } from '@/types/event.types';
 import styles from './EventsListView.module.scss';
@@ -45,6 +45,7 @@ function renderBody({
 export default function EventsListView() {
   const { events, total, isLoading, isError, isFetching, refetch, filters } = useEvents();
   const { bySlug } = useCategories();
+  const { t } = useTranslation();
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -115,7 +116,7 @@ export default function EventsListView() {
               aria-live="polite"
               sx={{ color: 'var(--color-text-secondary)' }}
             >
-              {S.RESULTS_COUNT(total)}
+              {t.RESULTS_COUNT(total)}
             </Typography>
             {isFetching && !isLoading && (
               <CircularProgress size={16} sx={{ color: 'var(--color-accent-primary)', ml: 1 }} />
@@ -134,7 +135,7 @@ export default function EventsListView() {
                   updateFilter({ pageSize: Number(e.target.value) as PageSize })
                 }
                 sx={{ fontSize: '0.8125rem' }}
-                SelectDisplayProps={{ 'aria-label': S.PAGE_SIZE_LABEL }}
+                SelectDisplayProps={{ 'aria-label': t.PAGE_SIZE_LABEL }}
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <MenuItem key={size} value={size}>

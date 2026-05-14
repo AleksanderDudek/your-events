@@ -1,7 +1,7 @@
 'use client';
 
 import Typography from '@mui/material/Typography';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 
 interface PriceLabelProps {
   amount: number | null;
@@ -10,6 +10,7 @@ interface PriceLabelProps {
 }
 
 export default function PriceLabel({ amount, currency, className }: PriceLabelProps) {
+  const { t } = useTranslation();
   if (amount === null) {
     return (
       <Typography
@@ -18,7 +19,7 @@ export default function PriceLabel({ amount, currency, className }: PriceLabelPr
         className={className}
         sx={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}
       >
-        {S.PRICE_UNKNOWN}
+        {t.PRICE_UNKNOWN}
       </Typography>
     );
   }
@@ -31,7 +32,7 @@ export default function PriceLabel({ amount, currency, className }: PriceLabelPr
         className={className}
         sx={{ color: 'var(--color-status-active)', fontWeight: 600 }}
       >
-        {S.PRICE_FREE}
+        {t.PRICE_FREE}
       </Typography>
     );
   }

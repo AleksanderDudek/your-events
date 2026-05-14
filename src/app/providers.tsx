@@ -8,6 +8,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { pl } from 'date-fns/locale';
 import { theme } from '@/styles/theme';
+import { LocaleProvider } from '@/i18n';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -30,12 +31,14 @@ export default function Providers({ children }: Readonly<ProvidersProps>) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={pl}>
-          <CssBaseline />
-          {children}
-        </LocalizationProvider>
-      </ThemeProvider>
+      <LocaleProvider>
+        <ThemeProvider theme={theme}>
+          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={pl}>
+            <CssBaseline />
+            {children}
+          </LocalizationProvider>
+        </ThemeProvider>
+      </LocaleProvider>
     </QueryClientProvider>
   );
 }

@@ -5,7 +5,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { format, parseISO, isValid } from 'date-fns';
-import { S } from '@/lib/strings';
+import { useTranslation } from '@/i18n';
 import { DateMode } from '@/types/filter.types';
 
 interface DateRangePickerProps {
@@ -53,6 +53,7 @@ export default function DateRangePicker({
   onDateFromChange,
   onDateToChange,
 }: Readonly<DateRangePickerProps>) {
+  const { t } = useTranslation();
   const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: string | null) => {
     if (newMode === null) {
       onDateModeChange(null);
@@ -87,13 +88,13 @@ export default function DateRangePicker({
           },
         }}
       >
-        <ToggleButton value="single">{S.FILTER_DATE_SINGLE}</ToggleButton>
-        <ToggleButton value="range">{S.FILTER_DATE_RANGE}</ToggleButton>
+        <ToggleButton value="single">{t.FILTER_DATE_SINGLE}</ToggleButton>
+        <ToggleButton value="range">{t.FILTER_DATE_RANGE}</ToggleButton>
       </ToggleButtonGroup>
 
       {dateMode === 'single' && (
         <DatePicker
-          label={S.FILTER_DATE_SINGLE}
+          label={t.FILTER_DATE_SINGLE}
           value={toDate(dateSingle)}
           onChange={(date) => onDateSingleChange(fromDate(date))}
           slotProps={pickerSlotProps}
@@ -103,14 +104,14 @@ export default function DateRangePicker({
       {dateMode === 'range' && (
         <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
           <DatePicker
-            label={S.FILTER_DATE_FROM}
+            label={t.FILTER_DATE_FROM}
             value={toDate(dateFrom)}
             onChange={(date) => onDateFromChange(fromDate(date))}
             maxDate={toDate(dateTo) ?? undefined}
             slotProps={pickerSlotProps}
           />
           <DatePicker
-            label={S.FILTER_DATE_TO}
+            label={t.FILTER_DATE_TO}
             value={toDate(dateTo)}
             onChange={(date) => onDateToChange(fromDate(date))}
             minDate={toDate(dateFrom) ?? undefined}
