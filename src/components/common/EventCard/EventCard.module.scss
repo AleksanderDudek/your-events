@@ -20,8 +20,16 @@
 .imageWrapper {
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 140px;
   overflow: hidden;
+
+  @include sm {
+    height: 160px;
+  }
+
+  @include md {
+    height: 180px;
+  }
 }
 
 .image {
@@ -43,17 +51,26 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
-  padding: 16px !important;
+  padding: 12px 14px !important;
+
+  @include md {
+    gap: 8px;
+    padding: 16px !important;
+  }
 }
 
 .name {
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   line-height: 1.3;
   color: var(--color-text-primary);
+
+  @include md {
+    font-size: 1rem;
+  }
 
   @include motion-safe {
     transition: color var(--transition-base);

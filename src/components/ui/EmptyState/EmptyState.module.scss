@@ -1,11 +1,18 @@
+@use '../../../styles/mixins' as *;
+
 .container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 64px 24px;
-  min-height: 300px;
+  padding: 32px 16px;
+  min-height: 240px;
+
+  @include md {
+    padding: 64px 24px;
+    min-height: 300px;
+  }
 }
 
 .icon {

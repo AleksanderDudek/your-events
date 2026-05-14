@@ -93,44 +93,40 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
       {/* Detail grid */}
       <Box className={styles.detailGrid}>
         <Box className={styles.detailMain}>
-          {/* Date */}
+          {/* Date + Time combined into a single compact line */}
           <Box className={styles.detailRow}>
             <CalendarTodayIcon className={styles.detailIcon} />
-            <Box>
-              <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
+            <Box className={styles.detailRowBody}>
+              <Typography variant="caption" className={styles.detailLabel}>
                 {t.DETAIL_DATE}
               </Typography>
-              <Typography variant="body1" sx={{ fontFamily: 'var(--font-mono)' }}>
+              <Typography className={styles.detailValue} sx={{ fontFamily: 'var(--font-mono)' }}>
                 {formatDate(event.date)}
+                {time && (
+                  <>
+                    <Box component="span" className={styles.metaSeparator} aria-hidden="true">
+                      ·
+                    </Box>
+                    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <AccessTimeIcon sx={{ fontSize: '0.95em' }} />
+                      {time}
+                    </Box>
+                  </>
+                )}
               </Typography>
             </Box>
           </Box>
 
-          {/* Time */}
-          {time && (
-            <Box className={styles.detailRow}>
-              <AccessTimeIcon className={styles.detailIcon} />
-              <Box>
-                <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                  {t.DETAIL_TIME}
-                </Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'var(--font-mono)' }}>
-                  {time}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-
           {/* Location */}
           <Box className={styles.detailRow}>
             <PlaceIcon className={styles.detailIcon} />
-            <Box>
-              <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
+            <Box className={styles.detailRowBody}>
+              <Typography variant="caption" className={styles.detailLabel}>
                 {t.DETAIL_LOCATION}
               </Typography>
-              <Typography variant="body1">{event.location.name}</Typography>
+              <Typography className={styles.detailValue}>{event.location.name}</Typography>
               {event.location.city && (
-                <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
+                <Typography variant="body2" className={styles.detailSub}>
                   {event.location.city}
                 </Typography>
               )}
@@ -141,7 +137,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   startIcon={<MapIcon />}
-                  sx={{ mt: 1, textTransform: 'none', color: 'var(--color-accent-primary)' }}
+                  sx={{ mt: 0.5, textTransform: 'none', color: 'var(--color-accent-primary)', minHeight: 0, p: 0 }}
                 >
                   {t.OPEN_IN_MAPS}
                 </Button>
@@ -149,15 +145,13 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             </Box>
           </Box>
 
-          <Divider sx={{ borderColor: 'var(--color-border)', my: 2 }} />
-
           {/* Categories */}
           {categoryChips.length > 0 && (
             <Box className={styles.detailSection}>
-              <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
+              <Typography variant="caption" className={styles.detailLabel} sx={{ display: 'block', mb: 0.75 }}>
                 {t.DETAIL_CATEGORIES}
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                 {categoryChips.map((cat) => (
                   <CategoryChip key={cat} category={cat} />
                 ))}
@@ -168,14 +162,14 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
           {/* Description — only when present */}
           {description && (
             <>
-              <Divider sx={{ borderColor: 'var(--color-border)', my: 2 }} />
+              <Divider sx={{ borderColor: 'var(--color-border)', my: { xs: 1.5, md: 2 } }} />
               <Box className={styles.detailSection}>
-                <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
+                <Typography variant="caption" className={styles.detailLabel} sx={{ display: 'block', mb: 0.75 }}>
                   {t.DETAIL_DESCRIPTION}
                 </Typography>
                 <Typography
-                  variant="body1"
-                  sx={{ color: 'var(--color-text-primary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}
+                  className={styles.description}
+                  sx={{ color: 'var(--color-text-primary)', whiteSpace: 'pre-wrap' }}
                 >
                   {description}
                 </Typography>
@@ -184,69 +178,72 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
           )}
         </Box>
 
-        {/* Sidebar info */}
+        {/* Sidebar info — appears under hero on mobile via CSS order */}
         <Box className={styles.detailSidebar}>
           <Box className={styles.infoCard}>
-            {/* Price */}
-            <Box className={styles.infoRow}>
-              <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
-                {t.DETAIL_PRICE}
-              </Typography>
-              <Box sx={{ mt: 0.5 }}>
-                <PriceLabel amount={event.price.amount} currency={event.price.currency} />
-                {priceLabel && event.price.amount === null && (
-                  <Typography variant="caption" display="block" sx={{ color: 'var(--color-text-muted)', mt: 0.5 }}>
-                    {priceLabel}
-                  </Typography>
-                )}
+            <Box className={styles.priceCtaRow}>
+              {/* Price */}
+              <Box className={styles.infoRow}>
+                <Typography variant="caption" className={styles.detailLabel}>
+                  {t.DETAIL_PRICE}
+                </Typography>
+                <Box sx={{ mt: 0.25 }}>
+                  <PriceLabel amount={event.price.amount} currency={event.price.currency} />
+                  {priceLabel && event.price.amount === null && (
+                    <Typography variant="caption" display="block" sx={{ color: 'var(--color-text-muted)', mt: 0.25 }}>
+                      {priceLabel}
+                    </Typography>
+                  )}
+                </Box>
               </Box>
-            </Box>
 
-            <Divider sx={{ borderColor: 'var(--color-border)', my: 2 }} />
+              {/* External Link — only when the source URL is real */}
+              {hasUrl && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  href={event.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  endIcon={<OpenInNewIcon />}
+                  className={styles.externalLink}
+                  sx={{ minHeight: 44 }}
+                >
+                  {t.EXTERNAL_LINK}
+                </Button>
+              )}
+            </Box>
 
             {/* Sources */}
             {event.sources.length > 0 && (
-              <Box className={styles.infoRow}>
-                <Typography variant="caption" sx={{ color: 'var(--color-text-muted)', display: 'block', mb: 1 }}>
-                  {t.LISTED_ON}
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {event.sources.map((source) => (
-                    <Chip
-                      key={source}
-                      label={source}
-                      size="small"
-                      sx={{
-                        backgroundColor: 'var(--color-bg-elevated)',
-                        color: 'var(--color-text-secondary)',
-                        fontSize: '0.6875rem',
-                      }}
-                    />
-                  ))}
+              <>
+                <Divider sx={{ borderColor: 'var(--color-border)', my: { xs: 1.25, md: 2 } }} />
+                <Box className={styles.infoRow}>
+                  <Typography variant="caption" className={styles.detailLabel} sx={{ display: 'block', mb: 0.75 }}>
+                    {t.LISTED_ON}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {event.sources.map((source) => (
+                      <Chip
+                        key={source}
+                        label={source}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'var(--color-bg-elevated)',
+                          color: 'var(--color-text-secondary)',
+                          fontSize: '0.6875rem',
+                        }}
+                      />
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
-            )}
-
-            {/* External Link — only when the source URL is real */}
-            {hasUrl && (
-              <Button
-                variant="contained"
-                color="primary"
-                href={event.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                endIcon={<OpenInNewIcon />}
-                fullWidth
-                sx={{ mt: 2, minHeight: 44 }}
-              >
-                {t.EXTERNAL_LINK}
-              </Button>
+              </>
             )}
 
             {updatedAt && (
               <Typography
                 variant="caption"
-                sx={{ color: 'var(--color-text-muted)', display: 'block', mt: 2, textAlign: 'center' }}
+                sx={{ color: 'var(--color-text-muted)', display: 'block', mt: 1.5, textAlign: 'center' }}
               >
                 {t.LAST_UPDATED(updatedAt)}
               </Typography>
