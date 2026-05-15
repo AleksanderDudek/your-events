@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useTransition } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -43,7 +43,6 @@ export default function FilterPanel() {
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [, startTransition] = useTransition();
 
   const { topLevel, byParent } = useCategories();
 
@@ -56,35 +55,46 @@ export default function FilterPanel() {
     });
   }, []);
 
+  // Always merge against the *live* URL, not a closure-captured snapshot.
+  // Without this, a quick "Clear → re-select category" sequence would merge
+  // the new category back into the pre-clear filters (because React hasn't
+  // re-rendered FilterPanel yet), resurrecting the date/hour filters the
+  // user just cleared.
+  const readCurrentFilters = useCallback(() => {
+    const live =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams();
+    return parseFiltersFromParams(live);
+  }, []);
+
   const updateFilters = useCallback(
     (updates: Partial<EventFilters>) => {
-      const newFilters = { ...filters, ...updates, page: 1 };
+      const newFilters = { ...readCurrentFilters(), ...updates, page: 1 };
       const params = filtersToSearchParams(newFilters);
-      startTransition(() => {
-        router.push(`/events?${params.toString()}`);
-      });
+      router.push(`/events?${params.toString()}`);
     },
-    [filters, router]
+    [readCurrentFilters, router]
   );
 
   const clearFilters = useCallback(() => {
+    const current = readCurrentFilters();
     const defaults = getDefaultFilters();
-    defaults.viewMode = filters.viewMode;
-    defaults.pageSize = filters.pageSize;
+    defaults.viewMode = current.viewMode;
+    defaults.pageSize = current.pageSize;
     const params = filtersToSearchParams(defaults);
-    startTransition(() => {
-      router.push(`/events?${params.toString()}`);
-    });
-  }, [filters.viewMode, filters.pageSize, router]);
+    router.push(`/events?${params.toString()}`);
+  }, [readCurrentFilters, router]);
 
   const handleCategoryToggle = useCallback(
     (slug: string) => {
-      const cats = filters.categories.includes(slug)
-        ? filters.categories.filter((c) => c !== slug)
-        : [...filters.categories, slug];
+      const current = readCurrentFilters();
+      const cats = current.categories.includes(slug)
+        ? current.categories.filter((c) => c !== slug)
+        : [...current.categories, slug];
       updateFilters({ categories: cats });
     },
-    [filters.categories, updateFilters]
+    [readCurrentFilters, updateFilters]
   );
 
   const filterContent = (

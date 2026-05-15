@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useTransition } from 'react';
+import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -18,7 +18,12 @@ import ViewToggle from '@/components/common/ViewToggle/ViewToggle';
 import AppPagination from '@/components/common/AppPagination/AppPagination';
 import EmptyState from '@/components/ui/EmptyState/EmptyState';
 import ErrorState from '@/components/ui/ErrorState/ErrorState';
-import { filtersToSearchParams, getDefaultFilters, countActiveFilters } from '@/lib/filterUtils';
+import {
+  filtersToSearchParams,
+  getDefaultFilters,
+  countActiveFilters,
+  parseFiltersFromParams,
+} from '@/lib/filterUtils';
 import { PAGE_SIZE_OPTIONS } from '@/lib/constants';
 import { useTranslation } from '@/i18n';
 import { PageSize, ViewMode, EventFilters } from '@/types/filter.types';
@@ -47,39 +52,48 @@ export default function EventsListView() {
   const { bySlug } = useCategories();
   const { t } = useTranslation();
   const router = useRouter();
-  const [, startTransition] = useTransition();
+
+  // Always merge against the *live* URL, not a closure-captured snapshot.
+  // Without this, rapid actions (e.g. delete chip → change page) racing the
+  // next React render would merge into stale filters and undo each other.
+  const readCurrentFilters = useCallback(() => {
+    const live =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams();
+    return parseFiltersFromParams(live);
+  }, []);
 
   const navigate = useCallback(
     (params: URLSearchParams) => {
-      startTransition(() => {
-        router.push(`/events?${params.toString()}`);
-      });
+      router.push(`/events?${params.toString()}`);
     },
     [router]
   );
 
   const updateFilter = useCallback(
     (updates: Record<string, unknown>) => {
-      const newFilters = { ...filters, ...updates, page: 1 };
+      const newFilters = { ...readCurrentFilters(), ...updates, page: 1 };
       navigate(filtersToSearchParams(newFilters));
     },
-    [filters, navigate]
+    [readCurrentFilters, navigate]
   );
 
   const updatePagination = useCallback(
     (updates: Record<string, unknown>) => {
-      const newFilters = { ...filters, ...updates };
+      const newFilters = { ...readCurrentFilters(), ...updates };
       navigate(filtersToSearchParams(newFilters));
     },
-    [filters, navigate]
+    [readCurrentFilters, navigate]
   );
 
   const clearAll = useCallback(() => {
+    const current = readCurrentFilters();
     const defaults = getDefaultFilters();
-    defaults.viewMode = filters.viewMode;
-    defaults.pageSize = filters.pageSize;
+    defaults.viewMode = current.viewMode;
+    defaults.pageSize = current.pageSize;
     navigate(filtersToSearchParams(defaults));
-  }, [filters.viewMode, filters.pageSize, navigate]);
+  }, [readCurrentFilters, navigate]);
 
   const activeChips: { key: string; label: string }[] = [];
   if (filters.search) {
@@ -160,7 +174,7 @@ export default function EventsListView() {
                   else if (chip.key.startsWith('cat-')) {
                     const cat = chip.key.replace('cat-', '');
                     updateFilter({
-                      categories: filters.categories.filter((c) => c !== cat),
+                      categories: readCurrentFilters().categories.filter((c) => c !== cat),
                     });
                   }
                 }}
