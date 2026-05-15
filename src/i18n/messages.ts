@@ -92,6 +92,7 @@ const pl = {
   META_DESCRIPTION:
     'Odkryj najlepsze wydarzenia w Szczecinie — taniec, fitness, warsztaty kulinarne, koncerty i więcej.',
   LOADING: 'Ładowanie...',
+  LOADING_EVENTS: 'Wczytywanie wydarzeń…',
   OPEN_IN_MAPS: 'Pokaż na mapie',
   LISTED_ON: 'Źródła',
   LAST_UPDATED: (when: string) => `Aktualizacja: ${when}`,
@@ -208,6 +209,7 @@ const en: Messages = {
   META_DESCRIPTION:
     'Discover the best events in Szczecin — dance, fitness, cooking workshops, concerts and more.',
   LOADING: 'Loading...',
+  LOADING_EVENTS: 'Loading events…',
   OPEN_IN_MAPS: 'Open in maps',
   LISTED_ON: 'Sources',
   LAST_UPDATED: (when: string) => `Updated: ${when}`,

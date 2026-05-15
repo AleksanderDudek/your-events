@@ -13,7 +13,9 @@ import { useEvents } from '@/components/service/useEvents';
 import { useCategories } from '@/components/service/useCategories';
 import FilterPanel from '@/components/common/FilterPanel/FilterPanel';
 import EventGrid from '@/components/common/EventGrid/EventGrid';
+import EventGridSkeleton from '@/components/common/EventGrid/EventGridSkeleton';
 import EventList from '@/components/common/EventList/EventList';
+import EventListSkeleton from '@/components/common/EventList/EventListSkeleton';
 import ViewToggle from '@/components/common/ViewToggle/ViewToggle';
 import AppPagination from '@/components/common/AppPagination/AppPagination';
 import EmptyState from '@/components/ui/EmptyState/EmptyState';
@@ -41,7 +43,16 @@ function renderBody({
   filters: EventFilters;
   clearAll: () => void;
 }) {
-  if (events.length === 0 && !isLoading) {
+  // Initial fetch (no data cached yet) → render shape-matching skeletons sized
+  // to the user's chosen pageSize so the page doesn't reflow when data lands.
+  if (isLoading && events.length === 0) {
+    return filters.viewMode === 'grid' ? (
+      <EventGridSkeleton count={filters.pageSize} />
+    ) : (
+      <EventListSkeleton count={filters.pageSize} />
+    );
+  }
+  if (events.length === 0) {
     return <EmptyState onClear={countActiveFilters(filters) > 0 ? clearAll : undefined} />;
   }
   return filters.viewMode === 'grid' ? <EventGrid events={events} /> : <EventList events={events} />;
@@ -133,7 +144,17 @@ export default function EventsListView() {
               {t.RESULTS_COUNT(total)}
             </Typography>
             {isFetching && !isLoading && (
-              <CircularProgress size={16} sx={{ color: 'var(--color-accent-primary)', ml: 1 }} />
+              <Box
+                className={styles.loadingPill}
+                role="status"
+                aria-live="polite"
+                aria-label={t.LOADING_EVENTS}
+              >
+                <CircularProgress size={12} thickness={5} sx={{ color: 'var(--color-accent-primary)' }} />
+                <Typography variant="caption" sx={{ color: 'var(--color-accent-primary)', fontWeight: 600 }}>
+                  {t.LOADING_EVENTS}
+                </Typography>
+              </Box>
             )}
           </Box>
 
@@ -188,7 +209,9 @@ export default function EventsListView() {
           </Box>
         )}
 
-        <Box className={styles.body}>
+        <Box
+          className={`${styles.body}${isFetching && !isLoading ? ` ${styles.bodyRefetching}` : ''}`}
+        >
           {renderBody({ events, isLoading, filters, clearAll })}
         </Box>
 

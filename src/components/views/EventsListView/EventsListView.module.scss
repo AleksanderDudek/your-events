@@ -61,3 +61,25 @@
 .body {
   min-height: 300px;
 }
+
+// Soft fade while a refetch is in flight — the loading pill in the header
+// carries the explicit "something is happening" signal; this just dims the
+// stale results so users don't act on outdated content.
+.bodyRefetching {
+  opacity: 0.55;
+  pointer-events: none;
+
+  @include motion-safe {
+    transition: opacity var(--transition-base);
+  }
+}
+
+.loadingPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent-tint);
+}
