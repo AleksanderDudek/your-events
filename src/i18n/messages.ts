@@ -108,6 +108,15 @@ const pl = {
   HOME_SPORT_TITLE: 'Gdzie mogę dzisiaj poćwiczyć?',
   HOME_SPORT_SUB: 'Zajęcia sportowe od teraz do końca dnia',
   HOME_SPORT_CTA: 'Znajdź trening',
+  HOME_ART_TITLE: 'Dla miłośników sztuki',
+  HOME_ART_SUB: 'Wystawy, teatr i wieczory kulturalne',
+  HOME_ART_CTA: 'Zobacz wydarzenia artystyczne',
+  HOME_FOOD_TITLE: 'Dla smakoszy',
+  HOME_FOOD_SUB: 'Warsztaty kulinarne i degustacje',
+  HOME_FOOD_CTA: 'Znajdź warsztaty kulinarne',
+  HOME_DANCE_TITLE: 'Dla tancerzy',
+  HOME_DANCE_SUB: 'Zajęcia, warsztaty i wieczory taneczne',
+  HOME_DANCE_CTA: 'Zatańcz na mieście',
 };
 
 export type Messages = typeof pl;
@@ -212,6 +221,15 @@ const en: Messages = {
   HOME_SPORT_TITLE: 'Where can I work out today?',
   HOME_SPORT_SUB: 'Sport sessions from now until end of day',
   HOME_SPORT_CTA: 'Find a session',
+  HOME_ART_TITLE: 'For artistic spirits',
+  HOME_ART_SUB: 'Exhibitions, theatre and cultural nights',
+  HOME_ART_CTA: 'See art and culture',
+  HOME_FOOD_TITLE: 'For foodies',
+  HOME_FOOD_SUB: 'Cooking workshops and tastings',
+  HOME_FOOD_CTA: 'Find culinary workshops',
+  HOME_DANCE_TITLE: 'For dancers',
+  HOME_DANCE_SUB: 'Classes, workshops and dance nights',
+  HOME_DANCE_CTA: 'Go dancing',
 };
 
 export const messages: Record<Locale, Messages> = { pl, en };

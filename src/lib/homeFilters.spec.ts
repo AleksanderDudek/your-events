@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
+  buildArtUrl,
+  buildDanceUrl,
+  buildFoodUrl,
   buildNowUrl,
   buildSportNowUrl,
   buildWeekendUrl,
@@ -69,11 +72,38 @@ describe('homeFilters', () => {
     it('today, sport category, hourFrom only', () => {
       const now = new Date(2026, 2, 10, 14, 45);
       const p = paramsFrom(buildSportNowUrl(now));
-      expect(p.get('categories')).toBe('sport');
+      expect(p.get('categories')).toBe('sport-i-fitness');
       expect(p.get('dateMode')).toBe('single');
       expect(p.get('dateSingle')).toBe('2026-03-10');
       expect(p.get('hourFrom')).toBe('14:30');
       expect(p.get('hourTo')).toBeNull();
+    });
+  });
+
+  describe('interest-based CTAs', () => {
+    const now = new Date(2026, 2, 10, 14, 45);
+
+    it('buildArtUrl filters to visual arts + theatre from today onward', () => {
+      const p = paramsFrom(buildArtUrl(now));
+      expect(p.get('categories')).toBe('sztuka-i-wystawy,teatr-i-widowiska');
+      expect(p.get('dateMode')).toBe('range');
+      expect(p.get('dateFrom')).toBe('2026-03-10');
+      expect(p.get('dateTo')).toBeNull();
+      expect(p.get('hourFrom')).toBeNull();
+    });
+
+    it('buildFoodUrl filters to culinary workshops from today onward', () => {
+      const p = paramsFrom(buildFoodUrl(now));
+      expect(p.get('categories')).toBe('warsztaty/warsztaty-kulinarne');
+      expect(p.get('dateMode')).toBe('range');
+      expect(p.get('dateFrom')).toBe('2026-03-10');
+    });
+
+    it('buildDanceUrl filters to dance from today onward', () => {
+      const p = paramsFrom(buildDanceUrl(now));
+      expect(p.get('categories')).toBe('taniec');
+      expect(p.get('dateMode')).toBe('range');
+      expect(p.get('dateFrom')).toBe('2026-03-10');
     });
   });
 });

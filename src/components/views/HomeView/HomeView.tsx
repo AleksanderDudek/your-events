@@ -8,8 +8,18 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import BoltIcon from '@mui/icons-material/Bolt';
 import WeekendIcon from '@mui/icons-material/Weekend';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import PaletteIcon from '@mui/icons-material/Palette';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import NightlifeIcon from '@mui/icons-material/Nightlife';
 import { useTranslation } from '@/i18n';
-import { buildNowUrl, buildSportNowUrl, buildWeekendUrl } from '@/lib/homeFilters';
+import {
+  buildArtUrl,
+  buildDanceUrl,
+  buildFoodUrl,
+  buildNowUrl,
+  buildSportNowUrl,
+  buildWeekendUrl,
+} from '@/lib/homeFilters';
 import styles from './HomeView.module.scss';
 
 const FALLBACK_HREF = '/events' as Route;
@@ -18,6 +28,9 @@ interface CtaUrls {
   now: Route;
   weekend: Route;
   sport: Route;
+  art: Route;
+  food: Route;
+  dance: Route;
 }
 
 export default function HomeView() {
@@ -29,6 +42,9 @@ export default function HomeView() {
     now: FALLBACK_HREF,
     weekend: FALLBACK_HREF,
     sport: FALLBACK_HREF,
+    art: FALLBACK_HREF,
+    food: FALLBACK_HREF,
+    dance: FALLBACK_HREF,
   });
 
   useEffect(() => {
@@ -38,6 +54,9 @@ export default function HomeView() {
       now: buildNowUrl(now) as Route,
       weekend: buildWeekendUrl(now) as Route,
       sport: buildSportNowUrl(now) as Route,
+      art: buildArtUrl(now) as Route,
+      food: buildFoodUrl(now) as Route,
+      dance: buildDanceUrl(now) as Route,
     });
   }, []);
 
@@ -68,6 +87,33 @@ export default function HomeView() {
       cta: t.HOME_SPORT_CTA,
       icon: <FitnessCenterIcon />,
       className: styles.tileSport,
+    },
+    {
+      key: 'art',
+      href: urls.art,
+      title: t.HOME_ART_TITLE,
+      sub: t.HOME_ART_SUB,
+      cta: t.HOME_ART_CTA,
+      icon: <PaletteIcon />,
+      className: styles.tileArt,
+    },
+    {
+      key: 'food',
+      href: urls.food,
+      title: t.HOME_FOOD_TITLE,
+      sub: t.HOME_FOOD_SUB,
+      cta: t.HOME_FOOD_CTA,
+      icon: <RestaurantIcon />,
+      className: styles.tileFood,
+    },
+    {
+      key: 'dance',
+      href: urls.dance,
+      title: t.HOME_DANCE_TITLE,
+      sub: t.HOME_DANCE_SUB,
+      cta: t.HOME_DANCE_CTA,
+      icon: <NightlifeIcon />,
+      className: styles.tileDance,
     },
   ];
 

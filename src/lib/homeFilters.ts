@@ -1,9 +1,16 @@
 import { filtersToSearchParams } from './filterUtils';
 
-// Slug of the top-level "Sport" category in the categories table. Treated as a
-// constant for now — the category seed is owned by the data pipeline, so if
-// the slug ever changes we'd notice on the homepage immediately.
-export const SPORT_CATEGORY_SLUG = 'sport';
+// Slug of the top-level "Sport i Fitness" category in the categories table.
+// Treated as a constant for now — the category seed is owned by the data
+// pipeline, so if the slug ever changes we'd notice on the homepage immediately.
+export const SPORT_CATEGORY_SLUG = 'sport-i-fitness';
+export const DANCE_CATEGORY_SLUG = 'taniec';
+// Visual arts + theatre cover the "artistic spirits" intent; muzyka/film are
+// adjacent but feel too broad for this CTA.
+export const ART_CATEGORY_SLUGS = ['sztuka-i-wystawy', 'teatr-i-widowiska'];
+// Foodie content lives under a single sub-category — there is no top-level
+// food bucket in the seed.
+export const FOOD_CATEGORY_SLUG = 'warsztaty/warsztaty-kulinarne';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
@@ -85,4 +92,31 @@ export function buildSportNowUrl(now: Date): string {
     hourFrom: toLocalTimeString(start),
   });
   return `/events?${params.toString()}`;
+}
+
+// Interest-based CTAs aren't bound to "today only" the way Sport is — these
+// should surface upcoming events of the chosen flavor, so we pin the lower
+// bound to today and leave the upper bound open.
+function buildInterestUrl(now: Date, categories: string[]): string {
+  const params = filtersToSearchParams({
+    categories,
+    dateMode: 'range',
+    dateFrom: toLocalDateString(now),
+  });
+  return `/events?${params.toString()}`;
+}
+
+// "Dla miłośników sztuki" — visual arts + theatre, upcoming.
+export function buildArtUrl(now: Date): string {
+  return buildInterestUrl(now, ART_CATEGORY_SLUGS);
+}
+
+// "Dla smakoszy" — culinary workshops, upcoming.
+export function buildFoodUrl(now: Date): string {
+  return buildInterestUrl(now, [FOOD_CATEGORY_SLUG]);
+}
+
+// "Dla tancerzy" — dance category, upcoming.
+export function buildDanceUrl(now: Date): string {
+  return buildInterestUrl(now, [DANCE_CATEGORY_SLUG]);
 }
