@@ -5,6 +5,7 @@ import {
   buildFoodUrl,
   buildNowUrl,
   buildSportNowUrl,
+  buildTodayUrl,
   buildWeekendUrl,
   getUpcomingWeekend,
 } from './homeFilters';
@@ -65,6 +66,18 @@ describe('homeFilters', () => {
       const { fromDate, toDate } = getUpcomingWeekend(fri);
       expect(fromDate).toBe('2026-03-13');
       expect(toDate).toBe('2026-03-15');
+    });
+  });
+
+  describe('buildTodayUrl', () => {
+    it('today, hourFrom floored, no hourTo (capped by date)', () => {
+      const now = new Date(2026, 2, 10, 14, 45);
+      const p = paramsFrom(buildTodayUrl(now));
+      expect(p.get('dateMode')).toBe('single');
+      expect(p.get('dateSingle')).toBe('2026-03-10');
+      expect(p.get('hourFrom')).toBe('14:30');
+      expect(p.get('hourTo')).toBeNull();
+      expect(p.get('categories')).toBeNull();
     });
   });
 

@@ -6,6 +6,7 @@ import type { Route } from 'next';
 import Button from '@mui/material/Button';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import BoltIcon from '@mui/icons-material/Bolt';
+import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import WeekendIcon from '@mui/icons-material/Weekend';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PaletteIcon from '@mui/icons-material/Palette';
@@ -18,6 +19,7 @@ import {
   buildFoodUrl,
   buildNowUrl,
   buildSportNowUrl,
+  buildTodayUrl,
   buildWeekendUrl,
 } from '@/lib/homeFilters';
 import styles from './HomeView.module.scss';
@@ -26,6 +28,7 @@ const FALLBACK_HREF = '/events' as Route;
 
 interface CtaUrls {
   now: Route;
+  today: Route;
   weekend: Route;
   sport: Route;
   art: Route;
@@ -40,6 +43,7 @@ export default function HomeView() {
   // upgrade once mounted so the URL on hover / right-click is correct.
   const [urls, setUrls] = useState<CtaUrls>({
     now: FALLBACK_HREF,
+    today: FALLBACK_HREF,
     weekend: FALLBACK_HREF,
     sport: FALLBACK_HREF,
     art: FALLBACK_HREF,
@@ -52,6 +56,7 @@ export default function HomeView() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrls({
       now: buildNowUrl(now) as Route,
+      today: buildTodayUrl(now) as Route,
       weekend: buildWeekendUrl(now) as Route,
       sport: buildSportNowUrl(now) as Route,
       art: buildArtUrl(now) as Route,
@@ -69,6 +74,15 @@ export default function HomeView() {
       cta: t.HOME_NOW_CTA,
       icon: <BoltIcon />,
       className: styles.tileNow,
+    },
+    {
+      key: 'today',
+      href: urls.today,
+      title: t.HOME_TODAY_TITLE,
+      sub: t.HOME_TODAY_SUB,
+      cta: t.HOME_TODAY_CTA,
+      icon: <WbSunnyIcon />,
+      className: styles.tileToday,
     },
     {
       key: 'weekend',

@@ -69,6 +69,18 @@ export function buildNowUrl(now: Date): string {
   return `/events?${params.toString()}`;
 }
 
+// "Co dziś jeszcze się dzieje" — today, from the nearest half-hour, no upper
+// time bound (the date filter caps it at today).
+export function buildTodayUrl(now: Date): string {
+  const start = floorToHalfHour(now);
+  const params = filtersToSearchParams({
+    dateMode: 'single',
+    dateSingle: toLocalDateString(now),
+    hourFrom: toLocalTimeString(start),
+  });
+  return `/events?${params.toString()}`;
+}
+
 // "Co się dzieje w ten weekend" — Fri–Sun, 12:00 → 23:00.
 export function buildWeekendUrl(now: Date): string {
   const { fromDate, toDate } = getUpcomingWeekend(now);
