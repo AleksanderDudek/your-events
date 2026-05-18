@@ -1,37 +1,39 @@
 @use '../../../styles/mixins' as *;
 
-// Wrapper sizes itself to the *current* word via the invisible .measure span.
-// .incoming and .outgoing stack on top, absolutely positioned, so the
-// outgoing word doesn't push layout while it slides away.
+// Wrapper uses inline-grid so the measure span, incoming word, and outgoing
+// word all occupy the same single grid cell — they overlap visually but stay
+// in normal flow. This matters because we want the ancestor headline's
+// background-clip:text gradient to still clip to our text; absolute
+// positioning breaks that in webkit.
 .wrapper {
-  position: relative;
-  display: inline-block;
+  display: inline-grid;
+  grid-template-columns: max-content;
+  grid-template-rows: auto;
   vertical-align: baseline;
-  // The blur + slide animations push pixels outside the natural text bounds.
-  // Padding-bottom reserves room so descenders aren't clipped during transit.
-  padding-bottom: 0.05em;
+}
+
+.measure,
+.layer {
+  grid-column: 1;
+  grid-row: 1;
+  white-space: nowrap;
 }
 
 .measure {
   visibility: hidden;
-  white-space: nowrap;
-  display: inline-block;
 }
 
+// The layer has its own transform/filter, which means it creates its own
+// stacking context. That breaks background-clip:text on any ancestor — the
+// ancestor's gradient cannot paint into our local layer. So we apply the
+// gradient text-fill ourselves, sourced from CSS variables the consumer sets.
+// Defaults fall back to plain currentColor when no gradient is provided.
 .layer {
-  position: absolute;
-  inset: 0;
-  display: inline-block;
-  white-space: nowrap;
-  // Inherit the headline's gradient text fill / font properties.
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  background: inherit;
-  -webkit-background-clip: inherit;
-  background-clip: inherit;
-  -webkit-text-fill-color: inherit;
   will-change: transform, filter, opacity;
+  background: var(--animated-word-bg, transparent);
+  -webkit-background-clip: var(--animated-word-clip, border-box);
+  background-clip: var(--animated-word-clip, border-box);
+  -webkit-text-fill-color: var(--animated-word-fill, currentColor);
 }
 
 @include motion-safe {

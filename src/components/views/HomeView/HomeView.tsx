@@ -38,15 +38,39 @@ interface CtaUrls {
   dance: Route;
 }
 
+// How long each side of the toggle lingers before the swap.
+const HERO_CYCLE_MS = 2500;
+
 export default function HomeView() {
   const { t, locale } = useTranslation();
-  const { city, isResolved } = useCity();
-  // Until the city is resolved post-hydration, render the generic word so SSR
-  // and the first paint match. Once resolved, the prop flips to the city's
-  // accusative form and AnimatedLastWord animates the swap.
-  const headlineLastWord = isResolved
-    ? city.accusativeForm[locale]
-    : t.HOME_HERO_HEADLINE_GENERIC_WORD;
+  const { city } = useCity();
+  // SSR renders the generic word so the static HTML stays stable. After
+  // hydration we begin a two-state loop: the generic word ("miasto"/"town")
+  // and the selected city's accusative form, alternating every HERO_CYCLE_MS.
+  // The selected city is the only city ever shown; picking a different city
+  // from the dropdown swaps the loop's "city side" but the toggle keeps going.
+  const [showCity, setShowCity] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setShowCity(true);
+
+    // Reduced-motion users see the selected city once and stop — no toggling.
+    const mq =
+      typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+        : null;
+    if (mq?.matches) return;
+
+    const id = window.setInterval(() => {
+      setShowCity((prev) => !prev);
+    }, HERO_CYCLE_MS);
+    return () => window.clearInterval(id);
+  }, [city.id]);
+
+  const headlineLastWord =
+    showCity === true
+      ? city.accusativeForm[locale]
+      : t.HOME_HERO_HEADLINE_GENERIC_WORD;
   const cityLocative = city.locativeForm[locale];
   // CTA hrefs depend on the user's current Date, which would differ between
   // build-time SSR and client render. Ship the fallback in static HTML, then
@@ -63,7 +87,6 @@ export default function HomeView() {
 
   useEffect(() => {
     const now = new Date();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrls({
       now: buildNowUrl(now) as Route,
       today: buildTodayUrl(now) as Route,
@@ -154,7 +177,7 @@ export default function HomeView() {
         >
           <span className={styles.headlinePrefix} aria-hidden="true">
             {t.HOME_HERO_HEADLINE_PREFIX}
-          </span>{' '}
+          </span>
           <span className={styles.headlineLastWord} aria-hidden="true">
             <AnimatedLastWord text={headlineLastWord} />
           </span>

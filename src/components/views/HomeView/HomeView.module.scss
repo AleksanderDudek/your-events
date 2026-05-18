@@ -100,7 +100,10 @@
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  max-width: 14ch;
+  // Two-line layout: "Idź na" sits above the animated city word.
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   @include md {
     margin-bottom: 24px;
@@ -108,15 +111,22 @@
 }
 
 .headlinePrefix {
-  display: inline;
+  display: block;
 }
 
-// The animated word can briefly extend beyond its natural bounds (blur +
-// transform); the wrapper clips nothing but reserves vertical space.
+// The animated word lives on its own line below the prefix. The wrapper
+// clips nothing — letting blur + transform extend beyond natural bounds.
+//
+// The CSS variables here are read by AnimatedLastWord's .layer rule. Each
+// layer has its own transform/filter (= its own stacking context), so the
+// h1's background-clip:text gradient cannot reach into it; the layer applies
+// the same gradient locally so the swapped word still renders in colour.
 .headlineLastWord {
-  display: inline-block;
+  display: block;
   position: relative;
-  vertical-align: baseline;
+  --animated-word-bg: linear-gradient(135deg, #ec4899 0%, #f97316 50%, #8b5cf6 100%);
+  --animated-word-clip: text;
+  --animated-word-fill: transparent;
 }
 
 .heroSub {
