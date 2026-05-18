@@ -1,6 +1,6 @@
 export type DateMode = 'single' | 'range' | null;
 export type PageSize = 15 | 30 | 60;
-export type ViewMode = 'grid' | 'row';
+export type ViewMode = 'grid' | 'row' | 'map';
 
 export interface EventFilters {
   search: string;

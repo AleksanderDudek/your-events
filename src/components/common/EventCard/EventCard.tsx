@@ -20,7 +20,11 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const chips = [event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c));
+  // Dedupe — some events have categoryMain === categorySub (e.g. both "Warsztaty"),
+  // which would render two identical chips and collide on React keys.
+  const chips = Array.from(
+    new Set([event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c)))
+  );
   const maxChips = 2;
   const visibleCategories = chips.slice(0, maxChips);
   const extraCount = chips.length - maxChips;

@@ -15,6 +15,8 @@ import NightlifeIcon from '@mui/icons-material/Nightlife';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import AnimatedLastWord from '@/components/common/AnimatedLastWord/AnimatedLastWord';
+import EventsMap from '@/components/common/EventsMap/EventsMap';
+import { useEvents } from '@/components/service/useEvents';
 import {
   buildArtUrl,
   buildDanceUrl,
@@ -44,6 +46,9 @@ const HERO_CYCLE_MS = 2500;
 export default function HomeView() {
   const { t, locale } = useTranslation();
   const { city } = useCity();
+  // Preview map below the CTA tiles. useEvents reads from the URL — on the
+  // homepage that's empty, so this resolves to default filters (~15 events).
+  const { events: previewEvents } = useEvents();
   // SSR renders the generic word so the static HTML stays stable. After
   // hydration we begin a two-state loop: the generic word ("miasto"/"town")
   // and the selected city's accusative form, alternating every HERO_CYCLE_MS.
@@ -199,6 +204,33 @@ export default function HomeView() {
             </span>
           </Link>
         ))}
+      </section>
+
+      <section className={styles.mapSection} aria-label={t.HOME_MAP_TITLE}>
+        <div className={styles.mapSectionHeader}>
+          <h2 className={styles.mapSectionTitle}>{t.HOME_MAP_TITLE}</h2>
+          <p className={styles.mapSectionSub}>{t.HOME_MAP_SUB}</p>
+        </div>
+        <Link
+          href={'/events?viewMode=map' as Route}
+          className={styles.mapSectionMap}
+          aria-label={t.HOME_MAP_CTA}
+        >
+          <EventsMap
+            events={previewEvents}
+            center={city.coordinates}
+            zoom={12}
+            height={320}
+            interactive={false}
+            fitToEvents={previewEvents.length > 0}
+          />
+          <span className={styles.mapSectionOverlay} aria-hidden="true">
+            <span className={styles.mapSectionCta}>
+              {t.HOME_MAP_CTA}
+              <ArrowForwardIcon fontSize="small" />
+            </span>
+          </span>
+        </Link>
       </section>
 
       <div className={styles.browseAll}>

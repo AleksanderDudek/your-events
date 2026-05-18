@@ -17,16 +17,18 @@ import EventGridSkeleton from '@/components/common/EventGrid/EventGridSkeleton';
 import EventList from '@/components/common/EventList/EventList';
 import EventListSkeleton from '@/components/common/EventList/EventListSkeleton';
 import ViewToggle from '@/components/common/ViewToggle/ViewToggle';
+import EventsMap from '@/components/common/EventsMap/EventsMap';
 import AppPagination from '@/components/common/AppPagination/AppPagination';
 import EmptyState from '@/components/ui/EmptyState/EmptyState';
 import ErrorState from '@/components/ui/ErrorState/ErrorState';
+import { useCity } from '@/config/CityProvider';
 import {
   filtersToSearchParams,
   getDefaultFilters,
   countActiveFilters,
   parseFiltersFromParams,
 } from '@/lib/filterUtils';
-import { PAGE_SIZE_OPTIONS } from '@/lib/constants';
+import { PAGE_SIZE_OPTIONS, withBasePath } from '@/lib/constants';
 import { useTranslation } from '@/i18n';
 import { PageSize, ViewMode, EventFilters } from '@/types/filter.types';
 import { Event } from '@/types/event.types';
@@ -37,15 +39,20 @@ function renderBody({
   isLoading,
   filters,
   clearAll,
+  mapCenter,
+  mapEmptyMessage,
 }: {
   events: Event[];
   isLoading: boolean;
   filters: EventFilters;
   clearAll: () => void;
+  mapCenter: { lat: number; lng: number };
+  mapEmptyMessage: string;
 }) {
   // Initial fetch (no data cached yet) → render shape-matching skeletons sized
   // to the user's chosen pageSize so the page doesn't reflow when data lands.
   if (isLoading && events.length === 0) {
+    if (filters.viewMode === 'map') return null;
     return filters.viewMode === 'grid' ? (
       <EventGridSkeleton count={filters.pageSize} />
     ) : (
@@ -55,12 +62,45 @@ function renderBody({
   if (events.length === 0) {
     return <EmptyState onClear={countActiveFilters(filters) > 0 ? clearAll : undefined} />;
   }
+  if (filters.viewMode === 'map') {
+    const withCoords = events.filter(
+      (e) => e.location.lat !== null && e.location.lng !== null
+    );
+    if (withCoords.length === 0) {
+      return (
+        <Typography
+          variant="body2"
+          sx={{ color: 'var(--color-text-secondary)', py: 4, textAlign: 'center' }}
+        >
+          {mapEmptyMessage}
+        </Typography>
+      );
+    }
+    return (
+      <EventsMap
+        events={withCoords}
+        center={mapCenter}
+        zoom={12}
+        height={620}
+        fitToEvents
+        renderPopup={(ev) => {
+          const safeName = ev.name.replace(/</g, '&lt;');
+          const safeVenue = ev.location.name?.replace(/</g, '&lt;') ?? '';
+          // Leaflet popups render raw HTML, so we prepend basePath manually —
+          // Next.js's auto-prefixing doesn't reach anchors built outside React.
+          const href = withBasePath(`/events/${ev.id}`);
+          return `<strong>${safeName}</strong><br/>${safeVenue}<br/><a href="${href}" style="color:#ec4899;font-weight:600;">→</a>`;
+        }}
+      />
+    );
+  }
   return filters.viewMode === 'grid' ? <EventGrid events={events} /> : <EventList events={events} />;
 }
 
 export default function EventsListView() {
   const { events, total, isLoading, isError, isFetching, refetch, filters } = useEvents();
   const { bySlug } = useCategories();
+  const { city } = useCity();
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -212,16 +252,25 @@ export default function EventsListView() {
         <Box
           className={`${styles.body}${isFetching && !isLoading ? ` ${styles.bodyRefetching}` : ''}`}
         >
-          {renderBody({ events, isLoading, filters, clearAll })}
+          {renderBody({
+            events,
+            isLoading,
+            filters,
+            clearAll,
+            mapCenter: city.coordinates,
+            mapEmptyMessage: t.MAP_EVENT_NO_PINS,
+          })}
         </Box>
 
-        <AppPagination
-          page={filters.page}
-          pageSize={filters.pageSize}
-          total={total}
-          onPageChange={(page) => updatePagination({ page })}
-          onPageSizeChange={(pageSize) => updateFilter({ pageSize })}
-        />
+        {filters.viewMode !== 'map' && (
+          <AppPagination
+            page={filters.page}
+            pageSize={filters.pageSize}
+            total={total}
+            onPageChange={(page) => updatePagination({ page })}
+            onPageSizeChange={(pageSize) => updateFilter({ pageSize })}
+          />
+        )}
       </Box>
     </Box>
   );

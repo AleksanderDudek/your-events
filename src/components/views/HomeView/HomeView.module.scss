@@ -315,6 +315,121 @@
   }
 }
 
+// Map preview section -------------------------------------------------------
+
+.mapSection {
+  position: relative;
+  z-index: 1;
+  margin-top: 32px;
+
+  @include md {
+    margin-top: 48px;
+  }
+}
+
+.mapSectionHeader {
+  text-align: center;
+  margin-bottom: 16px;
+
+  @include md {
+    margin-bottom: 24px;
+  }
+}
+
+.mapSectionTitle {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+
+  @include md {
+    font-size: 1.875rem;
+  }
+}
+
+.mapSectionSub {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+
+  @include md {
+    font-size: 1rem;
+  }
+}
+
+.mapSectionMap {
+  position: relative;
+  display: block;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  color: inherit;
+
+  @include focus-visible;
+
+  @include motion-safe {
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-elevated);
+    @include motion-safe {
+      transform: translateY(-3px);
+    }
+    .mapSectionCta {
+      gap: 12px;
+    }
+    .mapSectionOverlay {
+      background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.35) 0%,
+        rgba(0, 0, 0, 0) 60%
+      );
+    }
+  }
+}
+
+.mapSectionOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 16px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.25) 0%,
+    rgba(0, 0, 0, 0) 60%
+  );
+  pointer-events: none;
+
+  @include motion-safe {
+    transition: background var(--transition-base);
+  }
+}
+
+.mapSectionCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--color-accent-primary);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: var(--shadow-card);
+
+  @include motion-safe {
+    transition: gap var(--transition-base);
+  }
+}
+
 // "Browse all" secondary action ---------------------------------------------
 
 .browseAll {

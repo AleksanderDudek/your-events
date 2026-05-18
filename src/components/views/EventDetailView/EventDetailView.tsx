@@ -15,6 +15,7 @@ import MapIcon from '@mui/icons-material/Map';
 import { Event } from '@/types/event.types';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
+import EventsMap from '@/components/common/EventsMap/EventsMap';
 import { formatDate, formatEventTime } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import styles from './EventDetailView.module.scss';
@@ -54,7 +55,11 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
   const { t } = useTranslation();
 
   const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
-  const categoryChips = [event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c));
+  // Dedupe — some events have categoryMain === categorySub, which would
+  // render two identical chips and collide on React keys.
+  const categoryChips = Array.from(
+    new Set([event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c)))
+  );
   const description = event.description.trim();
   const priceLabel = event.price.label?.trim();
   const hasMap = event.location.lat !== null && event.location.lng !== null;
@@ -141,6 +146,20 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                 >
                   {t.OPEN_IN_MAPS}
                 </Button>
+              )}
+              {hasMap && (
+                <Box sx={{ mt: 1.5 }}>
+                  <EventsMap
+                    events={[event]}
+                    center={{
+                      lat: event.location.lat as number,
+                      lng: event.location.lng as number,
+                    }}
+                    zoom={15}
+                    height={260}
+                    disableClustering
+                  />
+                </Box>
               )}
             </Box>
           </Box>

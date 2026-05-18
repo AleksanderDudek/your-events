@@ -20,7 +20,11 @@ export default function EventRow({ event }: EventRowProps) {
   const { byDisplayName } = useCategories();
   const categoryData = byDisplayName.get(event.categoryMain) ?? byDisplayName.get('Inne');
   const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
-  const chips = [event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c));
+  // Dedupe — some events have categoryMain === categorySub, which would
+  // render two identical chips and collide on React keys.
+  const chips = Array.from(
+    new Set([event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c)))
+  );
 
   return (
     <Link href={`/events/${event.id}`} className={styles.link}>

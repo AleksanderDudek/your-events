@@ -2,7 +2,7 @@ import { DateMode, EventFilters, PageSize, ViewMode } from '@/types/filter.types
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from './constants';
 
 const VALID_PAGE_SIZES = new Set([15, 30, 60]);
-const VALID_VIEW_MODES = new Set(['grid', 'row']);
+const VALID_VIEW_MODES = new Set(['grid', 'row', 'map']);
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_REGEX = /^\d{2}:\d{2}$/;
 
