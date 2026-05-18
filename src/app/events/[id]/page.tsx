@@ -4,15 +4,27 @@ import { notFound } from 'next/navigation';
 import { fetchEvent } from '@/components/service/eventsApi';
 import EventDetailView from '@/components/views/EventDetailView/EventDetailView';
 import { NotFoundError } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
+import { AVAILABLE_CITIES, DEFAULT_CITY_ID } from '@/config/cities';
+import { getSupabaseForCity } from '@/lib/supabase';
 
 import EventDetailLoading from './loading';
 
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  const { data } = await supabase.from('events').select('id');
-  return (data ?? []).map((row: { id: number }) => ({ id: String(row.id) }));
+  // Static export pre-renders one route per event id. With per-city Supabase
+  // projects we union ids across all available cities. Id collisions across
+  // projects are rare in practice (each project autoincrements its own
+  // sequence), but if they happen later we can switch to /events/[city]/[id].
+  const ids = new Set<string>();
+  for (const city of AVAILABLE_CITIES) {
+    const supabase = getSupabaseForCity(city.id);
+    const { data } = await supabase.from('events').select('id');
+    for (const row of (data ?? []) as Array<{ id: number }>) {
+      ids.add(String(row.id));
+    }
+  }
+  return Array.from(ids).map((id) => ({ id }));
 }
 
 interface EventDetailPageProps {
@@ -22,7 +34,9 @@ interface EventDetailPageProps {
 export async function generateMetadata({ params }: EventDetailPageProps): Promise<Metadata> {
   try {
     const { id } = await params;
-    const event = await fetchEvent(id);
+    // Build-time metadata uses the default-city project; client-side detail
+    // queries go through useEvent (city-aware via CityProvider).
+    const event = await fetchEvent(DEFAULT_CITY_ID, id);
     return {
       title: `${event.name} — ${event.date}`,
       description: event.description.slice(0, 160),
@@ -37,7 +51,7 @@ export async function generateMetadata({ params }: EventDetailPageProps): Promis
 async function EventDetailContent({ id }: Readonly<{ id: string }>) {
   let event;
   try {
-    event = await fetchEvent(id);
+    event = await fetchEvent(DEFAULT_CITY_ID, id);
   } catch (err) {
     if (err instanceof NotFoundError) {
       notFound();

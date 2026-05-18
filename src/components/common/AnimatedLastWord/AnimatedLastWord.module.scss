@@ -1,0 +1,85 @@
+@use '../../../styles/mixins' as *;
+
+// Wrapper sizes itself to the *current* word via the invisible .measure span.
+// .incoming and .outgoing stack on top, absolutely positioned, so the
+// outgoing word doesn't push layout while it slides away.
+.wrapper {
+  position: relative;
+  display: inline-block;
+  vertical-align: baseline;
+  // The blur + slide animations push pixels outside the natural text bounds.
+  // Padding-bottom reserves room so descenders aren't clipped during transit.
+  padding-bottom: 0.05em;
+}
+
+.measure {
+  visibility: hidden;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  display: inline-block;
+  white-space: nowrap;
+  // Inherit the headline's gradient text fill / font properties.
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  background: inherit;
+  -webkit-background-clip: inherit;
+  background-clip: inherit;
+  -webkit-text-fill-color: inherit;
+  will-change: transform, filter, opacity;
+}
+
+@include motion-safe {
+  .incoming {
+    animation: animated-word-in 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .outgoing {
+    animation: animated-word-out 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .incoming,
+  .outgoing {
+    animation: none;
+  }
+  .outgoing {
+    display: none;
+  }
+}
+
+@keyframes animated-word-in {
+  0% {
+    transform: translateY(110%) scale(0.9);
+    opacity: 0;
+    filter: blur(12px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes animated-word-out {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: translateY(-110%) scale(0.9);
+    opacity: 0;
+    filter: blur(12px);
+  }
+}

@@ -12,7 +12,9 @@ describe('HomeView', () => {
   it('renders the headline prompt and tagline', () => {
     render(<HomeView />);
     expect(screen.getByText('Chcesz zrobić coś fajnego?')).toBeInTheDocument();
-    expect(screen.getByText('Idź na miasto')).toBeInTheDocument();
+    // The headline is split into a static prefix + an animated last word; the
+    // full string is exposed via aria-label.
+    expect(screen.getByRole('heading', { level: 1, name: /Idź na miasto/i })).toBeInTheDocument();
   });
 
   it('renders all three CTA tiles', () => {

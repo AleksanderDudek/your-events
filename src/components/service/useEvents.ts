@@ -7,11 +7,13 @@ import { fetchEvents, ResolvedCategoryFilter } from './eventsApi';
 import { eventsKeys } from './queryKeys';
 import { parseFiltersFromParams } from '@/lib/filterUtils';
 import { useCategories } from './useCategories';
+import { useCity } from '@/config/CityProvider';
 
 export function useEvents() {
   const searchParams = useSearchParams();
   const filters = parseFiltersFromParams(searchParams);
   const { bySlug } = useCategories();
+  const { city } = useCity();
 
   const categoryFilter = useMemo<ResolvedCategoryFilter>(() => {
     const topLevelMains: string[] = [];
@@ -33,8 +35,8 @@ export function useEvents() {
   const queryEnabled = filters.categories.length === 0 || categoriesReady;
 
   const { data, isLoading, isError, isFetching, error, refetch } = useQuery({
-    queryKey: eventsKeys.list(filters),
-    queryFn: () => fetchEvents(filters, categoryFilter),
+    queryKey: eventsKeys.list(city.id, filters),
+    queryFn: () => fetchEvents(city.id, filters, categoryFilter),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
     retry: 2,

@@ -5,11 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchCategories } from './eventsApi';
 import { eventsKeys } from './queryKeys';
 import { DbCategory } from '@/types/event.types';
+import { useCity } from '@/config/CityProvider';
 
 export function useCategories() {
+  const { city } = useCity();
   const { data, isLoading, isError } = useQuery({
-    queryKey: eventsKeys.categories,
-    queryFn: fetchCategories,
+    queryKey: eventsKeys.categories(city.id),
+    queryFn: () => fetchCategories(city.id),
     staleTime: Infinity,
   });
 

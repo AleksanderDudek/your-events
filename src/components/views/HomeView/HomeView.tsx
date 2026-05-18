@@ -13,6 +13,8 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import NightlifeIcon from '@mui/icons-material/Nightlife';
 import { useTranslation } from '@/i18n';
+import { useCity } from '@/config/CityProvider';
+import AnimatedLastWord from '@/components/common/AnimatedLastWord/AnimatedLastWord';
 import {
   buildArtUrl,
   buildDanceUrl,
@@ -37,7 +39,15 @@ interface CtaUrls {
 }
 
 export default function HomeView() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const { city, isResolved } = useCity();
+  // Until the city is resolved post-hydration, render the generic word so SSR
+  // and the first paint match. Once resolved, the prop flips to the city's
+  // accusative form and AnimatedLastWord animates the swap.
+  const headlineLastWord = isResolved
+    ? city.accusativeForm[locale]
+    : t.HOME_HERO_HEADLINE_GENERIC_WORD;
+  const cityLocative = city.locativeForm[locale];
   // CTA hrefs depend on the user's current Date, which would differ between
   // build-time SSR and client render. Ship the fallback in static HTML, then
   // upgrade once mounted so the URL on hover / right-click is correct.
@@ -138,8 +148,18 @@ export default function HomeView() {
 
       <div className={styles.hero}>
         <p className={styles.prompt}>{t.HOME_HERO_PROMPT}</p>
-        <h1 className={styles.headline}>{t.HOME_HERO_HEADLINE}</h1>
-        <p className={styles.heroSub}>{t.HOME_HERO_SUB}</p>
+        <h1
+          className={styles.headline}
+          aria-label={`${t.HOME_HERO_HEADLINE_PREFIX} ${headlineLastWord}`}
+        >
+          <span className={styles.headlinePrefix} aria-hidden="true">
+            {t.HOME_HERO_HEADLINE_PREFIX}
+          </span>{' '}
+          <span className={styles.headlineLastWord} aria-hidden="true">
+            <AnimatedLastWord text={headlineLastWord} />
+          </span>
+        </h1>
+        <p className={styles.heroSub}>{t.HOME_HERO_SUB(cityLocative)}</p>
       </div>
 
       <section className={styles.tiles} aria-label={t.HOME_HERO_HEADLINE}>

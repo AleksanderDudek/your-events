@@ -19,6 +19,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from '@/i18n';
 import LanguageSwitcher from './LanguageSwitcher';
+import CitySwitcher from './CitySwitcher';
 import styles from './AppHeader.module.scss';
 
 export default function AppHeader() {
@@ -88,10 +89,12 @@ export default function AppHeader() {
                 {item.label}
               </Link>
             ))}
+            <CitySwitcher />
             <LanguageSwitcher />
           </Box>
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CitySwitcher />
             <LanguageSwitcher />
             <IconButton
               onClick={() => setDrawerOpen(true)}

@@ -10,10 +10,11 @@ export const DEFAULT_LOCALE: Locale = 'pl';
 
 const pl = {
   APP_NAME: 'Idź na miasto',
-  APP_TAGLINE: 'Odkryj wydarzenia w Szczecinie',
+  APP_TAGLINE: (cityLocative: string) => `Odkryj wydarzenia w ${cityLocative}`,
   LANG_LABEL: 'Język',
   LANG_PL: 'Polski',
   LANG_EN: 'Angielski',
+  CITY_LABEL: 'Wybierz miasto',
   NAV_HOME: 'Strona główna',
   NAV_EVENTS: 'Wydarzenia',
   NAV_MAIN: 'Główna nawigacja',
@@ -88,9 +89,9 @@ const pl = {
   RECURRENCE_WEEKLY: 'Co tydzień',
   RECURRENCE_BIWEEKLY: 'Co dwa tygodnie',
   RECURRENCE_MONTHLY: 'Co miesiąc',
-  META_EVENTS_TITLE: 'Wydarzenia w Szczecinie',
-  META_DESCRIPTION:
-    'Odkryj najlepsze wydarzenia w Szczecinie — taniec, fitness, warsztaty kulinarne, koncerty i więcej.',
+  META_EVENTS_TITLE: (cityLocative: string) => `Wydarzenia w ${cityLocative}`,
+  META_DESCRIPTION: (cityLocative: string) =>
+    `Odkryj najlepsze wydarzenia w ${cityLocative} — taniec, fitness, warsztaty kulinarne, koncerty i więcej.`,
   LOADING: 'Ładowanie...',
   LOADING_EVENTS: 'Wczytywanie wydarzeń…',
   OPEN_IN_MAPS: 'Pokaż na mapie',
@@ -98,7 +99,12 @@ const pl = {
   LAST_UPDATED: (when: string) => `Aktualizacja: ${when}`,
   HOME_HERO_PROMPT: 'Chcesz zrobić coś fajnego?',
   HOME_HERO_HEADLINE: 'Idź na miasto',
-  HOME_HERO_SUB: 'Sprawdź, co się dzieje w Szczecinie — teraz, w ten weekend, albo zaplanuj treningi.',
+  // Hero headline split into a static prefix + an animated last word that
+  // morphs into the selected city's accusative form.
+  HOME_HERO_HEADLINE_PREFIX: 'Idź na',
+  HOME_HERO_HEADLINE_GENERIC_WORD: 'miasto',
+  HOME_HERO_SUB: (cityLocative: string) =>
+    `Sprawdź, co się dzieje w ${cityLocative} — teraz, w ten weekend, albo zaplanuj treningi.`,
   HOME_CTA_BROWSE_ALL: 'Przeglądaj wszystkie wydarzenia',
   HOME_NOW_TITLE: 'Co się dzieje teraz na mieście?',
   HOME_NOW_SUB: 'Wydarzenia w najbliższe 4 godziny',
@@ -127,10 +133,11 @@ export type Messages = typeof pl;
 
 const en: Messages = {
   APP_NAME: 'Go to city',
-  APP_TAGLINE: 'Discover events in Szczecin',
+  APP_TAGLINE: (city: string) => `Discover events in ${city}`,
   LANG_LABEL: 'Language',
   LANG_PL: 'Polish',
   LANG_EN: 'English',
+  CITY_LABEL: 'Choose city',
   NAV_HOME: 'Home',
   NAV_EVENTS: 'Events',
   NAV_MAIN: 'Main navigation',
@@ -205,9 +212,9 @@ const en: Messages = {
   RECURRENCE_WEEKLY: 'Weekly',
   RECURRENCE_BIWEEKLY: 'Biweekly',
   RECURRENCE_MONTHLY: 'Monthly',
-  META_EVENTS_TITLE: 'Events in Szczecin',
-  META_DESCRIPTION:
-    'Discover the best events in Szczecin — dance, fitness, cooking workshops, concerts and more.',
+  META_EVENTS_TITLE: (city: string) => `Events in ${city}`,
+  META_DESCRIPTION: (city: string) =>
+    `Discover the best events in ${city} — dance, fitness, cooking workshops, concerts and more.`,
   LOADING: 'Loading...',
   LOADING_EVENTS: 'Loading events…',
   OPEN_IN_MAPS: 'Open in maps',
@@ -215,7 +222,10 @@ const en: Messages = {
   LAST_UPDATED: (when: string) => `Updated: ${when}`,
   HOME_HERO_PROMPT: 'Want to do something fun?',
   HOME_HERO_HEADLINE: 'Go to town',
-  HOME_HERO_SUB: 'See what is happening in Szczecin — right now, this weekend, or plan your workouts.',
+  HOME_HERO_HEADLINE_PREFIX: 'Go to',
+  HOME_HERO_HEADLINE_GENERIC_WORD: 'town',
+  HOME_HERO_SUB: (city: string) =>
+    `See what is happening in ${city} — right now, this weekend, or plan your workouts.`,
   HOME_CTA_BROWSE_ALL: 'Browse all events',
   HOME_NOW_TITLE: 'What is happening right now?',
   HOME_NOW_SUB: 'Events in the next 4 hours',

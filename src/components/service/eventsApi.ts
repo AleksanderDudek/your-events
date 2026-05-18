@@ -1,7 +1,8 @@
 import { Event, DbCategory } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseForCity } from '@/lib/supabase';
+import { CityId, getCity } from '@/config/cities';
 
 interface SupabaseEventRow {
   id: number;
@@ -58,7 +59,7 @@ function parseSources(raw: string | null | undefined, fallback: string): string[
   return fallback ? [fallback] : [];
 }
 
-function mapRow(row: SupabaseEventRow): Event {
+function mapRow(row: SupabaseEventRow, cityName: string): Event {
   return {
     id: String(row.id),
     name: row.name,
@@ -71,7 +72,7 @@ function mapRow(row: SupabaseEventRow): Event {
     durationMin: row.duration_min,
     location: {
       name: row.venue,
-      city: 'Szczecin',
+      city: cityName,
       lat: row.lat,
       lng: row.lng,
     },
@@ -98,9 +99,12 @@ function quoteForOr(value: string): string {
 }
 
 export async function fetchEvents(
+  cityId: CityId | string,
   filters: EventFilters,
   categoryFilter: ResolvedCategoryFilter = EMPTY_CATEGORY_FILTER
 ): Promise<{ events: Event[]; total: number }> {
+  const city = getCity(cityId);
+  const supabase = getSupabaseForCity(city.id);
   const from = (filters.page - 1) * filters.pageSize;
   const to = from + filters.pageSize - 1;
 
@@ -138,7 +142,8 @@ export async function fetchEvents(
   const { data, count, error } = await query;
   if (error) throw new ServerError(error.message);
 
-  const mapped = (data as SupabaseEventRow[] ?? []).map(mapRow);
+  const cityName = city.displayName.pl;
+  const mapped = (data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName));
 
   if (!needsClientFilter) {
     return { events: mapped, total: count ?? 0 };
@@ -155,7 +160,9 @@ function applyClientFilters(events: Event[], filters: EventFilters): Event[] {
   return events;
 }
 
-export async function fetchEvent(id: string): Promise<Event> {
+export async function fetchEvent(cityId: CityId | string, id: string): Promise<Event> {
+  const city = getCity(cityId);
+  const supabase = getSupabaseForCity(city.id);
   const { data, error } = await supabase
     .from('events')
     .select('*')
@@ -165,10 +172,11 @@ export async function fetchEvent(id: string): Promise<Event> {
   if (error?.code === 'PGRST116') throw new NotFoundError();
   if (error) throw new ServerError(error.message);
 
-  return mapRow(data as SupabaseEventRow);
+  return mapRow(data as SupabaseEventRow, city.displayName.pl);
 }
 
-export async function fetchCategories(): Promise<DbCategory[]> {
+export async function fetchCategories(cityId: CityId | string): Promise<DbCategory[]> {
+  const supabase = getSupabaseForCity(cityId);
   const { data, error } = await supabase
     .from('categories')
     .select('slug, parent_slug, display_name, display_plural, icon, color, sort_order')
@@ -177,4 +185,3 @@ export async function fetchCategories(): Promise<DbCategory[]> {
   if (error) throw new ServerError(error.message);
   return (data ?? []) as DbCategory[];
 }
-

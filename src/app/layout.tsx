@@ -2,18 +2,23 @@ import type { Metadata } from 'next';
 import Providers from './providers';
 import AppLayout from '@/components/common/AppLayout/AppLayout';
 import { messages, DEFAULT_LOCALE } from '@/i18n';
+import { DEFAULT_CITY_ID, getCity } from '@/config/cities';
 import './globals.scss';
 
-// Server-side metadata is rendered at build time. Locale switching happens
-// in the browser, so the static HTML / SEO tags ship in DEFAULT_LOCALE (pl).
+// Server-side metadata is rendered at build time. Locale switching and city
+// switching happen in the browser, so the static HTML / SEO tags ship in
+// DEFAULT_LOCALE (pl) and DEFAULT_CITY (Szczecin).
 const m = messages[DEFAULT_LOCALE];
+const defaultCity = getCity(DEFAULT_CITY_ID);
+const defaultCityLocative = defaultCity.locativeForm[DEFAULT_LOCALE];
+const defaultDescription = m.META_DESCRIPTION(defaultCityLocative);
 
 export const metadata: Metadata = {
   title: {
     default: m.APP_NAME,
     template: `%s | ${m.APP_NAME}`,
   },
-  description: m.META_DESCRIPTION,
+  description: defaultDescription,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -21,7 +26,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: m.APP_NAME,
-    description: m.META_DESCRIPTION,
+    description: defaultDescription,
     locale: 'pl_PL',
     type: 'website',
   },

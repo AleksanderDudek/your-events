@@ -4,10 +4,12 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import { useTranslation } from '@/i18n';
+import { useCity } from '@/config/CityProvider';
 import styles from './AppFooter.module.scss';
 
 export default function AppFooter() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const { city } = useCity();
   const year = new Date().getFullYear();
 
   return (
@@ -26,7 +28,7 @@ export default function AppFooter() {
             {t.APP_NAME}
           </Typography>
           <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
-            {t.APP_TAGLINE}
+            {t.APP_TAGLINE(city.locativeForm[locale])}
           </Typography>
         </Box>
 

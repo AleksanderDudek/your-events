@@ -107,6 +107,18 @@
   }
 }
 
+.headlinePrefix {
+  display: inline;
+}
+
+// The animated word can briefly extend beyond its natural bounds (blur +
+// transform); the wrapper clips nothing but reserves vertical space.
+.headlineLastWord {
+  display: inline-block;
+  position: relative;
+  vertical-align: baseline;
+}
+
 .heroSub {
   margin: 0 auto;
   font-family: var(--font-body);

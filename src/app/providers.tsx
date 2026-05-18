@@ -9,6 +9,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { pl } from 'date-fns/locale';
 import { theme } from '@/styles/theme';
 import { LocaleProvider } from '@/i18n';
+import { CityProvider } from '@/config/CityProvider';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -32,12 +33,14 @@ export default function Providers({ children }: Readonly<ProvidersProps>) {
   return (
     <QueryClientProvider client={queryClient}>
       <LocaleProvider>
-        <ThemeProvider theme={theme}>
-          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={pl}>
-            <CssBaseline />
-            {children}
-          </LocalizationProvider>
-        </ThemeProvider>
+        <CityProvider>
+          <ThemeProvider theme={theme}>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={pl}>
+              <CssBaseline />
+              {children}
+            </LocalizationProvider>
+          </ThemeProvider>
+        </CityProvider>
       </LocaleProvider>
     </QueryClientProvider>
   );
