@@ -3,17 +3,19 @@
 import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
 
-// Row-shaped skeleton mirroring EventRow's layout: a date column on the left,
-// a content column with title + meta + price, and a chevron column. Keeping
-// the shape match means the grid doesn't reflow when real data lands.
+// Shape-matched to EventRow — fixed 88px (mobile) / 84px (md+) height with the
+// date column, square icon tile, title + meta line, and a right-aligned price.
+// Keeping the dimensions in lockstep with EventRow prevents the list reflowing
+// when real data hydrates.
 export default function SkeletonRow() {
   return (
     <Box
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: { xs: 2, md: 3 },
-        padding: { xs: '16px', md: '20px 24px' },
+        gap: { xs: 1.5, md: 2 },
+        padding: { xs: '10px 12px', md: '12px 20px' },
+        height: { xs: 88, md: 84 },
         borderBottom: '1px solid var(--color-border)',
       }}
     >
@@ -22,73 +24,68 @@ export default function SkeletonRow() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          minWidth: 48,
+          justifyContent: 'center',
+          minWidth: 36,
           flexShrink: 0,
           gap: 0.5,
         }}
       >
         <Skeleton
           variant="text"
-          width={32}
-          height={28}
+          width={26}
+          height={22}
           animation="wave"
           sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
         />
         <Skeleton
           variant="text"
-          width={28}
-          height={14}
-          animation="wave"
-          sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
-        />
-      </Box>
-
-      <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Skeleton
-            variant="rounded"
-            width={48}
-            height={48}
-            animation="wave"
-            sx={{ flex: '0 0 48px', backgroundColor: 'var(--color-bg-elevated)' }}
-          />
-          <Skeleton
-            variant="text"
-            width="70%"
-            height={22}
-            animation="wave"
-            sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
-          />
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Skeleton
-            variant="rounded"
-            width={64}
-            height={20}
-            animation="wave"
-            sx={{ borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-bg-elevated)' }}
-          />
-          <Skeleton
-            variant="rounded"
-            width={80}
-            height={20}
-            animation="wave"
-            sx={{ borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-bg-elevated)' }}
-          />
-        </Box>
-        <Skeleton
-          variant="text"
-          width={120}
-          height={18}
+          width={24}
+          height={12}
           animation="wave"
           sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
         />
       </Box>
 
       <Skeleton
+        variant="rounded"
+        animation="wave"
+        sx={{
+          width: { xs: 44, md: 48 },
+          height: { xs: 44, md: 48 },
+          flex: { xs: '0 0 44px', md: '0 0 48px' },
+          backgroundColor: 'var(--color-bg-elevated)',
+        }}
+      />
+
+      <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Skeleton
+          variant="text"
+          width="75%"
+          height={18}
+          animation="wave"
+          sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
+        />
+        <Skeleton
+          variant="text"
+          width="55%"
+          height={14}
+          animation="wave"
+          sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
+        />
+      </Box>
+
+      <Skeleton
+        variant="text"
+        width={56}
+        height={18}
+        animation="wave"
+        sx={{ flexShrink: 0, backgroundColor: 'var(--color-bg-elevated)' }}
+      />
+
+      <Skeleton
         variant="circular"
-        width={20}
-        height={20}
+        width={18}
+        height={18}
         animation="wave"
         sx={{ flexShrink: 0, backgroundColor: 'var(--color-bg-elevated)' }}
       />

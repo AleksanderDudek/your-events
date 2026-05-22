@@ -4,9 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import PlaceIcon from '@mui/icons-material/Place';
 import { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
@@ -41,63 +39,50 @@ export default function EventCard({ event }: EventCardProps) {
       >
         <Box className={styles.imageWrapper}>
           <ImageWrapper event={event} />
+          <div className={styles.dateOverlay} aria-hidden>
+            <span className={styles.dateText}>{formatDateShort(event.date)}</span>
+            {time && <span className={styles.timeText}>{time}</span>}
+          </div>
         </Box>
 
-        <CardContent className={styles.content}>
-          <Typography variant="h6" component="h3" className={styles.name}>
-            {event.name}
-          </Typography>
+        {/* Grid container — row heights are locked in EventCard.module.scss
+            so every card lays out title/venue/chips/footer at identical
+            y-offsets, regardless of content length. */}
+        <div className={styles.content}>
+          <div className={styles.titleSlot}>
+            <h3 className={styles.name}>{event.name}</h3>
+          </div>
 
-          <Typography
-            variant="body2"
-            className={styles.datetime}
-            sx={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}
-          >
-            {formatDateShort(event.date)}
-            {time && ` · ${time}`}
-          </Typography>
+          <div className={styles.locationSlot}>
+            <PlaceIcon sx={{ fontSize: 14, color: 'var(--color-text-muted)', flexShrink: 0 }} />
+            <span className={styles.venue}>{event.location.name}</span>
+          </div>
 
-          <Box className={styles.location}>
-            <PlaceIcon sx={{ fontSize: 16, color: 'var(--color-text-muted)', flexShrink: 0 }} />
-            <Typography
-              variant="body2"
-              sx={{ color: 'var(--color-text-secondary)' }}
-              noWrap
-            >
-              {event.location.name}
-            </Typography>
-          </Box>
-
-          {visibleCategories.length > 0 && (
-            <Box className={styles.chips}>
-              {visibleCategories.map((label) => (
-                <CategoryChip key={label} category={label} />
-              ))}
-              {extraCount > 0 && (
-                <Typography
-                  variant="caption"
-                  sx={{ color: 'var(--color-text-muted)', alignSelf: 'center' }}
-                >
-                  +{extraCount}
-                </Typography>
-              )}
-            </Box>
-          )}
-
-          <Box className={styles.footer}>
-            <PriceLabel amount={event.price.amount} currency={event.price.currency} />
-            {sourceLabel && (
-              <Typography
-                variant="caption"
-                noWrap
-                sx={{ color: 'var(--color-text-muted)', maxWidth: '50%' }}
-                title={sourceLabel}
-              >
-                {sourceLabel}
-              </Typography>
+          {/* Always rendered (even when empty) so the chip row reserves its
+              26px slot in the grid. aria-hidden suppresses the empty region
+              for screen readers. */}
+          <div className={styles.chipsSlot} aria-hidden={visibleCategories.length === 0}>
+            {visibleCategories.map((label) => (
+              <CategoryChip key={label} category={label} />
+            ))}
+            {extraCount > 0 && (
+              <span style={{ color: 'var(--color-text-muted)', fontSize: '0.6875rem' }}>
+                +{extraCount}
+              </span>
             )}
-          </Box>
-        </CardContent>
+          </div>
+
+          <div className={styles.footer}>
+            <span className={styles.price}>
+              <PriceLabel amount={event.price.amount} currency={event.price.currency} />
+            </span>
+            {sourceLabel && (
+              <span className={styles.source} title={sourceLabel}>
+                {sourceLabel}
+              </span>
+            )}
+          </div>
+        </div>
       </Card>
     </Link>
   );
@@ -132,7 +117,7 @@ function ImageWrapper({ event }: { event: Event }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '3rem',
+        fontSize: '2rem',
       }}
     >
       {categoryData?.icon ?? '●'}

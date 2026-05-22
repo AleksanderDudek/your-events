@@ -1,9 +1,14 @@
 'use client';
 
 import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Skeleton from '@mui/material/Skeleton';
-import Box from '@mui/material/Box';
+
+// Shape-matched to EventCard — heights and grid rows mirror those in
+// EventCard.module.scss so the grid doesn't reflow when data hydrates.
+// Keep these constants in lockstep with the SCSS file's $card-h-* and
+// $title-row / $venue-row / $chips-row / $footer-row values.
+const CARD_HEIGHT = { xs: 220, sm: 226, md: 232 };
+const BAND_HEIGHT = { xs: 72, md: 80 };
 
 export default function SkeletonCard() {
   return (
@@ -11,69 +16,99 @@ export default function SkeletonCard() {
       sx={{
         borderRadius: 'var(--radius-md)',
         overflow: 'hidden',
+        height: CARD_HEIGHT,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Skeleton
         variant="rectangular"
-        height={180}
         animation="wave"
-        sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
+        sx={{
+          height: BAND_HEIGHT,
+          flexShrink: 0,
+          backgroundColor: 'var(--color-bg-elevated)',
+        }}
       />
-      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: '36px 18px 26px 1fr 26px',
+          rowGap: 4,
+          flex: 1,
+          minHeight: 0,
+          padding: '10px 12px',
+        }}
+      >
         <Skeleton
-          variant="text"
-          width="80%"
-          height={28}
+          variant="rectangular"
           animation="wave"
-          sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
+          sx={{
+            width: '85%',
+            height: 14,
+            borderRadius: 0.5,
+            backgroundColor: 'var(--color-bg-elevated)',
+          }}
         />
         <Skeleton
-          variant="text"
-          width="50%"
-          height={20}
+          variant="rectangular"
           animation="wave"
-          sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
+          sx={{
+            width: '60%',
+            height: 12,
+            borderRadius: 0.5,
+            backgroundColor: 'var(--color-bg-elevated)',
+            alignSelf: 'center',
+          }}
         />
-        <Skeleton
-          variant="text"
-          width="60%"
-          height={20}
-          animation="wave"
-          sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
-        />
-        <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           <Skeleton
             variant="rounded"
-            width={60}
-            height={24}
+            width={56}
+            height={20}
             animation="wave"
             sx={{ borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-bg-elevated)' }}
           />
           <Skeleton
             variant="rounded"
-            width={50}
-            height={24}
+            width={48}
+            height={20}
             animation="wave"
             sx={{ borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-bg-elevated)' }}
           />
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+        </div>
+        <div />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingTop: 6,
+            borderTop: '1px solid var(--color-border)',
+          }}
+        >
           <Skeleton
-            variant="text"
-            width={70}
-            height={20}
+            variant="rectangular"
             animation="wave"
-            sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
+            sx={{
+              width: 56,
+              height: 14,
+              borderRadius: 0.5,
+              backgroundColor: 'var(--color-bg-elevated)',
+            }}
           />
           <Skeleton
-            variant="text"
-            width={90}
-            height={20}
+            variant="rectangular"
             animation="wave"
-            sx={{ backgroundColor: 'var(--color-bg-elevated)' }}
+            sx={{
+              width: 70,
+              height: 12,
+              borderRadius: 0.5,
+              backgroundColor: 'var(--color-bg-elevated)',
+            }}
           />
-        </Box>
-      </CardContent>
+        </div>
+      </div>
     </Card>
   );
 }

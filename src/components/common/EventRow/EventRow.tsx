@@ -36,57 +36,54 @@ export default function EventRow({ event }: EventRowProps) {
       >
         <Box className={styles.dateCol}>
           <Typography
-            variant="h4"
             component="span"
             sx={{
               fontFamily: 'var(--font-mono)',
               fontWeight: 700,
               color: 'var(--color-accent-primary)',
+              fontSize: '1.375rem',
               lineHeight: 1,
             }}
           >
             {formatDay(event.date)}
           </Typography>
           <Typography
-            variant="caption"
             component="span"
             sx={{
               fontFamily: 'var(--font-mono)',
               color: 'var(--color-accent-primary)',
               fontSize: '0.625rem',
               letterSpacing: '0.08em',
+              lineHeight: 1.2,
             }}
           >
             {formatMonth(event.date)}
           </Typography>
         </Box>
 
+        <Box
+          className={styles.iconTile}
+          sx={{ bgcolor: categoryData?.color ?? '#6B7280' }}
+          aria-hidden
+        >
+          {categoryData?.icon ?? '●'}
+        </Box>
+
         <Box className={styles.contentCol}>
-          <Box className={styles.topLine}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  flex: '0 0 48px',
-                  borderRadius: 1,
-                  bgcolor: categoryData?.color ?? '#6B7280',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.5rem',
-                  userSelect: 'none',
-                }}
-              >
-                {categoryData?.icon ?? '●'}
-              </Box>
-              <Typography variant="subtitle1" component="h3" className={styles.name}>
-                {event.name}
+          <Typography variant="subtitle1" component="h3" className={styles.name}>
+            {event.name}
+          </Typography>
+
+          <Box className={styles.metaLine}>
+            <Box className={styles.venue}>
+              <PlaceIcon
+                sx={{ fontSize: 13, color: 'var(--color-text-muted)', flexShrink: 0 }}
+              />
+              <Typography component="span" className={styles.venueText}>
+                {event.location.name}
               </Typography>
             </Box>
-          </Box>
-
-          <Box className={styles.meta}>
+            {time && <span className={styles.time}>{time}</span>}
             {chips.length > 0 && (
               <Box className={styles.chips}>
                 {chips.map((label) => (
@@ -94,22 +91,10 @@ export default function EventRow({ event }: EventRowProps) {
                 ))}
               </Box>
             )}
-            <Box className={styles.locationTime}>
-              <PlaceIcon sx={{ fontSize: 14, color: 'var(--color-text-muted)' }} />
-              <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
-                {event.location.name}
-              </Typography>
-              {time && (
-                <Typography
-                  variant="caption"
-                  sx={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)', ml: 1 }}
-                >
-                  {time}
-                </Typography>
-              )}
-            </Box>
           </Box>
+        </Box>
 
+        <Box className={styles.rightCol}>
           <PriceLabel amount={event.price.amount} currency={event.price.currency} />
         </Box>
 

@@ -1,34 +1,69 @@
 @use '../../../styles/mixins' as *;
 
+// =============================================================================
+// Card dimensions
+// =============================================================================
+// Every card is locked to the same height. Inside the content area we use CSS
+// Grid with fixed row heights so the title / venue / chips / footer slots land
+// at identical y-coordinates across every card in the grid — regardless of
+// whether the title is 1 line or 2, or whether the event has 0/1/2 chips.
+//
+// Why grid-template-rows rather than per-element min-height: MUI's emotion
+// styles (injected at end of <head>) beat CSS Module classes in the cascade,
+// so min-height on a <Typography> was being clobbered. Grid sizes the row
+// from the container, not the child — the cascade war becomes irrelevant.
+
+$band-h-mobile: 72px;
+$band-h-md: 80px;
+
+$title-row: 36px;      // 2 lines × (0.875rem × 1.25) ≈ 35px + 1px slack
+$venue-row: 18px;
+$chips-row: 26px;      // MUI Chip size="small" is 24px, +2px slack
+$footer-row: 26px;     // price (~18px) + 6px padding-top + 1px border
+
+$card-h-mobile: 220px;
+$card-h-sm: 226px;
+$card-h-md: 232px;
+
 .link {
   text-decoration: none;
   display: block;
   border-radius: var(--radius-md);
+  height: 100%;
   @include focus-visible;
 }
 
 .card {
-  height: 100%;
+  height: $card-h-mobile;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   cursor: pointer;
 
+  @include sm {
+    height: $card-h-sm;
+  }
+
+  @include md {
+    height: $card-h-md;
+  }
+
   @include card-hover;
 }
+
+// =============================================================================
+// Hero band (category color + emoji + date overlay)
+// =============================================================================
 
 .imageWrapper {
   position: relative;
   width: 100%;
-  height: 140px;
+  height: $band-h-mobile;
   overflow: hidden;
-
-  @include sm {
-    height: 160px;
-  }
+  flex-shrink: 0;
 
   @include md {
-    height: 180px;
+    height: $band-h-md;
   }
 }
 
@@ -36,40 +71,77 @@
   object-fit: cover;
 }
 
-.gradient {
-  width: 100%;
-  height: 100%;
-}
-
-.statusBadge {
+.dateOverlay {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 1;
-}
-
-.content {
+  top: 6px;
+  right: 6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: flex-end;
+  gap: 1px;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(255, 255, 255, 0.94);
+  font-family: var(--font-mono);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.dateText {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timeText {
+  font-size: 0.5625rem;
+  color: var(--color-text-secondary);
+}
+
+// =============================================================================
+// Content area — CSS Grid with fixed row heights
+// =============================================================================
+
+.content {
+  display: grid;
+  // title | venue | chips | spacer (absorbs leftover) | footer
+  grid-template-rows: $title-row $venue-row $chips-row 1fr $footer-row;
+  grid-template-columns: 1fr;
+  row-gap: 4px;
   flex: 1;
-  padding: 12px 14px !important;
+  min-height: 0;
+  padding: 10px 12px;
 
   @include md {
-    gap: 8px;
-    padding: 16px !important;
+    padding: 10px 14px;
   }
 }
 
+// ---- Title slot ----
+.titleSlot {
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+
 .name {
+  margin: 0;
   font-family: var(--font-body);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.25;
   color: var(--color-text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 
   @include md {
-    font-size: 1rem;
+    font-size: 0.9375rem;
   }
 
   @include motion-safe {
@@ -81,27 +153,56 @@
   }
 }
 
-.datetime {
-  font-size: 0.75rem;
-}
-
-.location {
+// ---- Venue slot ----
+.locationSlot {
   display: flex;
   align-items: center;
   gap: 4px;
+  overflow: hidden;
+  min-width: 0;
 }
 
-.chips {
+.venue {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+// ---- Chips slot ----
+// nowrap keeps the second chip on the same line (or clips it) so the chips
+// row never blows past its 26px reservation.
+.chipsSlot {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  min-width: 0;
 }
 
+// ---- Footer slot ----
 .footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: auto;
-  padding-top: 8px;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+.price {
+  flex-shrink: 0;
+}
+
+.source {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
