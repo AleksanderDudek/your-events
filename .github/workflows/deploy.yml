@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # The site is a static export: event detail pages exist only for ids present
+  # in the DB at build time (generateStaticParams + dynamicParams=false). New
+  # events added to Supabase between code pushes would 404 until the next build,
+  # so rebuild on a schedule to keep the static pages fresh. Cron is UTC.
+  schedule:
+    - cron: '0 */3 * * *'
 
 permissions:
   contents: read
