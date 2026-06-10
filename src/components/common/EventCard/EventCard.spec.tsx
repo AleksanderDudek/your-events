@@ -30,6 +30,7 @@ const mockEvent: Event = {
   location: { name: 'Kimama Dance Studio', city: 'Szczecin', lat: null, lng: null },
   price: { amount: 35, currency: 'PLN', label: '35 zł' },
   url: 'https://kimama.pl/',
+  imageUrl: '',
   sources: ['kimama'],
   updatedAt: null,
 };

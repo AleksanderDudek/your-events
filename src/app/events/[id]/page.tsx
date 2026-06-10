@@ -64,6 +64,7 @@ async function EventDetailContent({ id }: Readonly<{ id: string }>) {
     '@type': 'Event',
     name: event.name,
     description: event.description,
+    ...(event.imageUrl && { image: event.imageUrl }),
     startDate: `${event.date}T${event.startTime}:00`,
     ...(event.endTime && { endDate: `${event.date}T${event.endTime}:00` }),
     location: {

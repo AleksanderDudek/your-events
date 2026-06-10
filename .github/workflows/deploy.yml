@@ -4,10 +4,17 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Backend (IdzNaMiasto scrape pipeline) fires repository_dispatch
+  # 'events-updated' right after its morning push to Supabase, so the static
+  # site rebuilds within minutes of fresh data instead of waiting for the
+  # next scheduled cron below.
+  repository_dispatch:
+    types: [events-updated]
   # The site is a static export: event detail pages exist only for ids present
   # in the DB at build time (generateStaticParams + dynamicParams=false). New
   # events added to Supabase between code pushes would 404 until the next build,
-  # so rebuild on a schedule to keep the static pages fresh. Cron is UTC.
+  # so rebuild on a schedule to keep the static pages fresh as a fallback.
+  # Cron is UTC.
   schedule:
     - cron: '0 */3 * * *'
 

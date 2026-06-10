@@ -92,17 +92,22 @@ function ImageWrapper({ event }: { event: Event }) {
   const { byDisplayName } = useCategories();
   const categoryData = byDisplayName.get(event.categoryMain) ?? byDisplayName.get('Inne');
   const iconPath = getCategoryIconPath(event.categoryMain || 'inne');
-  const [errored, setErrored] = useState(false);
 
-  if (!errored) {
+  // Image source chain: real event image (poster / source logo) → category
+  // icon → solid color box with emoji. `stage` advances on each onError:
+  //   0 = real imageUrl, 1 = category icon, 2 = color box.
+  const hasRealImage = Boolean(event.imageUrl);
+  const [stage, setStage] = useState<0 | 1 | 2>(hasRealImage ? 0 : 1);
+
+  if (stage < 2) {
     return (
       <Image
-        src={iconPath}
+        src={stage === 0 ? event.imageUrl : iconPath}
         alt={categoryData?.display_name ?? event.categoryMain}
         fill
         sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
         className={styles.image}
-        onError={() => setErrored(true)}
+        onError={() => setStage((s) => (s === 0 ? 1 : 2))}
         unoptimized
       />
     );
