@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -42,6 +44,32 @@ function getGradient(id: string): string {
   return GRADIENT_COLORS[Math.abs(hash) % GRADIENT_COLORS.length];
 }
 
+// Hero background: real event image (poster / source logo) when available,
+// otherwise the deterministic category gradient. Falls back to the gradient
+// on image load error. The heroOverlay scrim keeps the title legible on top
+// of either. `unoptimized` because next.config uses output:'export'.
+function HeroBackground({ event }: { event: Event }) {
+  const [errored, setErrored] = useState(false);
+  if (event.imageUrl && !errored) {
+    return (
+      <Image
+        src={event.imageUrl}
+        alt=""
+        aria-hidden
+        fill
+        sizes="(max-width: 900px) 100vw, 900px"
+        className={styles.heroImage}
+        onError={() => setErrored(true)}
+        unoptimized
+        priority
+      />
+    );
+  }
+  return (
+    <Box className={styles.heroGradient} sx={{ background: getGradient(event.id) }} />
+  );
+}
+
 function formatUpdatedAt(iso: string | null): string | null {
   if (!iso) return null;
   const d = new Date(iso);
@@ -82,7 +110,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
 
       {/* Hero */}
       <Box className={styles.hero}>
-        <Box className={styles.heroGradient} sx={{ background: getGradient(event.id) }} />
+        <HeroBackground event={event} />
         <Box className={styles.heroOverlay}>
           <Typography
             variant="h3"
