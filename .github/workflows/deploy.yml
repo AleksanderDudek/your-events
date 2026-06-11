@@ -55,6 +55,66 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/deploy-pages@v4
         id: deployment
+
+  # ── Notyfikacja Discord (ten sam kanal co backend pipeline) ──────────────
+  # Wysyla po KAZDYM deployu (sukces + fail), zeby caly pipeline (dane backendu
+  # + przebudowa frontu) byl widoczny w jednym kanale. Wymaga sekretu
+  # DISCORD_WEBHOOK_URL w tym repo (ta sama wartosc co w repo backendu).
+  notify:
+    needs: [build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          EVENT: ${{ github.event_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "Brak DISCORD_WEBHOOK_URL – pomijam notyfikacje."
+            exit 0
+          fi
+          if [ "$BUILD_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ]; then
+            TITLE="🌐 Frontend deploy — ✅ sukces"
+            COLOR=4906588          # 0x4ade80 green
+          else
+            TITLE="🌐 Frontend deploy — ❌ fail (build=$BUILD_RESULT, deploy=$DEPLOY_RESULT)"
+            COLOR=15680580         # 0xef4444 red
+          fi
+          PAGE="${PAGE_URL:-https://aleksanderdudek.github.io/your-events}"
+          # jq buduje JSON bezpiecznie (escaping). User-Agent omija Cloudflare 1010.
+          payload=$(jq -n \
+            --arg title "$TITLE" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            --arg event "$EVENT" \
+            --arg page "$PAGE" \
+            '{
+              username: "your-events Deploy",
+              embeds: [{
+                title: $title,
+                url: $url,
+                color: $color,
+                fields: [
+                  { name: "Trigger", value: $event, inline: true },
+                  { name: "Strona", value: $page, inline: false }
+                ]
+              }]
+            }')
+          code=$(curl -sS -o /tmp/discord_resp -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: your-events-deploy/1.0 (+https://github.com/AleksanderDudek/your-events)" \
+            -d "$payload" "$DISCORD_WEBHOOK_URL")
+          echo "Discord webhook → HTTP $code"
+          if [ "$code" != "204" ]; then
+            echo "Odpowiedz:"; cat /tmp/discord_resp || true
+          fi
