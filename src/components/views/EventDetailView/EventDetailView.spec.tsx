@@ -22,6 +22,7 @@ const mockEvent: Event = {
   location: { name: 'Kimama Dance Studio', city: 'Szczecin', lat: null, lng: null },
   price: { amount: 35, currency: 'PLN', label: '35 zł jednorazowo' },
   url: 'https://kimama.pl/plan-zajec/',
+  imageUrl: '',
   sources: ['kimama'],
   updatedAt: '2026-03-10T12:00:00Z',
 };

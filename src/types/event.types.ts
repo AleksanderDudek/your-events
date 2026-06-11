@@ -1,7 +1,9 @@
 // Reflects the actual shape of an events-table row after `mapRow` in
 // eventsApi.ts. Fields the scraper never populates (age group, skill level,
-// instructor, capacity, recurrence, image, status, tags, sourceType) have
+// instructor, capacity, recurrence, status, tags, sourceType) have
 // been removed — re-add them when the data pipeline starts surfacing them.
+// `imageUrl` is now populated (poster from multikino API / per-source logo
+// fallback at ~100% coverage), so it lives in Event again.
 
 export interface EventLocation {
   name: string;
@@ -29,6 +31,7 @@ export interface Event {
   location: EventLocation;
   price: EventPrice;
   url: string;               // '' when missing
+  imageUrl: string;          // event poster / source logo; '' when missing
   sources: string[];         // 1+ scraper sources that listed this event
   updatedAt: string | null;  // ISO timestamp; freshness signal
 }

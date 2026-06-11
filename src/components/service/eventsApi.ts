@@ -26,6 +26,7 @@ interface SupabaseEventRow {
   is_free: boolean;
   lat: number | null;
   lng: number | null;
+  image_url: string | null;
   scraped_at: string;
   updated_at: string;
 }
@@ -82,6 +83,7 @@ function mapRow(row: SupabaseEventRow, cityName: string): Event {
       label: row.price_label ?? '',
     },
     url: row.url ?? '',
+    imageUrl: row.image_url ?? '',
     sources: parseSources(row.sources, row.source),
     updatedAt: row.updated_at ?? null,
   };
