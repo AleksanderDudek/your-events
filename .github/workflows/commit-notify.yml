@@ -1,0 +1,49 @@
+name: Commit → Discord
+
+# Powiadomienie na Discord o nowych commitach na main (repo frontendu).
+# Wspolny kanal #commits z backendem (sekret DISCORD_COMMITS_WEBHOOK_URL).
+# Commity z [skip ci] nie wyzwalaja Actions → brak spamu.
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Notify Discord (commits)
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_COMMITS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "Brak DISCORD_COMMITS_WEBHOOK_URL – pomijam."; exit 0
+          fi
+          payload=$(jq -c '
+            (.commits | map(select((.message // "") | contains("[skip ci]") | not))) as $cs
+            | if ($cs | length) == 0 then empty else
+              {
+                username: "your-events Commits",
+                embeds: [{
+                  title: ("📝 " + ($cs | length | tostring) + " commit → " + (.ref | split("/") | last)),
+                  url: .compare,
+                  color: 3447003,
+                  description: ($cs[0:8]
+                    | map("[`" + (.id[0:7]) + "`](" + .url + ") **"
+                          + ((.message // "") | split("\n")[0])
+                          + "** — " + (.author.name // "?"))
+                    | join("\n")),
+                  footer: { text: .repository.full_name }
+                }]
+              }
+              end
+          ' "$GITHUB_EVENT_PATH")
+          if [ -z "$payload" ]; then
+            echo "Brak commitow do zgloszenia (same [skip ci])."; exit 0
+          fi
+          code=$(curl -sS -o /tmp/resp -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: your-events-commits/1.0 (+https://github.com/AleksanderDudek/your-events)" \
+            -d "$payload" "$WEBHOOK")
+          echo "Discord (commity) → HTTP $code"
+          [ "$code" = "204" ] || { echo "Odpowiedz:"; cat /tmp/resp; }
