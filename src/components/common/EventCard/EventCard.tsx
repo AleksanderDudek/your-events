@@ -74,7 +74,7 @@ export default function EventCard({ event }: EventCardProps) {
 
           <div className={styles.footer}>
             <span className={styles.price}>
-              <PriceLabel amount={event.price.amount} currency={event.price.currency} />
+              <PriceLabel amount={event.price.amount} currency={event.price.currency} label={event.price.label} showLabel={event.price.showLabel} />
             </span>
             {sourceLabel && (
               <span className={styles.source} title={sourceLabel}>

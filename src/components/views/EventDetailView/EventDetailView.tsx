@@ -235,8 +235,8 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                   {t.DETAIL_PRICE}
                 </Typography>
                 <Box sx={{ mt: 0.25 }}>
-                  <PriceLabel amount={event.price.amount} currency={event.price.currency} />
-                  {priceLabel && event.price.amount === null && (
+                  <PriceLabel amount={event.price.amount} currency={event.price.currency} label={event.price.label} showLabel={event.price.showLabel} />
+                  {priceLabel && !event.price.showLabel && event.price.amount === null && (
                     <Typography variant="caption" display="block" sx={{ color: 'var(--color-text-muted)', mt: 0.25 }}>
                       {priceLabel}
                     </Typography>
