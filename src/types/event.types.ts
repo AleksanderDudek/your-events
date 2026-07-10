@@ -16,6 +16,8 @@ export interface EventPrice {
   amount: number | null;     // PLN, or null when unknown / suspect
   currency: string;
   label: string;             // raw price_label from the scraper, used as fallback display
+  showLabel: boolean;        // true when the label itself should be shown (e.g. "Karnet od 189 zł"
+                             // for membership-only pricing, where a bare number would mislead)
 }
 
 export interface Event {

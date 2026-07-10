@@ -31,6 +31,20 @@ interface SupabaseEventRow {
   updated_at: string;
 }
 
+// A "descriptive" label carries meaningful words beyond a bare number + currency
+// (e.g. "Karnet od 189 zł"), so it should be shown verbatim rather than reduced
+// to a number. "40 zł" / "35 PLN" strip down to nothing → not descriptive.
+function isDescriptivePriceLabel(label: string | null | undefined): boolean {
+  if (!label) return false;
+  if (/https?:\/\//i.test(label)) return false;
+  const residual = label
+    .toLowerCase()
+    .replace(/z[łl]|pln|gr\b/g, '')  // currency tokens
+    .replace(/[0-9]/g, '')
+    .replace(/[^a-ząćęłńóśźż]/g, ''); // keep only letters
+  return residual.length > 0;
+}
+
 function parsePriceAmount(row: SupabaseEventRow): number | null {
   if (row.is_free) return 0;
   // Reject prices parsed from URL fragments (e.g. price=196331 for a
@@ -81,6 +95,10 @@ function mapRow(row: SupabaseEventRow, cityName: string): Event {
       amount: parsePriceAmount(row),
       currency: 'PLN',
       label: row.price_label ?? '',
+      // Show the label verbatim only for label-only pricing (no numeric price
+      // column) with a descriptive label – e.g. Zdrofit "Karnet od 189 zł".
+      // Events with a real numeric price (e.g. Mizukon 42) keep "42 zł".
+      showLabel: row.price === null && !row.is_free && isDescriptivePriceLabel(row.price_label),
     },
     url: row.url ?? '',
     imageUrl: row.image_url ?? '',

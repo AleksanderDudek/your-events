@@ -95,7 +95,7 @@ export default function EventRow({ event }: EventRowProps) {
         </Box>
 
         <Box className={styles.rightCol}>
-          <PriceLabel amount={event.price.amount} currency={event.price.currency} />
+          <PriceLabel amount={event.price.amount} currency={event.price.currency} label={event.price.label} showLabel={event.price.showLabel} />
         </Box>
 
         <Box className={styles.chevron}>

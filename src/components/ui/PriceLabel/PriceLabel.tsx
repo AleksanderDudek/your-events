@@ -6,11 +6,30 @@ import { useTranslation } from '@/i18n';
 interface PriceLabelProps {
   amount: number | null;
   currency: string;
+  label?: string;
+  showLabel?: boolean;
   className?: string;
 }
 
-export default function PriceLabel({ amount, currency, className }: PriceLabelProps) {
+export default function PriceLabel({ amount, currency, label, showLabel, className }: PriceLabelProps) {
   const { t } = useTranslation();
+
+  // Membership-only pricing (e.g. "Karnet od 189 zł"): show the label verbatim
+  // instead of a bare number, which would read as a single-entry price.
+  if (showLabel && label) {
+    return (
+      <Typography
+        variant="body2"
+        component="span"
+        className={className}
+        title={label}
+        sx={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
+      >
+        {label}
+      </Typography>
+    );
+  }
+
   if (amount === null) {
     return (
       <Typography
