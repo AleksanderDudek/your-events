@@ -40,6 +40,7 @@ export default function RootLayout({
   return (
     <html lang={DEFAULT_LOCALE}>
       <head>
+        <meta name="security-scan" content="wirtualnatarcza-verify-b910f78bb326f4ab115e4637d25e134410a83076" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
