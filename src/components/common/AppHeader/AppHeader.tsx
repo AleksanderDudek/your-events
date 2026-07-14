@@ -18,6 +18,7 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from '@/i18n';
+import { useCity } from '@/config/CityProvider';
 import LanguageSwitcher from './LanguageSwitcher';
 import CitySwitcher from './CitySwitcher';
 import styles from './AppHeader.module.scss';
@@ -28,10 +29,11 @@ export default function AppHeader() {
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const { t } = useTranslation();
+  const { city } = useCity();
 
   const navItems = [
-    { label: t.NAV_HOME, href: '/' as const },
-    { label: t.NAV_EVENTS, href: '/events' as const },
+    { label: t.NAV_HOME, href: `/${city.id}` as const },
+    { label: t.NAV_EVENTS, href: `/${city.id}/wydarzenia` as const },
   ];
 
   const isActive = (href: string) => {
