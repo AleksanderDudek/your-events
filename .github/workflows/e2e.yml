@@ -60,6 +60,10 @@ jobs:
           # deploy.yml. Serve the app at the domain root for the tests.
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # Per-city (multi-city): Wrocław events endpoint. Without these the
+          # build/dev marks Wrocław available:false and it's hidden from the picker.
+          NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
           NEXT_PUBLIC_BASE_PATH: ''
         run: pnpm exec playwright test --project=chromium --project="Mobile Chrome"
 
