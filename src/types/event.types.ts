@@ -22,6 +22,7 @@ export interface EventPrice {
 
 export interface Event {
   id: string;
+  eventKey: string;          // immutable natural key (event_key); source of the permalink id
   name: string;
   description: string;
   categoryMain: string;

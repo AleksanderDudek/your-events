@@ -19,6 +19,7 @@ import { Event } from '@/types/event.types';
 
 const mockEvent: Event = {
   id: 'evt-001',
+  eventKey: 'evt-test',
   name: 'Hip Hop Choreo',
   description: 'Zajęcia choreograficzne',
   categoryMain: 'Taniec',

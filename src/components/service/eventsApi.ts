@@ -2,7 +2,7 @@ import { Event, DbCategory } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
 import { getSupabaseForCity } from '@/lib/supabase';
-import { CityId, getCity } from '@/config/cities';
+import { CityId, getCity, CATEGORIES_CITY_ID } from '@/config/cities';
 
 interface SupabaseEventRow {
   id: number;
@@ -77,6 +77,7 @@ function parseSources(raw: string | null | undefined, fallback: string): string[
 function mapRow(row: SupabaseEventRow, cityName: string): Event {
   return {
     id: String(row.id),
+    eventKey: row.event_key,
     name: row.name,
     description: row.description,
     categoryMain: row.category_main,
@@ -195,8 +196,8 @@ export async function fetchEvent(cityId: CityId | string, id: string): Promise<E
   return mapRow(data as SupabaseEventRow, city.displayName.pl);
 }
 
-export async function fetchCategories(cityId: CityId | string): Promise<DbCategory[]> {
-  const supabase = getSupabaseForCity(cityId);
+export async function fetchCategories(): Promise<DbCategory[]> {
+  const supabase = getSupabaseForCity(CATEGORIES_CITY_ID);
   const { data, error } = await supabase
     .from('categories')
     .select('slug, parent_slug, display_name, display_plural, icon, color, sort_order')
@@ -204,4 +205,27 @@ export async function fetchCategories(cityId: CityId | string): Promise<DbCatego
     .order('sort_order');
   if (error) throw new ServerError(error.message);
   return (data ?? []) as DbCategory[];
+}
+
+// Build-time cache: one fetch-all per city per build process. Shared by
+// generateStaticParams and every static detail/hub page so we never refetch.
+const cityEventsCache = new Map<string, Promise<Event[]>>();
+
+export function getCityEvents(cityId: CityId | string): Promise<Event[]> {
+  const city = getCity(cityId);
+  const cached = cityEventsCache.get(city.id);
+  if (cached) return cached;
+  const promise = (async () => {
+    const supabase = getSupabaseForCity(city.id);
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .order('date')
+      .order('time_start');
+    if (error) throw new ServerError(error.message);
+    const cityName = city.displayName.pl;
+    return (data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName));
+  })();
+  cityEventsCache.set(city.id, promise);
+  return promise;
 }

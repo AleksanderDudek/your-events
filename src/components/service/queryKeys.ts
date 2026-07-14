@@ -9,6 +9,6 @@ export const eventsKeys = {
     ['events', cityId, 'list', filters] as const,
   detail: (cityId: CityId | string, id: string) =>
     ['events', cityId, 'detail', id] as const,
-  categories: (cityId: CityId | string) => ['categories', cityId] as const,
+  categories: () => ['categories'] as const,
   sources: (cityId: CityId | string) => ['sources', cityId] as const,
 };

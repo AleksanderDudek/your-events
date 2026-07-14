@@ -157,6 +157,7 @@ describe('eventsApi', () => {
 
       expect(event).toEqual({
         id: '101',
+        eventKey: 'evt-101',
         name: 'Hip Hop Choreo',
         description: 'Zajęcia hip hop',
         categoryMain: 'dance',
@@ -470,7 +471,7 @@ describe('eventsApi', () => {
       ];
       s.results.categories = { data: rows, count: null, error: null };
 
-      const categories = await fetchCategories('szczecin');
+      const categories = await fetchCategories();
 
       expect(categories).toEqual(rows);
       expect(s.client.from).toHaveBeenCalledWith('categories');
@@ -482,14 +483,14 @@ describe('eventsApi', () => {
       const s = setup();
       s.results.categories = { data: null, count: null, error: null };
 
-      await expect(fetchCategories('szczecin')).resolves.toEqual([]);
+      await expect(fetchCategories()).resolves.toEqual([]);
     });
 
     it('throws ServerError on a query error', async () => {
       const s = setup();
       s.results.categories = { data: null, count: null, error: { message: 'boom' } };
 
-      await expect(fetchCategories('szczecin')).rejects.toBeInstanceOf(ServerError);
+      await expect(fetchCategories()).rejects.toBeInstanceOf(ServerError);
     });
   });
 });
