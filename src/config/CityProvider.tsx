@@ -34,14 +34,27 @@ interface CityContextValue {
 
 const CityContext = createContext<CityContextValue | null>(null);
 
-export function CityProvider({ children }: { children: React.ReactNode }) {
+export function CityProvider({
+  children,
+  initialCityId,
+}: {
+  children: React.ReactNode;
+  initialCityId?: CityId;
+}) {
   // SSR + first paint use the default city so the static HTML matches.
   // The "real" city is reconciled after hydration from localStorage or
   // geolocation, which flips isResolved=true and lets the hero animate.
-  const [cityId, setCityId] = useState<CityId>(DEFAULT_CITY_ID);
+  // When initialCityId is supplied (from the URL-aware [city] layout), it
+  // wins outright and the resolution effect below is a no-op.
+  const [cityId, setCityId] = useState<CityId>(initialCityId ?? DEFAULT_CITY_ID);
   const [isResolved, setIsResolved] = useState(false);
 
   useEffect(() => {
+    if (initialCityId) {
+      setIsResolved(true);
+      return;
+    }
+
     let cancelled = false;
 
     const finalize = (id: CityId) => {
@@ -85,7 +98,7 @@ export function CityProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialCityId]);
 
   const setCity = useCallback((next: CityId) => {
     setCityId(next);
