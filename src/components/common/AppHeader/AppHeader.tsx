@@ -38,8 +38,9 @@ export default function AppHeader() {
   ];
 
   const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname.startsWith(href);
+    const current = pathname.replace(/\/$/, '') || '/';
+    if (href === `/${city.id}`) return current === href;
+    return current.startsWith(href);
   };
 
   return (

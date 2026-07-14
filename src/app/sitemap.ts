@@ -26,7 +26,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const e of events) {
       routes.push({
         url: `${SITE_URL}${eventPath(city.id, e, map)}`,
-        lastModified: e.updatedAt ? new Date(e.updatedAt) : lastModified,
+        lastModified: ((): Date => {
+          if (!e.updatedAt) return lastModified;
+          const d = new Date(e.updatedAt);
+          return Number.isNaN(d.getTime()) ? lastModified : d;
+        })(),
         changeFrequency: 'weekly',
         priority: 0.6,
       });

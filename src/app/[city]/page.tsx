@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import HomeView from '@/components/views/HomeView/HomeView';
 import { messages, DEFAULT_LOCALE } from '@/i18n';
 import { getCity, isCityId, DEFAULT_CITY_ID } from '@/config/cities';
+import { SITE_URL } from '@/config/site';
 
 interface CityPageProps {
   params: Promise<Readonly<{ city: string }>>;
@@ -15,6 +16,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
   return {
     title: messages[DEFAULT_LOCALE].META_EVENTS_TITLE(locative),
     description: messages[DEFAULT_LOCALE].META_DESCRIPTION(locative),
+    alternates: { canonical: `${SITE_URL}/${cityId}` },
   };
 }
 

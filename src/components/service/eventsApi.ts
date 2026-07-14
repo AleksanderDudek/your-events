@@ -3,6 +3,7 @@ import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
 import { getSupabaseForCity } from '@/lib/supabase';
 import { CityId, getCity, CATEGORIES_CITY_ID } from '@/config/cities';
+import { shortId } from '@/lib/slug';
 
 interface SupabaseEventRow {
   id: number;
@@ -217,6 +218,7 @@ export function getCityEvents(cityId: CityId | string): Promise<Event[]> {
   if (cached) return cached;
   const promise = (async () => {
     const supabase = getSupabaseForCity(city.id);
+    // NOTE: no .range() — relies on the 1000-row default; add pagination before a city exceeds it.
     const { data, error } = await supabase
       .from('events')
       .select('*')
@@ -224,7 +226,17 @@ export function getCityEvents(cityId: CityId | string): Promise<Event[]> {
       .order('time_start');
     if (error) throw new ServerError(error.message);
     const cityName = city.displayName.pl;
-    return (data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName));
+    const mapped = (data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName));
+
+    // Permalinks derive from shortId(event_key); a collision would make two
+    // events resolve to the same page. Astronomically unlikely at this scale,
+    // but fail the build loudly (deploy notifies on failure) rather than serve
+    // wrong content silently.
+    if (new Set(mapped.map((e) => shortId(e.eventKey))).size !== mapped.length) {
+      throw new ServerError(`Duplicate permalink shortId within city "${city.id}"`);
+    }
+
+    return mapped;
   })();
   cityEventsCache.set(city.id, promise);
   return promise;

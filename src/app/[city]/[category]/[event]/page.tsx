@@ -5,6 +5,7 @@ import { buildCategorySlugMap, resolveCategorySlug, shortId, nameSlug } from '@/
 import { AVAILABLE_CITIES, getCity, isCityId, DEFAULT_CITY_ID } from '@/config/cities';
 import EventDetailView from '@/components/views/EventDetailView/EventDetailView';
 import { Event } from '@/types/event.types';
+import { SITE_URL } from '@/config/site';
 
 export const dynamicParams = false;
 
@@ -38,11 +39,15 @@ interface DetailProps {
 }
 
 export async function generateMetadata({ params }: DetailProps): Promise<Metadata> {
-  const { city, event } = await params;
+  const { city, category, event } = await params;
   if (!isCityId(city)) return { title: 'Wydarzenie nie znalezione' };
   const found = await resolveEvent(city, event);
   if (!found) return { title: 'Wydarzenie nie znalezione' };
-  return { title: `${found.name} — ${found.date}`, description: found.description.slice(0, 160) };
+  return {
+    title: `${found.name} — ${found.date}`,
+    description: found.description.slice(0, 160),
+    alternates: { canonical: `${SITE_URL}/${city}/${category}/${event}` },
+  };
 }
 
 export default async function EventDetailPage({ params }: DetailProps) {

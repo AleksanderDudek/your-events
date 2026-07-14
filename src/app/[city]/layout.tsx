@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import { AVAILABLE_CITIES, isCityId, getCity } from '@/config/cities';
-import CityRouteProvider from '@/config/CityRouteProvider';
 
 export const dynamicParams = false;
 
@@ -16,5 +15,5 @@ interface CityLayoutProps {
 export default async function CityLayout({ children, params }: CityLayoutProps) {
   const { city } = await params;
   if (!isCityId(city) || !getCity(city).available) notFound();
-  return <CityRouteProvider cityId={city}>{children}</CityRouteProvider>;
+  return <>{children}</>;
 }

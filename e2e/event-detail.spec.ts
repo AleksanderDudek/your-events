@@ -7,9 +7,10 @@ import { TEXT, CITY, firstCard, gotoEvents } from './support/helpers';
 // matches a bare path, so it anchors with `^/` instead.
 const PERMALINK = new RegExp(`/${CITY}/[a-z0-9-]+/[a-z0-9-]+-[0-9a-f]{8}/?$`);
 
-// The detail page is server-rendered from Supabase (fetchEvent) with a
-// client-hydrated view. We discover a real event from the list at runtime
-// rather than hardcoding an id, so the suite survives the daily data refresh.
+// The detail page is statically generated: getCityEvents() is fetched at
+// build time and the event is resolved via its stable shortId. We discover a
+// real event from the list at runtime rather than hardcoding an id, so the
+// suite survives the daily data refresh.
 test.describe('Event detail', () => {
   test('opens the detail page from a card and shows its title', async ({ page }) => {
     await gotoEvents(page);
