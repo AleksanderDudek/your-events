@@ -164,20 +164,27 @@ export type CityId = (typeof CITY_DEFS)[number]['id'];
 
 export const DEFAULT_CITY_ID: CityId = 'szczecin';
 
-function envKey(cityId: string): string {
-  return cityId.toUpperCase().replace(/-/g, '_');
-}
+// Per-city Supabase env vars MUST be referenced statically (process.env.NAME),
+// not via a computed key (process.env[`...${k}`]). Next.js inlines NEXT_PUBLIC_*
+// into the browser bundle only for static references; a dynamic key is left as
+// a runtime `process.env[...]` lookup, which is undefined in the static export —
+// so the city would silently stay unavailable no matter how the secret is set.
+// Add an entry here when a new city's Supabase project comes online.
+const CITY_SUPABASE_ENV: Partial<Record<CityId, { url?: string; anonKey?: string }>> = {
+  wroclaw: {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL_WROCLAW,
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW,
+  },
+};
 
 function resolveSupabase(cityId: CityId): {
   url: string;
   anonKey: string;
   available: boolean;
 } {
-  const k = envKey(cityId);
-  const cityUrl = process.env[`NEXT_PUBLIC_SUPABASE_URL_${k}`];
-  const cityKey = process.env[`NEXT_PUBLIC_SUPABASE_ANON_KEY_${k}`];
-  if (cityUrl && cityKey) {
-    return { url: cityUrl, anonKey: cityKey, available: true };
+  const cityEnv = CITY_SUPABASE_ENV[cityId];
+  if (cityEnv?.url && cityEnv?.anonKey) {
+    return { url: cityEnv.url, anonKey: cityEnv.anonKey, available: true };
   }
   // The default city always uses the shared env vars (backwards compatible).
   if (cityId === DEFAULT_CITY_ID) {
