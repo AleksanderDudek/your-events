@@ -49,6 +49,9 @@ coverage/
 playwright-report/
 blob-report/
 test-results/
+results.json
+/.playwright/
+/playwright/.cache/
 
 # Mock server
 mock-server/node_modules/

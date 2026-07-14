@@ -1,0 +1,101 @@
+name: E2E (insights · non-blocking)
+
+# Playwright end-to-end tests that drive the REAL app against the live Supabase
+# project. This workflow is deliberately INFORMATIONAL:
+#   • It is a separate workflow from ci.yml, so it runs in parallel and never
+#     delays the main lint / type-check / unit-test pipeline.
+#   • The test step is `continue-on-error`, so the job always concludes green —
+#     a failing e2e never blocks a merge, even under "require checks" rules.
+#   • Results surface as a job summary, a sticky PR comment, and a downloadable
+#     HTML report artifact. That's the "additional insight" — not a gate.
+#
+# To make this a real merge gate later: drop `continue-on-error` on the test
+# step and add "E2E (insights · non-blocking) / e2e" to branch protection.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write # to post the insights comment
+
+# Newer runs supersede in-flight ones for the same branch/PR.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      # Both the chromium and "Mobile Chrome" projects use the chromium binary,
+      # so a single browser download covers the whole CI matrix.
+      - name: Install Playwright browser (chromium)
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        id: e2e
+        continue-on-error: true # insights only — never fail the job
+        env:
+          # Anon key is public (RLS-protected) and already a repo secret used by
+          # deploy.yml. Serve the app at the domain root for the tests.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_BASE_PATH: ''
+        run: pnpm exec playwright test --project=chromium --project="Mobile Chrome"
+
+      - name: Build insights summary
+        if: always()
+        run: node .github/scripts/e2e-summary.mjs
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Comment insights on PR
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        continue-on-error: true # a comment failure must not fail the job
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- e2e-insights -->';
+            let body;
+            try {
+              body = fs.readFileSync('e2e-comment.md', 'utf8');
+            } catch {
+              body = `${marker}\n### 🎭 E2E insights (non-blocking)\n\nNo report was generated.`;
+            }
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
