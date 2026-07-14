@@ -9,6 +9,7 @@ const basePath = rawBasePath === '' ? undefined : rawBasePath;
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
+  trailingSlash: true,
   basePath,
   images: {
     unoptimized: true,
@@ -19,7 +20,7 @@ const nextConfig = {
       },
     ],
   },
-  typedRoutes: true,
+  typedRoutes: false, // TEMP: re-enable after multi-city routing migration lands (see plan Task 16)
 };
 
 module.exports = nextConfig;
