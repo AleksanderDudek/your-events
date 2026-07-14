@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { isCityId } from '@/config/cities';
+import { useTranslation } from '@/i18n';
 
 const SECONDS = 6;
 
@@ -15,6 +16,7 @@ const SECONDS = 6;
 export default function NotFoundRedirect({ redirectTo = '/' }: { redirectTo?: string }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [left, setLeft] = useState(SECONDS);
 
   const firstSeg = pathname.split('/').filter(Boolean)[0];
@@ -34,18 +36,17 @@ export default function NotFoundRedirect({ redirectTo = '/' }: { redirectTo?: st
       <Typography variant="h1" sx={{ fontFamily: 'var(--font-display)', fontSize: { xs: '4rem', md: '6rem' }, color: 'var(--color-accent-primary)', mb: 2 }}>
         404
       </Typography>
-      {/* TODO(i18n Task 12): swap the three literals below to t.NOTFOUND_TITLE / t.NOTFOUND_BODY / t.NOTFOUND_CTA and the countdown to t.NOTFOUND_REDIRECT(left) */}
       <Typography variant="h5" sx={{ color: 'var(--color-text-primary)', mb: 1 }}>
-        Nie znaleziono strony
+        {t.NOTFOUND_TITLE}
       </Typography>
       <Typography variant="body1" sx={{ color: 'var(--color-text-secondary)', mb: 3 }}>
-        Ta strona nie istnieje lub wydarzenie się już zakończyło.
+        {t.NOTFOUND_BODY}
       </Typography>
       <Typography variant="body2" sx={{ color: 'var(--color-text-muted)', mb: 3 }} role="status" aria-live="polite">
-        {`Przekierujemy Cię do wyszukiwania za ${left} s…`}
+        {t.NOTFOUND_REDIRECT(left)}
       </Typography>
       <Button component="a" href={target} variant="contained" color="primary" sx={{ minHeight: 44 }}>
-        Szukaj wydarzeń
+        {t.NOTFOUND_CTA}
       </Button>
     </Box>
   );

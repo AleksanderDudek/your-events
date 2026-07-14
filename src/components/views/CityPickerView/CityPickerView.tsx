@@ -9,7 +9,7 @@ import { AVAILABLE_CITIES } from '@/config/cities';
 import { useTranslation } from '@/i18n';
 
 export default function CityPickerView() {
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
   return (
     <Box
       sx={{
@@ -25,12 +25,10 @@ export default function CityPickerView() {
     >
       <Box>
         <Typography variant="h3" component="h1" sx={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>
-          {/* TODO(i18n Task 12): swap to t.CITY_PICKER_TITLE */}
-          Wybierz swoje miasto
+          {t.CITY_PICKER_TITLE}
         </Typography>
         <Typography variant="body1" sx={{ color: 'var(--color-text-secondary)', mt: 1 }}>
-          {/* TODO(i18n Task 12): swap to t.CITY_PICKER_SUBTITLE */}
-          Zobacz, co się dzieje w Twojej okolicy
+          {t.CITY_PICKER_SUBTITLE}
         </Typography>
       </Box>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>

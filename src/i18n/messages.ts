@@ -133,6 +133,14 @@ const pl = {
   HOME_DANCE_TITLE: 'Dla tancerzy',
   HOME_DANCE_SUB: 'Zajęcia, warsztaty i wieczory taneczne',
   HOME_DANCE_CTA: 'Zatańcz na mieście',
+  CITY_PICKER_TITLE: 'Wybierz swoje miasto',
+  CITY_PICKER_SUBTITLE: 'Zobacz, co się dzieje w Twojej okolicy',
+  CATEGORY_HUB_INTRO: (category: string) => `Nadchodzące wydarzenia z kategorii ${category}.`,
+  CATEGORY_HUB_SEE_ALL: 'Zobacz wszystkie i filtruj',
+  NOTFOUND_TITLE: 'Nie znaleziono strony',
+  NOTFOUND_BODY: 'Ta strona nie istnieje lub wydarzenie się już zakończyło.',
+  NOTFOUND_REDIRECT: (s: number) => `Przekierujemy Cię do wyszukiwania za ${s} s…`,
+  NOTFOUND_CTA: 'Szukaj wydarzeń',
 };
 
 export type Messages = typeof pl;
@@ -260,6 +268,14 @@ const en: Messages = {
   HOME_DANCE_TITLE: 'For dancers',
   HOME_DANCE_SUB: 'Classes, workshops and dance nights',
   HOME_DANCE_CTA: 'Go dancing',
+  CITY_PICKER_TITLE: 'Choose your city',
+  CITY_PICKER_SUBTITLE: 'See what is happening near you',
+  CATEGORY_HUB_INTRO: (category: string) => `Upcoming ${category} events.`,
+  CATEGORY_HUB_SEE_ALL: 'See all and filter',
+  NOTFOUND_TITLE: 'Page not found',
+  NOTFOUND_BODY: 'This page does not exist or the event has already ended.',
+  NOTFOUND_REDIRECT: (s: number) => `Redirecting you to search in ${s}s…`,
+  NOTFOUND_CTA: 'Search events',
 };
 
 export const messages: Record<Locale, Messages> = { pl, en };

@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import EventGrid from '@/components/common/EventGrid/EventGrid';
 import { Event } from '@/types/event.types';
+import { useTranslation } from '@/i18n';
 
 interface CategoryHubViewProps {
   citySlug: string;
@@ -16,14 +17,14 @@ interface CategoryHubViewProps {
 }
 
 export default function CategoryHubView({ citySlug, categorySlug, categoryName, events }: CategoryHubViewProps) {
+  const { t } = useTranslation();
   return (
     <Box sx={{ maxWidth: 1400, mx: 'auto', p: { xs: 2, sm: 3, md: 4 } }}>
       <Typography variant="h4" component="h1" sx={{ fontFamily: 'var(--font-display)', fontWeight: 700, mb: 1 }}>
         {categoryName}
       </Typography>
       <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 3 }}>
-        {/* TODO(i18n Task 12): swap to t.CATEGORY_HUB_INTRO(categoryName) */}
-        {`Nadchodzące wydarzenia z kategorii ${categoryName}.`}
+        {t.CATEGORY_HUB_INTRO(categoryName)}
       </Typography>
       <EventGrid events={events} />
       <Box sx={{ textAlign: 'center', mt: 4 }}>
@@ -32,8 +33,7 @@ export default function CategoryHubView({ citySlug, categorySlug, categoryName, 
           href={`/${citySlug}/wydarzenia?categories=${categorySlug}` as Route}
           variant="outlined"
         >
-          {/* TODO(i18n Task 12): swap to t.CATEGORY_HUB_SEE_ALL */}
-          Zobacz wszystkie i filtruj
+          {t.CATEGORY_HUB_SEE_ALL}
         </Button>
       </Box>
     </Box>
