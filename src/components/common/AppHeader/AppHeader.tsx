@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -32,8 +33,8 @@ export default function AppHeader() {
   const { city } = useCity();
 
   const navItems = [
-    { label: t.NAV_HOME, href: `/${city.id}` as const },
-    { label: t.NAV_EVENTS, href: `/${city.id}/wydarzenia` as const },
+    { label: t.NAV_HOME, href: `/${city.id}` as Route },
+    { label: t.NAV_EVENTS, href: `/${city.id}/wydarzenia` as Route },
   ];
 
   const isActive = (href: string) => {

@@ -20,7 +20,7 @@ const nextConfig = {
       },
     ],
   },
-  typedRoutes: false, // TEMP: re-enable after multi-city routing migration lands (see plan Task 16)
+  typedRoutes: true,
 };
 
 module.exports = nextConfig;
