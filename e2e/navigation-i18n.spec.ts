@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { TEXT, gotoEvents } from './support/helpers';
 
-// Cross-cutting shell features: language switching (pl↔en), the city picker
-// (multi-city data source) and header navigation.
+// Cross-cutting shell features: language switching (pl↔en), the header city
+// switcher (multi-city data source) and header navigation.
 test.describe('Navigation, i18n and city switching', () => {
   test('language switch re-renders the UI in English', async ({ page }) => {
     await gotoEvents(page);
@@ -15,20 +15,22 @@ test.describe('Navigation, i18n and city switching', () => {
     await expect(page.getByText(TEXT.resultsCountEn)).toBeVisible();
   });
 
-  test('city picker opens and lists the current city', async ({ page }) => {
+  test('header city switcher opens and lists the current city', async ({ page }) => {
     // Wait for the client app to hydrate (cards rendered) before clicking the
     // header button — a bare goto can click it before its onClick is attached,
     // making the menu never open (the cause of a cold-start CI flake here).
     await gotoEvents(page);
     await page.getByRole('button', { name: TEXT.cityLabel }).click();
-    // Szczecin is the default, always-available city.
-    await expect(page.getByRole('option', { name: 'Szczecin' })).toBeVisible();
+    // Wrocław is the launch city being tested here (always available).
+    await expect(page.getByRole('option', { name: /Wroc/ })).toBeVisible();
   });
 
-  test('brand logo returns to the home page', async ({ page }) => {
-    await page.goto('/events');
+  test('brand logo returns to the city picker', async ({ page }) => {
+    // The header brand now links to "/" — the fullscreen city picker — not a
+    // city's own landing page.
+    await gotoEvents(page);
     await page.getByRole('banner').getByText('Idź na miasto').click();
-    // .first(): hero content can transiently duplicate during dev hydration.
-    await expect(page.getByText(TEXT.heroPrompt).first()).toBeVisible();
+    await expect(page.getByText(TEXT.cityPickerTitle)).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe('/');
   });
 });

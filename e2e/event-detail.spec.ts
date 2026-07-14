@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, firstCard, gotoEvents } from './support/helpers';
+import { TEXT, CITY, firstCard, gotoEvents } from './support/helpers';
+
+// The permalink shape: /{city}/{category}/{name}-{shortid}. Not anchored at
+// the start: toHaveURL matches against the full URL (including
+// origin/protocol), whereas the href-attribute check in events-list.spec.ts
+// matches a bare path, so it anchors with `^/` instead.
+const PERMALINK = new RegExp(`/${CITY}/[a-z0-9-]+/[a-z0-9-]+-[0-9a-f]{8}/?$`);
 
 // The detail page is server-rendered from Supabase (fetchEvent) with a
 // client-hydrated view. We discover a real event from the list at runtime
@@ -12,14 +18,14 @@ test.describe('Event detail', () => {
     const title = (await card.locator('h3').innerText()).trim();
 
     await card.click();
-    await expect(page).toHaveURL(/\/events\/\d+/);
+    await expect(page).toHaveURL(PERMALINK);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
   });
 
   test('renders the core detail fields (title + venue)', async ({ page }) => {
     await gotoEvents(page);
     await firstCard(page).click();
-    await expect(page).toHaveURL(/\/events\/\d+/);
+    await expect(page).toHaveURL(PERMALINK);
 
     await expect(page.getByRole('heading', { level: 1 })).not.toBeEmpty();
     // "Lokalizacja" label + a non-empty venue value are always present.
@@ -29,16 +35,16 @@ test.describe('Event detail', () => {
   test('back button returns to the events list', async ({ page }) => {
     await gotoEvents(page);
     await firstCard(page).click();
-    await expect(page).toHaveURL(/\/events\/\d+/);
+    await expect(page).toHaveURL(PERMALINK);
 
     await page.getByRole('button', { name: TEXT.back }).click();
-    await expect(page).toHaveURL(/\/events(\?|$)/);
+    await expect(page).toHaveURL(new RegExp(`/${CITY}/wydarzenia`));
   });
 
   test('external ticket link opens safely in a new tab', async ({ page }) => {
     await gotoEvents(page);
     await firstCard(page).click();
-    await expect(page).toHaveURL(/\/events\/\d+/);
+    await expect(page).toHaveURL(PERMALINK);
 
     // The "Visit website" link only renders when the event has a source URL —
     // skip cleanly when this particular event has none.

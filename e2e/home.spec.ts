@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { TEXT } from './support/helpers';
+import { TEXT, CITY } from './support/helpers';
 
-// The landing page is the app's front door: hero + quick-filter tiles that deep
-// link into the pre-filtered events list.
-test.describe('Home / landing page', () => {
+// The city landing page is that city's front door: hero + quick-filter tiles
+// that deep link into the pre-filtered events list. The root "/" is now a
+// separate city picker (see city-picker.spec.ts) — landing content lives at
+// /{city}.
+test.describe('City landing page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto(`/${CITY}`);
   });
 
   test('renders the hero prompt and headline', async ({ page }) => {
@@ -25,15 +27,16 @@ test.describe('Home / landing page', () => {
 
   test('"browse all events" CTA navigates to the events list', async ({ page }) => {
     await page.getByRole('link', { name: TEXT.browseAll }).click();
-    await expect(page).toHaveURL(/\/events/);
+    await expect(page).toHaveURL(new RegExp(`/${CITY}/wydarzenia`));
   });
 
   test('a quick-filter tile deep links into the filtered list', async ({ page }) => {
-    // Tiles upgrade their href from the "/events" fallback to a date-filtered
-    // URL after hydration; either way they land on the events list.
+    // Tiles upgrade their href from the plain list-URL fallback to a
+    // date-filtered URL after hydration; either way they land on the events
+    // list for the current city.
     const tile = page.locator('a', { hasText: 'Co się dzieje teraz na mieście?' }).first();
     await expect(tile).toBeVisible();
     await tile.click();
-    await expect(page).toHaveURL(/\/events/);
+    await expect(page).toHaveURL(new RegExp(`/${CITY}/wydarzenia`));
   });
 });
