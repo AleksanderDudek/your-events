@@ -1,51 +1,36 @@
 import { MetadataRoute } from 'next';
-
 import { AVAILABLE_CITIES } from '@/config/cities';
 import { SITE_URL } from '@/config/site';
-import { getSupabaseForCity } from '@/lib/supabase';
+import { getCityEvents, fetchCategories } from '@/components/service/eventsApi';
+import { buildCategorySlugMap, resolveCategorySlug, eventPath } from '@/lib/slug';
 
 export const dynamic = 'force-static';
 
-// Mirrors generateStaticParams in app/events/[id]/page.tsx: union event ids
-// across every available city so the sitemap lists exactly the detail pages
-// that get pre-rendered at build time. Keep both in sync — a page that exists
-// but is absent here is invisible to crawlers; a url here without a page 404s.
-async function getEventIds(): Promise<string[]> {
-  const ids = new Set<string>();
-  for (const city of AVAILABLE_CITIES) {
-    const supabase = getSupabaseForCity(city.id);
-    const { data } = await supabase.from('events').select('id');
-    for (const row of (data ?? []) as Array<{ id: number }>) {
-      ids.add(String(row.id));
-    }
-  }
-  return Array.from(ids);
-}
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
+  const map = buildCategorySlugMap(await fetchCategories());
 
-  const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: SITE_URL,
-      lastModified,
-      changeFrequency: 'daily',
-      priority: 1,
-    },
-    {
-      url: `${SITE_URL}/events`,
-      lastModified,
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
+  const routes: MetadataRoute.Sitemap = [
+    { url: SITE_URL, lastModified, changeFrequency: 'daily', priority: 1 },
   ];
 
-  const eventRoutes: MetadataRoute.Sitemap = (await getEventIds()).map((id) => ({
-    url: `${SITE_URL}/events/${id}`,
-    lastModified,
-    changeFrequency: 'weekly',
-    priority: 0.7,
-  }));
+  for (const city of AVAILABLE_CITIES) {
+    routes.push({ url: `${SITE_URL}/${city.id}`, lastModified, changeFrequency: 'daily', priority: 0.9 });
+    routes.push({ url: `${SITE_URL}/${city.id}/wydarzenia`, lastModified, changeFrequency: 'daily', priority: 0.8 });
 
-  return [...staticRoutes, ...eventRoutes];
+    const events = await getCityEvents(city.id);
+    const hubSlugs = new Set(events.map((e) => resolveCategorySlug(e.categoryMain, map)));
+    for (const slug of hubSlugs) {
+      routes.push({ url: `${SITE_URL}/${city.id}/${slug}`, lastModified, changeFrequency: 'daily', priority: 0.7 });
+    }
+    for (const e of events) {
+      routes.push({
+        url: `${SITE_URL}${eventPath(city.id, e, map)}`,
+        lastModified: e.updatedAt ? new Date(e.updatedAt) : lastModified,
+        changeFrequency: 'weekly',
+        priority: 0.6,
+      });
+    }
+  }
+  return routes;
 }
