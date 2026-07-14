@@ -45,6 +45,11 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # Per-miasto (multi-city). NEXT_PUBLIC_* są wpiekane przy buildzie, więc
+          # każde nowe miasto musi tu dostać swój URL + anon key, inaczej zostaje
+          # available:false i jest ukryte w pickerze.
+          NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
