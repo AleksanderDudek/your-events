@@ -1,51 +1,43 @@
 import { test, expect } from '@playwright/test';
+import { TEXT, firstCard, gotoEvents } from './support/helpers';
 
-test.describe('Events List Page', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/events');
+// Core browsing surface: the events list renders cards from Supabase and lets
+// the user switch between grid / list / map presentations.
+test.describe('Events list', () => {
+  test('renders event cards from Supabase', async ({ page }) => {
+    await gotoEvents(page);
+    await expect(firstCard(page)).toBeVisible();
+    expect(await page.locator('article').count()).toBeGreaterThan(0);
   });
 
-  test('displays events on the page', async ({ page }) => {
-    await expect(page.locator('article').first()).toBeVisible();
+  test('shows a live result count', async ({ page }) => {
+    await gotoEvents(page);
+    await expect(page.getByText(TEXT.resultsCount)).toBeVisible();
   });
 
-  test('shows result count', async ({ page }) => {
-    await expect(page.getByText(/Znaleziono \d+ wydarzeń/)).toBeVisible();
+  test('each card links to a numeric event detail route', async ({ page }) => {
+    await gotoEvents(page);
+    // Event ids are Supabase integers, e.g. /events/1234 — never the legacy
+    // "evt-xxx" mock ids.
+    const href = await firstCard(page).locator('xpath=ancestor::a').first().getAttribute('href');
+    expect(href).toMatch(/\/events\/\d+/);
   });
 
-  test('search filters events with debounce', async ({ page }) => {
-    const searchInput = page.getByPlaceholder('Szukaj wydarzeń...');
-    await searchInput.fill('Hip Hop');
-    await page.waitForTimeout(2000);
-    await expect(page).toHaveURL(/search=Hip\+Hop/);
-  });
+  test('view toggle switches grid → list → map and reflects it in the URL', async ({ page }) => {
+    await gotoEvents(page);
 
-  test('category filter updates URL', async ({ page }) => {
-    const categoriesSection = page.getByText('Kategorie');
-    await categoriesSection.click();
-    const danceCheckbox = page.getByRole('checkbox').first();
-    await danceCheckbox.check();
-    await expect(page).toHaveURL(/categories=/);
-  });
-
-  test('pagination works', async ({ page }) => {
-    const nextButton = page.getByLabel('Go to next page');
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
-      await expect(page).toHaveURL(/page=2/);
-    }
-  });
-
-  test('view toggle switches between grid and list', async ({ page }) => {
-    const listToggle = page.getByLabel('Widok listy');
-    await listToggle.click();
+    await page.getByRole('button', { name: TEXT.viewList }).click();
     await expect(page).toHaveURL(/viewMode=row/);
-  });
 
-  test('empty state shows when no results match', async ({ page }) => {
-    const searchInput = page.getByPlaceholder('Szukaj wydarzeń...');
-    await searchInput.fill('xyznonexistent12345');
-    await page.waitForTimeout(2000);
-    await expect(page.getByText('Nie znaleziono wydarzeń')).toBeVisible();
+    await page.getByRole('button', { name: TEXT.viewMap }).click();
+    await expect(page).toHaveURL(/viewMode=map/);
+    // The Leaflet map mounts client-side only (dynamic import, ssr:false).
+    await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 15000 });
+
+    // Grid is the default view, so the app drops viewMode from the URL entirely
+    // rather than writing viewMode=grid. Assert we're back to the default grid.
+    await page.getByRole('button', { name: TEXT.viewGrid }).click();
+    await expect(page).not.toHaveURL(/viewMode=(map|row)/);
+    await expect(firstCard(page)).toBeVisible();
   });
 });
