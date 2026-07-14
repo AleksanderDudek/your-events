@@ -43,6 +43,11 @@ export async function generateMetadata({ params }: HubProps): Promise<Metadata> 
     title: `${name} — ${messages[DEFAULT_LOCALE].META_EVENTS_TITLE(locative)}`,
     description: messages[DEFAULT_LOCALE].META_DESCRIPTION(locative),
     alternates: { canonical: `${SITE_URL}/${cityId}/${category}` },
+    openGraph: {
+      title: `${name} — ${messages[DEFAULT_LOCALE].META_EVENTS_TITLE(locative)}`,
+      description: messages[DEFAULT_LOCALE].META_DESCRIPTION(locative),
+      type: 'website',
+    },
   };
 }
 

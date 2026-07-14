@@ -15,7 +15,13 @@ export async function generateMetadata({ params }: ListPageProps): Promise<Metad
   const locative = getCity(cityId).locativeForm[DEFAULT_LOCALE];
   return {
     title: messages[DEFAULT_LOCALE].META_EVENTS_TITLE(locative),
+    description: messages[DEFAULT_LOCALE].META_DESCRIPTION(locative),
     alternates: { canonical: `${SITE_URL}/${cityId}/wydarzenia` },
+    openGraph: {
+      title: messages[DEFAULT_LOCALE].META_EVENTS_TITLE(locative),
+      description: messages[DEFAULT_LOCALE].META_DESCRIPTION(locative),
+      type: 'website',
+    },
   };
 }
 

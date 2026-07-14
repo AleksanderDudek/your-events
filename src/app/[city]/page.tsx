@@ -17,6 +17,11 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
     title: messages[DEFAULT_LOCALE].META_EVENTS_TITLE(locative),
     description: messages[DEFAULT_LOCALE].META_DESCRIPTION(locative),
     alternates: { canonical: `${SITE_URL}/${cityId}` },
+    openGraph: {
+      title: messages[DEFAULT_LOCALE].META_EVENTS_TITLE(locative),
+      description: messages[DEFAULT_LOCALE].META_DESCRIPTION(locative),
+      type: 'website',
+    },
   };
 }
 

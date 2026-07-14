@@ -47,6 +47,12 @@ export async function generateMetadata({ params }: DetailProps): Promise<Metadat
     title: `${found.name} — ${found.date}`,
     description: found.description.slice(0, 160),
     alternates: { canonical: `${SITE_URL}/${city}/${category}/${event}` },
+    openGraph: {
+      title: `${found.name} — ${found.date}`,
+      description: found.description.slice(0, 160),
+      type: 'article',
+      ...(found.imageUrl && { images: [found.imageUrl] }),
+    },
   };
 }
 
