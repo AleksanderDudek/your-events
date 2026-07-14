@@ -28,8 +28,6 @@ import {
 } from '@/lib/homeFilters';
 import styles from './HomeView.module.scss';
 
-const FALLBACK_HREF = '/events' as Route;
-
 interface CtaUrls {
   now: Route;
   today: Route;
@@ -77,31 +75,32 @@ export default function HomeView() {
       ? city.accusativeForm[locale]
       : t.HOME_HERO_HEADLINE_GENERIC_WORD;
   const cityLocative = city.locativeForm[locale];
+  const listHref = `/${city.id}/wydarzenia` as Route;
   // CTA hrefs depend on the user's current Date, which would differ between
   // build-time SSR and client render. Ship the fallback in static HTML, then
   // upgrade once mounted so the URL on hover / right-click is correct.
   const [urls, setUrls] = useState<CtaUrls>({
-    now: FALLBACK_HREF,
-    today: FALLBACK_HREF,
-    weekend: FALLBACK_HREF,
-    sport: FALLBACK_HREF,
-    art: FALLBACK_HREF,
-    food: FALLBACK_HREF,
-    dance: FALLBACK_HREF,
+    now: listHref,
+    today: listHref,
+    weekend: listHref,
+    sport: listHref,
+    art: listHref,
+    food: listHref,
+    dance: listHref,
   });
 
   useEffect(() => {
     const now = new Date();
     setUrls({
-      now: buildNowUrl(now) as Route,
-      today: buildTodayUrl(now) as Route,
-      weekend: buildWeekendUrl(now) as Route,
-      sport: buildSportNowUrl(now) as Route,
-      art: buildArtUrl(now) as Route,
-      food: buildFoodUrl(now) as Route,
-      dance: buildDanceUrl(now) as Route,
+      now: buildNowUrl(city.id, now) as Route,
+      today: buildTodayUrl(city.id, now) as Route,
+      weekend: buildWeekendUrl(city.id, now) as Route,
+      sport: buildSportNowUrl(city.id, now) as Route,
+      art: buildArtUrl(city.id, now) as Route,
+      food: buildFoodUrl(city.id, now) as Route,
+      dance: buildDanceUrl(city.id, now) as Route,
     });
-  }, []);
+  }, [city.id]);
 
   const tiles = [
     {
@@ -212,7 +211,7 @@ export default function HomeView() {
           <p className={styles.mapSectionSub}>{t.HOME_MAP_SUB}</p>
         </div>
         <Link
-          href={'/events?viewMode=map' as Route}
+          href={`/${city.id}/wydarzenia?viewMode=map` as Route}
           className={styles.mapSectionMap}
           aria-label={t.HOME_MAP_CTA}
         >
@@ -236,7 +235,7 @@ export default function HomeView() {
       <div className={styles.browseAll}>
         <Button
           component={Link}
-          href={'/events' as Route}
+          href={listHref}
           variant="outlined"
           endIcon={<ArrowForwardIcon />}
           className={styles.browseAllButton}
