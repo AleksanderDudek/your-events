@@ -47,13 +47,13 @@ export function CityProvider({
   // When initialCityId is supplied (from the URL-aware [city] layout), it
   // wins outright and the resolution effect below is a no-op.
   const [cityId, setCityId] = useState<CityId>(initialCityId ?? DEFAULT_CITY_ID);
-  const [isResolved, setIsResolved] = useState(false);
+  // When the city comes from the URL it's known at first paint, so treat it as
+  // already resolved (seeded here) — that also keeps the resolution effect free
+  // of a synchronous setState.
+  const [isResolved, setIsResolved] = useState(Boolean(initialCityId));
 
   useEffect(() => {
-    if (initialCityId) {
-      setIsResolved(true);
-      return;
-    }
+    if (initialCityId) return;
 
     let cancelled = false;
 
