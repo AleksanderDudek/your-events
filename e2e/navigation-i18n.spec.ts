@@ -16,7 +16,10 @@ test.describe('Navigation, i18n and city switching', () => {
   });
 
   test('city picker opens and lists the current city', async ({ page }) => {
-    await page.goto('/events');
+    // Wait for the client app to hydrate (cards rendered) before clicking the
+    // header button — a bare goto can click it before its onClick is attached,
+    // making the menu never open (the cause of a cold-start CI flake here).
+    await gotoEvents(page);
     await page.getByRole('button', { name: TEXT.cityLabel }).click();
     // Szczecin is the default, always-available city.
     await expect(page.getByRole('option', { name: 'Szczecin' })).toBeVisible();
