@@ -9,12 +9,14 @@ vi.mock('@/components/service/useCategories', () => ({
     bySlug: new Map(),
     byParent: new Map(),
     byDisplayName: new Map(),
+    displayNameToSlug: new Map(),
     isLoading: false,
     isError: false,
   }),
 }));
 
 import EventRow from './EventRow';
+import { eventPath } from '@/lib/slug';
 import { Event } from '@/types/event.types';
 
 const mockEvent: Event = {
@@ -56,6 +58,6 @@ describe('EventRow', () => {
   it('links to event detail', () => {
     render(<EventRow event={mockEvent} />);
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/events/evt-001');
+    expect(link).toHaveAttribute('href', eventPath('szczecin', mockEvent, new Map()));
   });
 });

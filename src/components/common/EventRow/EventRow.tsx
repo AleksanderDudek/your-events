@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { Route } from 'next';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -10,6 +11,8 @@ import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import { formatDay, formatEventTime, formatMonth } from '@/lib/utils';
+import { useCity } from '@/config/CityProvider';
+import { eventPath } from '@/lib/slug';
 import styles from './EventRow.module.scss';
 
 interface EventRowProps {
@@ -17,7 +20,9 @@ interface EventRowProps {
 }
 
 export default function EventRow({ event }: EventRowProps) {
-  const { byDisplayName } = useCategories();
+  const { city } = useCity();
+  const { byDisplayName, displayNameToSlug } = useCategories();
+  const href = eventPath(city.id, event, displayNameToSlug);
   const categoryData = byDisplayName.get(event.categoryMain) ?? byDisplayName.get('Inne');
   const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
   // Dedupe — some events have categoryMain === categorySub, which would
@@ -27,7 +32,7 @@ export default function EventRow({ event }: EventRowProps) {
   );
 
   return (
-    <Link href={`/events/${event.id}`} className={styles.link}>
+    <Link href={href as Route} className={styles.link}>
       <Box
         component="article"
         role="article"

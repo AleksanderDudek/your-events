@@ -117,9 +117,9 @@ export default function EventsListView() {
 
   const navigate = useCallback(
     (params: URLSearchParams) => {
-      router.push(`/events?${params.toString()}`);
+      router.push(`/${city.id}/wydarzenia?${params.toString()}`);
     },
-    [router]
+    [router, city.id]
   );
 
   const updateFilter = useCallback(

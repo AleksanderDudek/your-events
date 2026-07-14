@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import type { Route } from 'next';
 import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import PlaceIcon from '@mui/icons-material/Place';
@@ -11,6 +12,8 @@ import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import { formatDateShort, formatEventTime, getCategoryIconPath } from '@/lib/utils';
+import { useCity } from '@/config/CityProvider';
+import { eventPath } from '@/lib/slug';
 import styles from './EventCard.module.scss';
 
 interface EventCardProps {
@@ -18,6 +21,9 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
+  const { city } = useCity();
+  const { displayNameToSlug } = useCategories();
+  const href = eventPath(city.id, event, displayNameToSlug);
   // Dedupe — some events have categoryMain === categorySub (e.g. both "Warsztaty"),
   // which would render two identical chips and collide on React keys.
   const chips = Array.from(
@@ -30,7 +36,7 @@ export default function EventCard({ event }: EventCardProps) {
   const sourceLabel = event.sources.join(' · ');
 
   return (
-    <Link href={`/events/${event.id}`} className={styles.link}>
+    <Link href={href as Route} className={styles.link}>
       <Card
         component="article"
         role="article"

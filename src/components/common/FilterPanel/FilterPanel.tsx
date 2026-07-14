@@ -28,6 +28,7 @@ import {
 } from '@/lib/filterUtils';
 import { useTranslation } from '@/i18n';
 import { useCategories } from '@/components/service/useCategories';
+import { useCity } from '@/config/CityProvider';
 import SearchInput from '@/components/ui/SearchInput/SearchInput';
 import DateRangePicker from '@/components/ui/DateRangePicker/DateRangePicker';
 import HourRangePicker from '@/components/ui/HourRangePicker/HourRangePicker';
@@ -44,6 +45,7 @@ export default function FilterPanel() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
+  const { city } = useCity();
   const { topLevel, byParent } = useCategories();
 
   const toggleExpanded = useCallback((slug: string) => {
@@ -72,9 +74,9 @@ export default function FilterPanel() {
     (updates: Partial<EventFilters>) => {
       const newFilters = { ...readCurrentFilters(), ...updates, page: 1 };
       const params = filtersToSearchParams(newFilters);
-      router.push(`/events?${params.toString()}`);
+      router.push(`/${city.id}/wydarzenia?${params.toString()}`);
     },
-    [readCurrentFilters, router]
+    [readCurrentFilters, router, city.id]
   );
 
   const clearFilters = useCallback(() => {
@@ -83,8 +85,8 @@ export default function FilterPanel() {
     defaults.viewMode = current.viewMode;
     defaults.pageSize = current.pageSize;
     const params = filtersToSearchParams(defaults);
-    router.push(`/events?${params.toString()}`);
-  }, [readCurrentFilters, router]);
+    router.push(`/${city.id}/wydarzenia?${params.toString()}`);
+  }, [readCurrentFilters, router, city.id]);
 
   const handleCategoryToggle = useCallback(
     (slug: string) => {
