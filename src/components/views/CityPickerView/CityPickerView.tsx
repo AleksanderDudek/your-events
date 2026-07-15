@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import type { Route } from 'next';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import PlaceIcon from '@mui/icons-material/Place';
 import { AVAILABLE_CITIES } from '@/config/cities';
+import { withBasePath } from '@/lib/constants';
 import { useTranslation } from '@/i18n';
 
 // Illustrated hero image per city (served from /public). Cities without an
@@ -80,12 +80,23 @@ export default function CityPickerView() {
                 }}
               >
                 {image ? (
-                  <Image
-                    src={image}
+                  // Plain <img> (not next/image): images are unoptimized in the
+                  // static export anyway, and next/image drops the basePath from
+                  // the src. withBasePath applies the real base path so it works
+                  // under /your-events and at the root alike.
+                  <Box
+                    component="img"
+                    src={withBasePath(image)}
                     alt=""
-                    fill
-                    sizes="(max-width: 600px) 86vw, 340px"
-                    style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
+                    loading="eager"
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transition: 'transform 0.4s ease',
+                    }}
                   />
                 ) : (
                   <Box
