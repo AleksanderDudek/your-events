@@ -13,7 +13,3 @@ export function getSupabaseForCity(cityId: CityId | string = DEFAULT_CITY_ID): S
   clientCache.set(city.id, client);
   return client;
 }
-
-// Default-city client. Kept for SSR/static-generation paths that don't have a
-// runtime city context (generateStaticParams, sitemap, server metadata).
-export const supabase = getSupabaseForCity(DEFAULT_CITY_ID);

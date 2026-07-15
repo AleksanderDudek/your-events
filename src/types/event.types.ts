@@ -39,11 +39,6 @@ export interface Event {
   updatedAt: string | null;  // ISO timestamp; freshness signal
 }
 
-export interface CategoryItem {
-  id: string;
-  label: string;
-}
-
 export interface DbCategory {
   slug: string;
   parent_slug: string | null;

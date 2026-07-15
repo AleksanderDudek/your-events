@@ -1,4 +1,4 @@
-export class AppError extends Error {
+class AppError extends Error {
   constructor(
     message: string,
     public code: string
@@ -12,13 +12,6 @@ export class NotFoundError extends AppError {
   constructor(message = 'Nie znaleziono') {
     super(message, 'NOT_FOUND');
     this.name = 'NotFoundError';
-  }
-}
-
-export class NetworkError extends AppError {
-  constructor(message = 'Błąd sieci') {
-    super(message, 'NETWORK_ERROR');
-    this.name = 'NetworkError';
   }
 }
 
@@ -57,12 +50,6 @@ export function formatMonth(dateStr: string): string {
   return date.toLocaleDateString('pl-PL', { month: 'short' }).toUpperCase();
 }
 
-export function formatTimeRange(startTime: string, endTime: string): string {
-  if (!startTime) return '';
-  if (endTime) return `${startTime}–${endTime}`;
-  return startTime;
-}
-
 // Renders an event's time. Prefers explicit end_time, falls back to a
 // synthesized end derived from duration_min, otherwise just shows the start.
 export function formatEventTime(
@@ -91,38 +78,11 @@ function addMinutes(hhmm: string, minutes: number): string | null {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-// Caps obvious data-quality landmines: some scraped rows store sales-URL
-// digits in `price` (e.g. 196331 for a kupbilecik event id). Anything above
-// this ceiling is treated as garbage and the caller falls back to the
-// price_label or "see description".
-const REALISTIC_PRICE_CEILING_PLN = 5000;
-
-export function isRealisticPrice(amount: number | null): boolean {
-  if (amount === null) return false;
-  if (!Number.isFinite(amount)) return false;
-  if (amount < 0) return false;
-  return amount <= REALISTIC_PRICE_CEILING_PLN;
-}
-
-export function formatPrice(amount: number | null, currency: string): string {
-  if (amount === null) return '';
-  if (amount === 0) return '';
-  return `${amount} ${currency}`;
-}
-
-export function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(' ');
-}
-
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
 export function totalPages(total: number, pageSize: number): number {
   return Math.max(1, Math.ceil(total / pageSize));
 }
 
-export function slugify(value: string): string {
+function slugify(value: string): string {
   return value
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')

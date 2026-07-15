@@ -53,13 +53,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/your-events/favicons/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-title" content={m.APP_NAME} />
         <link rel="manifest" href="/your-events/favicons/site.webmanifest" />
-        {process.env.NODE_ENV === 'production' && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', function() { navigator.serviceWorker.register('/your-events/sw.js'); }); }`,
-            }}
-          />
-        )}
       </head>
       <body>
         <Providers>

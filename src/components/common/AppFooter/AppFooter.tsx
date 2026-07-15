@@ -2,7 +2,6 @@
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Link from '@mui/material/Link';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import styles from './AppFooter.module.scss';
@@ -30,25 +29,6 @@ export default function AppFooter() {
           <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
             {t.APP_TAGLINE(city.locativeForm[locale])}
           </Typography>
-        </Box>
-
-        <Box className={styles.col}>
-          <Box className={styles.links}>
-            <Link
-              href="#"
-              underline="hover"
-              sx={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}
-            >
-              {t.FOOTER_PRIVACY}
-            </Link>
-            <Link
-              href="#"
-              underline="hover"
-              sx={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}
-            >
-              {t.FOOTER_CONTACT}
-            </Link>
-          </Box>
         </Box>
       </Box>
 
