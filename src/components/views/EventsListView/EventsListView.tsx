@@ -44,6 +44,7 @@ function renderBody({
   mapEmptyMessage,
   citySlug,
   displayNameToSlug,
+  mapPopupCta,
 }: {
   events: Event[];
   isLoading: boolean;
@@ -53,6 +54,7 @@ function renderBody({
   mapEmptyMessage: string;
   citySlug: string;
   displayNameToSlug: Map<string, string>;
+  mapPopupCta: string;
 }) {
   // Initial fetch (no data cached yet) → render shape-matching skeletons sized
   // to the user's chosen pageSize so the page doesn't reflow when data lands.
@@ -91,10 +93,17 @@ function renderBody({
         renderPopup={(ev) => {
           const safeName = ev.name.replace(/</g, '&lt;');
           const safeVenue = ev.location.name?.replace(/</g, '&lt;') ?? '';
-          // Leaflet popups render raw HTML, so we prepend basePath manually —
-          // Next.js's auto-prefixing doesn't reach anchors built outside React.
-          const href = withBasePath(eventPath(citySlug, ev, displayNameToSlug));
-          return `<strong>${safeName}</strong><br/>${safeVenue}<br/><a href="${href}" style="color:#ec4899;font-weight:600;">→</a>`;
+          // Leaflet popups render raw HTML outside React, so basePath is applied
+          // manually; the trailing slash matches the static export's route
+          // (trailingSlash: true) so the link resolves without a redirect.
+          const href = `${withBasePath(eventPath(citySlug, ev, displayNameToSlug))}/`;
+          const arrow =
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+          return (
+            `<strong style="display:block;font-size:0.875rem;margin-bottom:2px;">${safeName}</strong>` +
+            (safeVenue ? `<span style="color:#6b7280;">${safeVenue}</span>` : '') +
+            `<a href="${href}" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:7px 12px;border-radius:8px;background:#ec4899;color:#fff;font-weight:600;font-size:0.8125rem;text-decoration:none;">${mapPopupCta}${arrow}</a>`
+          );
         }}
       />
     );
@@ -266,6 +275,7 @@ export default function EventsListView() {
             mapEmptyMessage: t.MAP_EVENT_NO_PINS,
             citySlug: city.id,
             displayNameToSlug,
+            mapPopupCta: t.MAP_POPUP_CTA,
           })}
         </Box>
 
