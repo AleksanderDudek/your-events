@@ -11,6 +11,12 @@
   overflow: hidden;
   vertical-align: bottom;
   line-height: 1.12;
+  // Pin to exactly one line. Without a fixed height the inline-block would grow
+  // to the roller's two-line content while a swap is in flight, jolting the
+  // whole hero (subtitle + tiles) up and down. A fixed height keeps the window
+  // one line tall so overflow:hidden clips the outgoing word and layout is
+  // rock-steady.
+  height: 1.12em;
   // Small side breathing room so a heavier glyph edge isn't clipped; the
   // negative margin keeps the visual box flush with the surrounding text.
   padding-inline: 0.08em;
