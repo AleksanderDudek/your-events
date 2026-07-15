@@ -16,6 +16,12 @@ import { expect, type Page } from '@playwright/test';
 
 export const CITY = 'wroclaw';
 
+// The "other" available city. Only Wrocław (dedicated Supabase project) and
+// Szczecin (DEFAULT_CITY_ID, shared project) are `available: true`, so the
+// header city switcher lists exactly these two — Szczecin is the one we switch
+// *to* when exercising an end-to-end city change.
+export const CITY_OTHER = 'szczecin';
+
 // Default-locale (Polish) UI strings, mirrored from src/i18n/messages.ts. The
 // app renders Polish on first paint (DEFAULT_LOCALE = 'pl'); the stored
 // preference is only applied after hydration.
@@ -37,6 +43,21 @@ export const TEXT = {
   viewMap: 'Widok mapy',
   // English strings we cross-check after switching locale
   resultsCountEn: /Found \d+ events/,
+  // "Clear filters" — rendered in the FilterPanel header (desktop) and again in
+  // the mobile drawer footer, so locate with .first().
+  filterClear: /Wyczyść filtry/,
+  // The freeOnly active-filter chip. freeOnly is a URL-only filter (no toggle
+  // exists in the panel UI), so it is exercised via deep links.
+  freeOnlyChip: 'Tylko bezpłatne',
+  // The CTA anchor inside a map marker's Leaflet popup (raw HTML, outside React).
+  mapPopupCta: 'Zobacz wydarzenie',
+  // Home quick-filter tile titles (accessible names of the tile links).
+  homeNowTitle: 'Co się dzieje teraz na mieście?',
+  homeWeekendTitle: 'Co się dzieje w ten weekend?',
+  // The other switchable city, as it appears in the switcher's option list.
+  cityOther: /Szczecin/,
+  // SEO: the events-list document <title> (a title template appends the brand).
+  metaEventsTitle: /Wydarzenia w Wroc/,
 } as const;
 
 // The mobile filter Fab is labelled "Filtry (N)"; the leading word is stable.
@@ -58,16 +79,35 @@ export async function gotoEvents(page: Page): Promise<void> {
 }
 
 /**
+ * The events list always renders a result count ("Znaleziono N wydarzeń"),
+ * even for zero results. Awaiting it is a data-independent signal that the
+ * client tree has hydrated — use it after a cold `page.goto` before touching
+ * filter controls, so interactions don't race the SSR→hydration flip.
+ */
+export async function waitForList(page: Page): Promise<void> {
+  await expect(page.getByText(TEXT.resultsCount).first()).toBeVisible({ timeout: 20000 });
+}
+
+/**
  * On mobile the FilterPanel lives behind a bottom-drawer Fab; on desktop it is
- * an always-visible sidebar. Open the drawer when present so the search box and
+ * an always-visible sidebar. Open the drawer on mobile so the search box and
  * category checkboxes are reachable. No-op on desktop.
+ *
+ * Decide by viewport width (md = 900px, matching the panel's own
+ * `breakpoints.up('md')`) rather than the Fab's visibility: during SSR
+ * `useMediaQuery` returns false, so a transient mobile Fab briefly renders on
+ * desktop and then detaches at hydration — clicking it there races the detach.
  */
 export async function openFilters(page: Page): Promise<void> {
-  const fab = page.getByRole('button', { name: FILTER_FAB });
-  if (await fab.isVisible().catch(() => false)) {
-    await fab.click();
-    await expect(page.getByPlaceholder(TEXT.searchPlaceholder)).toBeVisible();
-  }
+  const width = page.viewportSize()?.width ?? 0;
+  if (width >= 900) return; // desktop: sidebar is always visible, nothing to open
+  // Idempotent: if the drawer is already open (its search box is showing), the
+  // Fab is obscured behind the backdrop — clicking it would hang. Selecting a
+  // category leaves the drawer open, so callers can legitimately re-open.
+  const searchBox = page.getByPlaceholder(TEXT.searchPlaceholder);
+  if (await searchBox.isVisible().catch(() => false)) return;
+  await page.getByRole('button', { name: FILTER_FAB }).click();
+  await expect(searchBox).toBeVisible();
 }
 
 /**
@@ -90,4 +130,37 @@ export async function search(page: Page, term: string): Promise<void> {
   await openFilters(page);
   await page.getByPlaceholder(TEXT.searchPlaceholder).fill(term);
   await page.waitForURL(/[?&]search=/, { timeout: 10000 });
+}
+
+/**
+ * Tick the first (top-level) category checkbox and wait for its slug to land in
+ * the URL. Returns the discovered slug so a follow-up assertion can deep-link to
+ * it — we never hardcode a category, the taxonomy is owned by the data pipeline.
+ * Uses .click() (not .check()): selecting a category triggers a navigation +
+ * refetch that races .check()'s post-click "is it checked?" assertion.
+ */
+export async function applyFirstCategory(page: Page): Promise<string> {
+  await openFilters(page);
+  const firstCategory = page.getByRole('checkbox').first();
+  await expect(firstCategory).toBeVisible({ timeout: 15000 });
+  await firstCategory.click();
+  await page.waitForURL(/categories=/, { timeout: 10000 });
+  return new URL(page.url()).searchParams.get('categories') ?? '';
+}
+
+/**
+ * Click the "clear filters" control. On mobile it renders twice (drawer header
+ * + footer); .last() targets the FOOTER button, which both clears and closes
+ * the drawer in one handler — avoiding a fragile Escape-to-dismiss afterwards.
+ * On desktop there is a single (sidebar) clear button, so .last() === .first().
+ * Only present when at least one filter is active.
+ */
+export async function clearAllFilters(page: Page): Promise<void> {
+  await openFilters(page);
+  await page.getByRole('button', { name: TEXT.filterClear }).last().click();
+}
+
+/** Locate an active-filter chip (in the results header) by its visible label. */
+export function activeChip(page: Page, label: string | RegExp) {
+  return page.locator('.MuiChip-root').filter({ hasText: label });
 }
