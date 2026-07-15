@@ -1,35 +1,37 @@
 @use '../../../styles/mixins' as *;
 
-// Wrapper uses inline-grid so the measure span, incoming word, and outgoing
-// word all occupy the same single grid cell — they overlap visually but stay
-// in normal flow. This matters because we want the ancestor headline's
-// background-clip:text gradient to still clip to our text; absolute
-// positioning breaks that in webkit.
+// A "slot machine" roll. The wrapper is a one-line window that clips its
+// overflow; the roller stacks the outgoing word above the incoming one and
+// slides up by exactly one line. Only one word sits in the window at rest, and
+// the two are always a full line apart — so they never overlap in place the way
+// a same-cell crossfade does. line-height leaves headroom so uppercase
+// diacritics (Ó, Ź, Ł) are never cropped by the clip.
 .wrapper {
-  display: inline-grid;
-  grid-template-columns: max-content;
-  grid-template-rows: auto;
-  vertical-align: baseline;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  line-height: 1.12;
+  // Small side breathing room so a heavier glyph edge isn't clipped; the
+  // negative margin keeps the visual box flush with the surrounding text.
+  padding-inline: 0.08em;
+  margin-inline: -0.08em;
 }
 
-.measure,
-.layer {
-  grid-column: 1;
-  grid-row: 1;
+.roller {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  will-change: transform;
+}
+
+.line {
+  display: block;
   white-space: nowrap;
-}
-
-.measure {
-  visibility: hidden;
-}
-
-// The layer has its own transform/filter, which means it creates its own
-// stacking context. That breaks background-clip:text on any ancestor — the
-// ancestor's gradient cannot paint into our local layer. So we apply the
-// gradient text-fill ourselves, sourced from CSS variables the consumer sets.
-// Defaults fall back to plain currentColor when no gradient is provided.
-.layer {
-  will-change: transform, filter, opacity;
+  line-height: 1.12;
+  // The roller's transform creates a stacking context, so an ancestor's
+  // background-clip:text gradient can't paint into it — each line re-applies the
+  // gradient text-fill from CSS variables the consumer sets (falling back to
+  // currentColor when none are provided).
   background: var(--animated-word-bg, transparent);
   -webkit-background-clip: var(--animated-word-clip, border-box);
   background-clip: var(--animated-word-clip, border-box);
@@ -37,51 +39,25 @@
 }
 
 @include motion-safe {
-  .incoming {
-    animation: animated-word-in 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  .outgoing {
-    animation: animated-word-out 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    pointer-events: none;
+  .roller[data-rolling='true'] {
+    // Springy ease-out gives the roll a confident, mechanical "snap".
+    animation: animated-word-roll 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
 
+// Reduced motion: skip the roll and land straight on the incoming word (which
+// is the second — and last — child while rolling).
 @media (prefers-reduced-motion: reduce) {
-  .incoming,
-  .outgoing {
-    animation: none;
-  }
-  .outgoing {
-    display: none;
+  .roller[data-rolling='true'] {
+    transform: translateY(-50%);
   }
 }
 
-@keyframes animated-word-in {
-  0% {
-    transform: translateY(110%) scale(0.9);
-    opacity: 0;
-    filter: blur(12px);
+@keyframes animated-word-roll {
+  from {
+    transform: translateY(0);
   }
-  60% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-    filter: blur(0);
-  }
-}
-
-@keyframes animated-word-out {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-    filter: blur(0);
-  }
-  100% {
-    transform: translateY(-110%) scale(0.9);
-    opacity: 0;
-    filter: blur(12px);
+  to {
+    transform: translateY(-50%);
   }
 }
