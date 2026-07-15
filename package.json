@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "preview": "NEXT_PUBLIC_BASE_PATH='' next build && npx --yes serve out",
+    "start": "npm run preview",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
