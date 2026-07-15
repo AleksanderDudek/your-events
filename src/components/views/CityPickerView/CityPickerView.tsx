@@ -15,6 +15,10 @@ import { useTranslation } from '@/i18n';
 const CITY_IMAGES: Record<string, string> = {
   wroclaw: '/images/cities/wroclaw.jpg',
   szczecin: '/images/cities/szczecin.jpg',
+  poznan: '/images/cities/poznan.jpg',
+  gdansk: '/images/cities/gdansk.jpg',
+  krakow: '/images/cities/krakow.jpg',
+  warszawa: '/images/cities/warszawa.jpg',
 };
 
 export default function CityPickerView() {

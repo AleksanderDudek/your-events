@@ -8,6 +8,12 @@ const envSchema = z.object({
   // override both when wiring up the production domain. See @/config/site.
   NEXT_PUBLIC_SITE_ORIGIN: z.string().min(1).default('https://aleksanderdudek.github.io'),
   NEXT_PUBLIC_BASE_PATH: z.string().default('/your-events'),
+  // Comma-separated allowlist of city ids that are live on the site (e.g.
+  // "wroclaw,szczecin,poznan"). It is the explicit on/off switch for cities:
+  // the picker, header switcher, generated routes and sitemap all follow it.
+  // Empty/unset ⇒ every city is enabled and availability falls back to whether
+  // the city has a Supabase project (backwards compatible). See @/config/cities.
+  NEXT_PUBLIC_ENABLED_CITIES: z.string().default(''),
 });
 
 function validateEnv() {
@@ -16,6 +22,7 @@ function validateEnv() {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SITE_ORIGIN: process.env.NEXT_PUBLIC_SITE_ORIGIN,
     NEXT_PUBLIC_BASE_PATH: process.env.NEXT_PUBLIC_BASE_PATH,
+    NEXT_PUBLIC_ENABLED_CITIES: process.env.NEXT_PUBLIC_ENABLED_CITIES,
   });
 
   if (!parsed.success) {

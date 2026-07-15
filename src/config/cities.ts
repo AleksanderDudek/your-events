@@ -174,42 +174,82 @@ export const CATEGORIES_CITY_ID: CityId = 'szczecin';
 // into the browser bundle only for static references; a dynamic key is left as
 // a runtime `process.env[...]` lookup, which is undefined in the static export —
 // so the city would silently stay unavailable no matter how the secret is set.
-// Add an entry here when a new city's Supabase project comes online.
+//
+// Every city is pre-wired below (suffix = city id upper-cased, '-' → '_'), so
+// bringing one online is purely an env change: set its NEXT_PUBLIC_SUPABASE_URL_
+// <CITY> + NEXT_PUBLIC_SUPABASE_ANON_KEY_<CITY>, then add it to
+// NEXT_PUBLIC_ENABLED_CITIES. Unset entries resolve to `undefined` and the city
+// stays without a dedicated project (see resolveSupabase).
 const CITY_SUPABASE_ENV: Partial<Record<CityId, { url?: string; anonKey?: string }>> = {
-  wroclaw: {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL_WROCLAW,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW,
-  },
+  wroclaw: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_WROCLAW, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW },
+  szczecin: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_SZCZECIN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SZCZECIN },
+  warszawa: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_WARSZAWA, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_WARSZAWA },
+  krakow: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_KRAKOW, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_KRAKOW },
+  lodz: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_LODZ, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_LODZ },
+  poznan: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_POZNAN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN },
+  gdansk: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_GDANSK, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_GDANSK },
+  bydgoszcz: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_BYDGOSZCZ, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_BYDGOSZCZ },
+  torun: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_TORUN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_TORUN },
+  lublin: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_LUBLIN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_LUBLIN },
+  katowice: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_KATOWICE, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_KATOWICE },
+  bialystok: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_BIALYSTOK, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_BIALYSTOK },
+  kielce: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_KIELCE, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_KIELCE },
+  olsztyn: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_OLSZTYN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_OLSZTYN },
+  rzeszow: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_RZESZOW, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_RZESZOW },
+  opole: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_OPOLE, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_OPOLE },
+  gorzow: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_GORZOW, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_GORZOW },
+  'zielona-gora': { url: process.env.NEXT_PUBLIC_SUPABASE_URL_ZIELONA_GORA, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_ZIELONA_GORA },
 };
 
+// Explicit env allowlist of live cities. `null` when NEXT_PUBLIC_ENABLED_CITIES
+// is empty/unset → treat every city as enabled (availability then depends solely
+// on Supabase config, preserving the pre-toggle behaviour).
+const ENABLED_CITIES: ReadonlySet<string> | null = (() => {
+  const ids = env.NEXT_PUBLIC_ENABLED_CITIES.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return ids.length > 0 ? new Set(ids) : null;
+})();
+
+function isCityEnabled(cityId: string): boolean {
+  return ENABLED_CITIES === null || ENABLED_CITIES.has(cityId);
+}
+
+// Resolve a city's Supabase endpoint and whether it has a real data source.
+// `hasSupabase` (dedicated creds, or the shared default for DEFAULT_CITY_ID) is
+// necessary but not sufficient for availability — the env allowlist gates it.
 function resolveSupabase(cityId: CityId): {
   url: string;
   anonKey: string;
-  available: boolean;
+  hasSupabase: boolean;
 } {
   const cityEnv = CITY_SUPABASE_ENV[cityId];
   if (cityEnv?.url && cityEnv?.anonKey) {
-    return { url: cityEnv.url, anonKey: cityEnv.anonKey, available: true };
+    return { url: cityEnv.url, anonKey: cityEnv.anonKey, hasSupabase: true };
   }
   // The default city always uses the shared env vars (backwards compatible).
   if (cityId === DEFAULT_CITY_ID) {
     return {
       url: env.NEXT_PUBLIC_SUPABASE_URL,
       anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      available: true,
+      hasSupabase: true,
     };
   }
-  // No dedicated project yet — fall back to the default so queries don't crash,
-  // but mark unavailable so the picker hides it.
+  // No dedicated project — fall back to the default so queries don't crash, but
+  // report no data source so the city can't go live on the wrong data.
   return {
     url: env.NEXT_PUBLIC_SUPABASE_URL,
     anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    available: false,
+    hasSupabase: false,
   };
 }
 
 export const CITIES: readonly CityConfig[] = CITY_DEFS.map((def) => {
-  const { url, anonKey, available } = resolveSupabase(def.id);
+  const { url, anonKey, hasSupabase } = resolveSupabase(def.id);
+  // A city is live only when it is both enabled (env allowlist) AND backed by a
+  // resolvable Supabase project — so a listed-but-unconfigured city never shows
+  // the default project's data.
+  const available = hasSupabase && isCityEnabled(def.id);
   return { ...def, supabase: { url, anonKey }, available };
 });
 
