@@ -29,6 +29,7 @@ import {
   parseFiltersFromParams,
 } from '@/lib/filterUtils';
 import { PAGE_SIZE_OPTIONS, withBasePath } from '@/lib/constants';
+import { eventPath } from '@/lib/slug';
 import { useTranslation } from '@/i18n';
 import { PageSize, ViewMode, EventFilters } from '@/types/filter.types';
 import { Event } from '@/types/event.types';
@@ -41,6 +42,8 @@ function renderBody({
   clearAll,
   mapCenter,
   mapEmptyMessage,
+  citySlug,
+  displayNameToSlug,
 }: {
   events: Event[];
   isLoading: boolean;
@@ -48,6 +51,8 @@ function renderBody({
   clearAll: () => void;
   mapCenter: { lat: number; lng: number };
   mapEmptyMessage: string;
+  citySlug: string;
+  displayNameToSlug: Map<string, string>;
 }) {
   // Initial fetch (no data cached yet) → render shape-matching skeletons sized
   // to the user's chosen pageSize so the page doesn't reflow when data lands.
@@ -88,7 +93,7 @@ function renderBody({
           const safeVenue = ev.location.name?.replace(/</g, '&lt;') ?? '';
           // Leaflet popups render raw HTML, so we prepend basePath manually —
           // Next.js's auto-prefixing doesn't reach anchors built outside React.
-          const href = withBasePath(`/events/${ev.id}`);
+          const href = withBasePath(eventPath(citySlug, ev, displayNameToSlug));
           return `<strong>${safeName}</strong><br/>${safeVenue}<br/><a href="${href}" style="color:#ec4899;font-weight:600;">→</a>`;
         }}
       />
@@ -99,7 +104,7 @@ function renderBody({
 
 export default function EventsListView() {
   const { events, total, isLoading, isError, isFetching, refetch, filters } = useEvents();
-  const { bySlug } = useCategories();
+  const { bySlug, displayNameToSlug } = useCategories();
   const { city } = useCity();
   const { t } = useTranslation();
   const router = useRouter();
@@ -117,9 +122,9 @@ export default function EventsListView() {
 
   const navigate = useCallback(
     (params: URLSearchParams) => {
-      router.push(`/events?${params.toString()}`);
+      router.push(`/${city.id}/wydarzenia?${params.toString()}`);
     },
-    [router]
+    [router, city.id]
   );
 
   const updateFilter = useCallback(
@@ -259,6 +264,8 @@ export default function EventsListView() {
             clearAll,
             mapCenter: city.coordinates,
             mapEmptyMessage: t.MAP_EVENT_NO_PINS,
+            citySlug: city.id,
+            displayNameToSlug,
           })}
         </Box>
 

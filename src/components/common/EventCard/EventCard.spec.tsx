@@ -9,16 +9,19 @@ vi.mock('@/components/service/useCategories', () => ({
     bySlug: new Map(),
     byParent: new Map(),
     byDisplayName: new Map(),
+    displayNameToSlug: new Map(),
     isLoading: false,
     isError: false,
   }),
 }));
 
 import EventCard from './EventCard';
+import { eventPath } from '@/lib/slug';
 import { Event } from '@/types/event.types';
 
 const mockEvent: Event = {
   id: 'evt-001',
+  eventKey: 'evt-test',
   name: 'Hip Hop Choreo',
   description: 'Zajęcia choreograficzne',
   categoryMain: 'Taniec',
@@ -56,7 +59,7 @@ describe('EventCard', () => {
   it('links to event detail page', () => {
     render(<EventCard event={mockEvent} />);
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/events/evt-001');
+    expect(link).toHaveAttribute('href', eventPath('szczecin', mockEvent, new Map()));
   });
 
   it('has article role with aria-label', () => {

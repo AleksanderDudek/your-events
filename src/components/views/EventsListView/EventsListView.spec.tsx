@@ -18,6 +18,7 @@ vi.mock('@/components/service/useCategories', () => ({
     bySlug: new Map(),
     byParent: new Map(),
     byDisplayName: new Map(),
+    displayNameToSlug: new Map(),
     isLoading: false,
     isError: false,
   }),

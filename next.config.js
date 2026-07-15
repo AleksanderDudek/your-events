@@ -9,6 +9,7 @@ const basePath = rawBasePath === '' ? undefined : rawBasePath;
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
+  trailingSlash: true,
   basePath,
   images: {
     unoptimized: true,

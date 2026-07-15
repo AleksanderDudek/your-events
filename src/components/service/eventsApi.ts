@@ -2,7 +2,8 @@ import { Event, DbCategory } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
 import { getSupabaseForCity } from '@/lib/supabase';
-import { CityId, getCity } from '@/config/cities';
+import { CityId, getCity, CATEGORIES_CITY_ID } from '@/config/cities';
+import { shortId } from '@/lib/slug';
 
 interface SupabaseEventRow {
   id: number;
@@ -77,6 +78,7 @@ function parseSources(raw: string | null | undefined, fallback: string): string[
 function mapRow(row: SupabaseEventRow, cityName: string): Event {
   return {
     id: String(row.id),
+    eventKey: row.event_key,
     name: row.name,
     description: row.description,
     categoryMain: row.category_main,
@@ -195,8 +197,8 @@ export async function fetchEvent(cityId: CityId | string, id: string): Promise<E
   return mapRow(data as SupabaseEventRow, city.displayName.pl);
 }
 
-export async function fetchCategories(cityId: CityId | string): Promise<DbCategory[]> {
-  const supabase = getSupabaseForCity(cityId);
+export async function fetchCategories(): Promise<DbCategory[]> {
+  const supabase = getSupabaseForCity(CATEGORIES_CITY_ID);
   const { data, error } = await supabase
     .from('categories')
     .select('slug, parent_slug, display_name, display_plural, icon, color, sort_order')
@@ -204,4 +206,38 @@ export async function fetchCategories(cityId: CityId | string): Promise<DbCatego
     .order('sort_order');
   if (error) throw new ServerError(error.message);
   return (data ?? []) as DbCategory[];
+}
+
+// Build-time cache: one fetch-all per city per build process. Shared by
+// generateStaticParams and every static detail/hub page so we never refetch.
+const cityEventsCache = new Map<string, Promise<Event[]>>();
+
+export function getCityEvents(cityId: CityId | string): Promise<Event[]> {
+  const city = getCity(cityId);
+  const cached = cityEventsCache.get(city.id);
+  if (cached) return cached;
+  const promise = (async () => {
+    const supabase = getSupabaseForCity(city.id);
+    // NOTE: no .range() — relies on the 1000-row default; add pagination before a city exceeds it.
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .order('date')
+      .order('time_start');
+    if (error) throw new ServerError(error.message);
+    const cityName = city.displayName.pl;
+    const mapped = (data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName));
+
+    // Permalinks derive from shortId(event_key); a collision would make two
+    // events resolve to the same page. Astronomically unlikely at this scale,
+    // but fail the build loudly (deploy notifies on failure) rather than serve
+    // wrong content silently.
+    if (new Set(mapped.map((e) => shortId(e.eventKey))).size !== mapped.length) {
+      throw new ServerError(`Duplicate permalink shortId within city "${city.id}"`);
+    }
+
+    return mapped;
+  })();
+  cityEventsCache.set(city.id, promise);
+  return promise;
 }

@@ -20,7 +20,7 @@ describe('homeFilters', () => {
     it('today, half-hour-floored start, +4h end', () => {
       // Tue 2026-03-10, 14:35 local
       const now = new Date(2026, 2, 10, 14, 35);
-      const p = paramsFrom(buildNowUrl(now));
+      const p = paramsFrom(buildNowUrl('wroclaw', now));
       expect(p.get('dateMode')).toBe('single');
       expect(p.get('dateSingle')).toBe('2026-03-10');
       expect(p.get('hourFrom')).toBe('14:30');
@@ -29,7 +29,7 @@ describe('homeFilters', () => {
 
     it('floors to the hour when minutes < 30', () => {
       const now = new Date(2026, 5, 1, 9, 12);
-      const p = paramsFrom(buildNowUrl(now));
+      const p = paramsFrom(buildNowUrl('wroclaw', now));
       expect(p.get('hourFrom')).toBe('09:00');
       expect(p.get('hourTo')).toBe('13:00');
     });
@@ -39,7 +39,7 @@ describe('homeFilters', () => {
     it('Tue → upcoming Fri–Sun, 12:00–23:00', () => {
       // Tue 2026-03-10
       const now = new Date(2026, 2, 10, 10, 0);
-      const p = paramsFrom(buildWeekendUrl(now));
+      const p = paramsFrom(buildWeekendUrl('wroclaw', now));
       expect(p.get('dateMode')).toBe('range');
       expect(p.get('dateFrom')).toBe('2026-03-13'); // Fri
       expect(p.get('dateTo')).toBe('2026-03-15');   // Sun
@@ -72,7 +72,7 @@ describe('homeFilters', () => {
   describe('buildTodayUrl', () => {
     it('today, hourFrom floored, no hourTo (capped by date)', () => {
       const now = new Date(2026, 2, 10, 14, 45);
-      const p = paramsFrom(buildTodayUrl(now));
+      const p = paramsFrom(buildTodayUrl('wroclaw', now));
       expect(p.get('dateMode')).toBe('single');
       expect(p.get('dateSingle')).toBe('2026-03-10');
       expect(p.get('hourFrom')).toBe('14:30');
@@ -84,7 +84,7 @@ describe('homeFilters', () => {
   describe('buildSportNowUrl', () => {
     it('today, sport category, hourFrom only', () => {
       const now = new Date(2026, 2, 10, 14, 45);
-      const p = paramsFrom(buildSportNowUrl(now));
+      const p = paramsFrom(buildSportNowUrl('wroclaw', now));
       expect(p.get('categories')).toBe('sport-i-fitness');
       expect(p.get('dateMode')).toBe('single');
       expect(p.get('dateSingle')).toBe('2026-03-10');
@@ -97,7 +97,7 @@ describe('homeFilters', () => {
     const now = new Date(2026, 2, 10, 14, 45);
 
     it('buildArtUrl filters to visual arts + theatre from today onward', () => {
-      const p = paramsFrom(buildArtUrl(now));
+      const p = paramsFrom(buildArtUrl('wroclaw', now));
       expect(p.get('categories')).toBe('sztuka-i-wystawy,teatr-i-widowiska');
       expect(p.get('dateMode')).toBe('range');
       expect(p.get('dateFrom')).toBe('2026-03-10');
@@ -106,14 +106,14 @@ describe('homeFilters', () => {
     });
 
     it('buildFoodUrl filters to culinary workshops from today onward', () => {
-      const p = paramsFrom(buildFoodUrl(now));
+      const p = paramsFrom(buildFoodUrl('wroclaw', now));
       expect(p.get('categories')).toBe('warsztaty/warsztaty-kulinarne');
       expect(p.get('dateMode')).toBe('range');
       expect(p.get('dateFrom')).toBe('2026-03-10');
     });
 
     it('buildDanceUrl filters to dance from today onward', () => {
-      const p = paramsFrom(buildDanceUrl(now));
+      const p = paramsFrom(buildDanceUrl('wroclaw', now));
       expect(p.get('categories')).toBe('taniec');
       expect(p.get('dateMode')).toBe('range');
       expect(p.get('dateFrom')).toBe('2026-03-10');

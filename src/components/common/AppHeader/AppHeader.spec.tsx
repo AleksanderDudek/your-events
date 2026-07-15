@@ -5,6 +5,7 @@ import AppHeader from './AppHeader';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/events',
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 vi.mock('@mui/material/useMediaQuery', () => ({

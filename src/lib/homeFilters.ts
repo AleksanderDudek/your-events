@@ -57,7 +57,7 @@ export function getUpcomingWeekend(now: Date): { fromDate: string; toDate: strin
 }
 
 // "Co się dzieje teraz" — today, from the nearest half-hour for the next 4h.
-export function buildNowUrl(now: Date): string {
+export function buildNowUrl(citySlug: string, now: Date): string {
   const start = floorToHalfHour(now);
   const end = addHours(start, 4);
   const params = filtersToSearchParams({
@@ -66,23 +66,23 @@ export function buildNowUrl(now: Date): string {
     hourFrom: toLocalTimeString(start),
     hourTo: toLocalTimeString(end),
   });
-  return `/events?${params.toString()}`;
+  return `/${citySlug}/wydarzenia?${params.toString()}`;
 }
 
 // "Co dziś jeszcze się dzieje" — today, from the nearest half-hour, no upper
 // time bound (the date filter caps it at today).
-export function buildTodayUrl(now: Date): string {
+export function buildTodayUrl(citySlug: string, now: Date): string {
   const start = floorToHalfHour(now);
   const params = filtersToSearchParams({
     dateMode: 'single',
     dateSingle: toLocalDateString(now),
     hourFrom: toLocalTimeString(start),
   });
-  return `/events?${params.toString()}`;
+  return `/${citySlug}/wydarzenia?${params.toString()}`;
 }
 
 // "Co się dzieje w ten weekend" — Fri–Sun, 12:00 → 23:00.
-export function buildWeekendUrl(now: Date): string {
+export function buildWeekendUrl(citySlug: string, now: Date): string {
   const { fromDate, toDate } = getUpcomingWeekend(now);
   const params = filtersToSearchParams({
     dateMode: 'range',
@@ -91,11 +91,11 @@ export function buildWeekendUrl(now: Date): string {
     hourFrom: '12:00',
     hourTo: '23:00',
   });
-  return `/events?${params.toString()}`;
+  return `/${citySlug}/wydarzenia?${params.toString()}`;
 }
 
 // "Gdzie mogę dzisiaj poćwiczyć" — today, sport category, from now onward.
-export function buildSportNowUrl(now: Date): string {
+export function buildSportNowUrl(citySlug: string, now: Date): string {
   const start = floorToHalfHour(now);
   const params = filtersToSearchParams({
     categories: [SPORT_CATEGORY_SLUG],
@@ -103,32 +103,32 @@ export function buildSportNowUrl(now: Date): string {
     dateSingle: toLocalDateString(now),
     hourFrom: toLocalTimeString(start),
   });
-  return `/events?${params.toString()}`;
+  return `/${citySlug}/wydarzenia?${params.toString()}`;
 }
 
 // Interest-based CTAs aren't bound to "today only" the way Sport is — these
 // should surface upcoming events of the chosen flavor, so we pin the lower
 // bound to today and leave the upper bound open.
-function buildInterestUrl(now: Date, categories: string[]): string {
+function buildInterestUrl(citySlug: string, now: Date, categories: string[]): string {
   const params = filtersToSearchParams({
     categories,
     dateMode: 'range',
     dateFrom: toLocalDateString(now),
   });
-  return `/events?${params.toString()}`;
+  return `/${citySlug}/wydarzenia?${params.toString()}`;
 }
 
 // "Dla miłośników sztuki" — visual arts + theatre, upcoming.
-export function buildArtUrl(now: Date): string {
-  return buildInterestUrl(now, ART_CATEGORY_SLUGS);
+export function buildArtUrl(citySlug: string, now: Date): string {
+  return buildInterestUrl(citySlug, now, ART_CATEGORY_SLUGS);
 }
 
 // "Dla smakoszy" — culinary workshops, upcoming.
-export function buildFoodUrl(now: Date): string {
-  return buildInterestUrl(now, [FOOD_CATEGORY_SLUG]);
+export function buildFoodUrl(citySlug: string, now: Date): string {
+  return buildInterestUrl(citySlug, now, [FOOD_CATEGORY_SLUG]);
 }
 
 // "Dla tancerzy" — dance category, upcoming.
-export function buildDanceUrl(now: Date): string {
-  return buildInterestUrl(now, [DANCE_CATEGORY_SLUG]);
+export function buildDanceUrl(citySlug: string, now: Date): string {
+  return buildInterestUrl(citySlug, now, [DANCE_CATEGORY_SLUG]);
 }

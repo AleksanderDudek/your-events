@@ -1,13 +1,20 @@
 import { expect, type Page } from '@playwright/test';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// These e2e tests run the real app against the real (Szczecin) Supabase project.
-// Event data changes every day via the scrape pipeline, so NOTHING here asserts
-// a specific event name, id, or count. Assertions are STRUCTURAL (a card exists,
-// the URL reflects a filter, a heading is non-empty) and ids are discovered at
-// runtime from the DOM. That keeps the suite a reliable regression signal
-// instead of a daily false alarm.
+// These e2e tests run the real app against the real (multi-city) Supabase
+// projects. Event data changes every day via the scrape pipeline, so NOTHING
+// here asserts a specific event name, id, or count. Assertions are STRUCTURAL
+// (a card exists, the URL reflects a filter, a heading is non-empty) and ids
+// are discovered at runtime from the DOM. That keeps the suite a reliable
+// regression signal instead of a daily false alarm.
+//
+// City: the app now serves multiple cities under /{city}/... routes. Wrocław
+// is the launch city with real seeded data (~88 events), so it is the one
+// exercised here — Szczecin remains the DEFAULT_CITY_ID but is only used where
+// a test specifically needs "the other available city" (e.g. the switcher).
 // ─────────────────────────────────────────────────────────────────────────────
+
+export const CITY = 'wroclaw';
 
 // Default-locale (Polish) UI strings, mirrored from src/i18n/messages.ts. The
 // app renders Polish on first paint (DEFAULT_LOCALE = 'pl'); the stored
@@ -21,6 +28,7 @@ export const TEXT = {
   browseAll: 'Przeglądaj wszystkie wydarzenia',
   heroPrompt: 'Chcesz zrobić coś fajnego?',
   cityLabel: 'Wybierz miasto',
+  cityPickerTitle: 'Wybierz swoje miasto',
   langEn: 'Angielski',
   langLabel: 'Język',
   // View toggle aria-labels
@@ -34,18 +42,18 @@ export const TEXT = {
 // The mobile filter Fab is labelled "Filtry (N)"; the leading word is stable.
 const FILTER_FAB = /^Filtry/;
 
-/** A card is an <article> (role="article") wrapping a Link to /events/<id>. */
+/** A card is an <article> (role="article") wrapping a Link to the event permalink. */
 export function firstCard(page: Page) {
   return page.locator('article').first();
 }
 
 /**
- * Navigate to the events list and wait until real data has rendered. Throws
- * (fails the test) if no cards appear — that itself is a useful signal that the
- * list or its Supabase query is broken.
+ * Navigate to the (Wrocław) events list and wait until real data has
+ * rendered. Throws (fails the test) if no cards appear — that itself is a
+ * useful signal that the list or its Supabase query is broken.
  */
 export async function gotoEvents(page: Page): Promise<void> {
-  await page.goto('/events');
+  await page.goto(`/${CITY}/wydarzenia`);
   await expect(firstCard(page)).toBeVisible({ timeout: 20000 });
 }
 

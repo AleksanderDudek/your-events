@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -18,6 +19,7 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from '@/i18n';
+import { useCity } from '@/config/CityProvider';
 import LanguageSwitcher from './LanguageSwitcher';
 import CitySwitcher from './CitySwitcher';
 import styles from './AppHeader.module.scss';
@@ -28,15 +30,17 @@ export default function AppHeader() {
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const { t } = useTranslation();
+  const { city } = useCity();
 
   const navItems = [
-    { label: t.NAV_HOME, href: '/' as const },
-    { label: t.NAV_EVENTS, href: '/events' as const },
+    { label: t.NAV_HOME, href: `/${city.id}` as Route },
+    { label: t.NAV_EVENTS, href: `/${city.id}/wydarzenia` as Route },
   ];
 
   const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname.startsWith(href);
+    const current = pathname.replace(/\/$/, '') || '/';
+    if (href === `/${city.id}`) return current === href;
+    return current.startsWith(href);
   };
 
   return (

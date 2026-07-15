@@ -33,6 +33,13 @@ export interface CityConfig extends CityConfigBase {
 
 const CITY_DEFS = [
   {
+    id: 'wroclaw',
+    displayName: { pl: 'Wrocław', en: 'Wrocław' },
+    locativeForm: { pl: 'Wrocławiu', en: 'Wrocław' },
+    accusativeForm: { pl: 'Wrocław', en: 'Wrocław' },
+    coordinates: { lat: 51.1079, lng: 17.0385 },
+  },
+  {
     id: 'szczecin',
     displayName: { pl: 'Szczecin', en: 'Szczecin' },
     locativeForm: { pl: 'Szczecinie', en: 'Szczecin' },
@@ -59,13 +66,6 @@ const CITY_DEFS = [
     locativeForm: { pl: 'Łodzi', en: 'Łódź' },
     accusativeForm: { pl: 'Łódź', en: 'Łódź' },
     coordinates: { lat: 51.7592, lng: 19.4559 },
-  },
-  {
-    id: 'wroclaw',
-    displayName: { pl: 'Wrocław', en: 'Wrocław' },
-    locativeForm: { pl: 'Wrocławiu', en: 'Wrocław' },
-    accusativeForm: { pl: 'Wrocław', en: 'Wrocław' },
-    coordinates: { lat: 51.1079, lng: 17.0385 },
   },
   {
     id: 'poznan',
@@ -163,6 +163,11 @@ const CITY_DEFS = [
 export type CityId = (typeof CITY_DEFS)[number]['id'];
 
 export const DEFAULT_CITY_ID: CityId = 'szczecin';
+
+// Every city's filter categories are sourced from this one project. Per-city
+// Supabase projects hold events only; the taxonomy lives in Szczecin. This is a
+// deliberate architectural inconsistency (see the multi-city design spec).
+export const CATEGORIES_CITY_ID: CityId = 'szczecin';
 
 // Per-city Supabase env vars MUST be referenced statically (process.env.NAME),
 // not via a computed key (process.env[`...${k}`]). Next.js inlines NEXT_PUBLIC_*
