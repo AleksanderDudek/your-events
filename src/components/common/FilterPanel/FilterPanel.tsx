@@ -32,6 +32,8 @@ import { useCity } from '@/config/CityProvider';
 import SearchInput from '@/components/ui/SearchInput/SearchInput';
 import DateRangePicker from '@/components/ui/DateRangePicker/DateRangePicker';
 import HourRangePicker from '@/components/ui/HourRangePicker/HourRangePicker';
+import CategoryIcon from '@/components/ui/CategoryIcon/CategoryIcon';
+import { categoryColorVar } from '@/lib/utils';
 import styles from './FilterPanel.module.scss';
 
 export default function FilterPanel() {
@@ -121,6 +123,61 @@ export default function FilterPanel() {
 
       <Divider sx={{ borderColor: 'var(--color-border)' }} />
 
+      {/* Date */}
+      <Accordion disableGutters>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
+          <Badge
+            badgeContent={filters.dateMode ? 1 : undefined}
+            color="primary"
+            sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
+          >
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
+              {t.FILTER_DATE}
+            </Typography>
+          </Badge>
+        </AccordionSummary>
+        <AccordionDetails>
+          <DateRangePicker
+            dateMode={filters.dateMode}
+            dateSingle={filters.dateSingle}
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            onDateModeChange={(dateMode) => updateFilters({ dateMode })}
+            onDateSingleChange={(dateSingle) => updateFilters({ dateSingle })}
+            onDateFromChange={(dateFrom) => updateFilters({ dateFrom })}
+            onDateToChange={(dateTo) => updateFilters({ dateTo })}
+          />
+        </AccordionDetails>
+      </Accordion>
+
+      <Divider sx={{ borderColor: 'var(--color-border)' }} />
+
+      {/* Hour */}
+      <Accordion disableGutters>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
+          <Badge
+            badgeContent={filters.hourFrom || filters.hourTo ? 1 : undefined}
+            color="primary"
+            sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
+          >
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
+              {t.FILTER_HOUR}
+            </Typography>
+          </Badge>
+        </AccordionSummary>
+        <AccordionDetails>
+          <HourRangePicker
+            hourFrom={filters.hourFrom}
+            hourTo={filters.hourTo}
+            disabled={!filters.dateMode}
+            onHourFromChange={(hourFrom) => updateFilters({ hourFrom })}
+            onHourToChange={(hourTo) => updateFilters({ hourTo })}
+          />
+        </AccordionDetails>
+      </Accordion>
+
+      <Divider sx={{ borderColor: 'var(--color-border)' }} />
+
       {/* Categories */}
       <Accordion defaultExpanded disableGutters>
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
@@ -157,7 +214,12 @@ export default function FilterPanel() {
                       }
                       label={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                          <span style={{ fontSize: '1rem', lineHeight: 1 }}>{cat.icon}</span>
+                          <Box
+                            component="span"
+                            sx={{ color: categoryColorVar(cat.display_name), display: 'inline-flex' }}
+                          >
+                            <CategoryIcon category={cat.display_name} size={18} />
+                          </Box>
                           <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
                             {cat.display_name}
                           </Typography>
@@ -217,61 +279,6 @@ export default function FilterPanel() {
               );
             })}
           </Box>
-        </AccordionDetails>
-      </Accordion>
-
-      <Divider sx={{ borderColor: 'var(--color-border)' }} />
-
-      {/* Date */}
-      <Accordion disableGutters>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
-          <Badge
-            badgeContent={filters.dateMode ? 1 : undefined}
-            color="primary"
-            sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
-          >
-            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
-              {t.FILTER_DATE}
-            </Typography>
-          </Badge>
-        </AccordionSummary>
-        <AccordionDetails>
-          <DateRangePicker
-            dateMode={filters.dateMode}
-            dateSingle={filters.dateSingle}
-            dateFrom={filters.dateFrom}
-            dateTo={filters.dateTo}
-            onDateModeChange={(dateMode) => updateFilters({ dateMode })}
-            onDateSingleChange={(dateSingle) => updateFilters({ dateSingle })}
-            onDateFromChange={(dateFrom) => updateFilters({ dateFrom })}
-            onDateToChange={(dateTo) => updateFilters({ dateTo })}
-          />
-        </AccordionDetails>
-      </Accordion>
-
-      <Divider sx={{ borderColor: 'var(--color-border)' }} />
-
-      {/* Hour */}
-      <Accordion disableGutters>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
-          <Badge
-            badgeContent={filters.hourFrom || filters.hourTo ? 1 : undefined}
-            color="primary"
-            sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
-          >
-            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
-              {t.FILTER_HOUR}
-            </Typography>
-          </Badge>
-        </AccordionSummary>
-        <AccordionDetails>
-          <HourRangePicker
-            hourFrom={filters.hourFrom}
-            hourTo={filters.hourTo}
-            disabled={!filters.dateMode}
-            onHourFromChange={(hourFrom) => updateFilters({ hourFrom })}
-            onHourToChange={(hourTo) => updateFilters({ hourTo })}
-          />
         </AccordionDetails>
       </Accordion>
     </Box>

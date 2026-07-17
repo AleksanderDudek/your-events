@@ -91,8 +91,13 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
   const description = event.description.trim();
   const priceLabel = event.price.label?.trim();
   const hasMap = event.location.lat !== null && event.location.lng !== null;
-  const mapsUrl = hasMap
-    ? `https://www.google.com/maps/?q=${event.location.lat},${event.location.lng}`
+  // "Pokaż na mapie" opens the same OSM map shown inline; the Google button
+  // opens Google Maps. Both only render when the event has coordinates.
+  const osmUrl = hasMap
+    ? `https://www.openstreetmap.org/?mlat=${event.location.lat}&mlon=${event.location.lng}#map=16/${event.location.lat}/${event.location.lng}`
+    : null;
+  const googleMapsUrl = hasMap
+    ? `https://www.google.com/maps/search/?api=1&query=${event.location.lat},${event.location.lng}`
     : null;
   const hasUrl = Boolean(event.url);
   const updatedAt = formatUpdatedAt(event.updatedAt);
@@ -163,17 +168,33 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                   {event.location.city}
                 </Typography>
               )}
-              {mapsUrl && (
-                <Button
-                  size="small"
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  startIcon={<MapIcon />}
-                  sx={{ mt: 0.5, textTransform: 'none', color: 'var(--color-accent-primary)', minHeight: 0, p: 0 }}
-                >
-                  {t.OPEN_IN_MAPS}
-                </Button>
+              {hasMap && (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="primary"
+                    href={osmUrl as string}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    startIcon={<MapIcon />}
+                    sx={{ textTransform: 'none', color: '#fff' }}
+                  >
+                    {t.OPEN_IN_MAPS}
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="primary"
+                    href={googleMapsUrl as string}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    startIcon={<MapIcon />}
+                    sx={{ textTransform: 'none', color: '#fff' }}
+                  >
+                    {t.OPEN_IN_GOOGLE_MAPS}
+                  </Button>
+                </Box>
               )}
               {hasMap && (
                 <Box sx={{ mt: 1.5 }}>
