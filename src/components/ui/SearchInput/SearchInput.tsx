@@ -65,11 +65,9 @@ export default function SearchInput({ value, onChange }: SearchInputProps) {
       }}
       sx={{
         '& .MuiOutlinedInput-root': {
-          borderRadius: 'var(--radius-md)',
+          borderRadius: 'var(--radius-pill)',
           fontFamily: 'var(--font-body)',
-          '&.Mui-focused fieldset': {
-            borderColor: 'var(--color-accent-primary)',
-          },
+          minHeight: 44,
         },
       }}
     />
