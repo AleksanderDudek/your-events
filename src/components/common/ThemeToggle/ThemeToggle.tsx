@@ -11,7 +11,7 @@ import { useColorScheme } from '@mui/material/styles';
 // setState-in-effect (which React's lint rules flag).
 export default function ThemeToggle() {
   const { mode, systemMode, setMode } = useColorScheme();
-  if (!mode) return <IconButton aria-hidden sx={{ width: 40, height: 40 }} />;
+  if (!mode) return <IconButton aria-hidden tabIndex={-1} sx={{ width: 40, height: 40 }} />;
 
   const resolved = mode === 'system' ? systemMode : mode;
   const next = resolved === 'dark' ? 'light' : 'dark';

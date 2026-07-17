@@ -92,11 +92,6 @@ export function slugify(value: string): string {
     .replace(/\s+/g, '-');
 }
 
-export function getCategoryIconPath(category: string): string {
-  const name = category || 'inne';
-  return `/category-icons/${slugify(name)}.svg`;
-}
-
 // Resolves a category display name to its --cat-<slug> CSS variable (brief §2),
 // with a fallback color for categories outside the curated 13.
 export function categoryColorVar(displayName: string, fallback = '#8a8494'): string {

@@ -30,12 +30,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-[data-theme='dark'] body {
-  background:
-    radial-gradient(ellipse 70% 40% at 50% -5%, var(--primary-tint) 0%, transparent 60%),
-    var(--bg);
-}
+// No dark-mode override needed: --primary-tint and --bg already flip on
+// [data-theme='dark'], so the base rule above renders correctly in both themes.
 
 a {
   color: inherit;

@@ -108,7 +108,9 @@ function ImageWrapper({ event }: { event: Event }) {
     return (
       <Image
         src={stage === 0 ? event.imageUrl : artSrc}
-        alt={event.categoryMain}
+        // Real poster gets the event name; the category-art fallback is
+        // decorative (the article's aria-label already names the event).
+        alt={stage === 0 ? event.name : ''}
         fill
         sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
         className={styles.image}
