@@ -1,18 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import IconButton from '@mui/material/IconButton';
 import LightModeIcon from '@mui/icons-material/LightModeOutlined';
 import DarkModeIcon from '@mui/icons-material/DarkModeOutlined';
 import { useColorScheme } from '@mui/material/styles';
 
-// Cycles light ⇄ dark, persisted by MUI (writes data-theme). Renders nothing
-// until mounted to avoid an SSR/CSR mismatch on the icon.
+// Cycles light ⇄ dark, persisted by MUI (writes data-theme). MUI leaves `mode`
+// undefined on the server and until mount, so we render a placeholder until it
+// resolves — this avoids an SSR/CSR hydration mismatch on the icon without a
+// setState-in-effect (which React's lint rules flag).
 export default function ThemeToggle() {
   const { mode, systemMode, setMode } = useColorScheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return <IconButton aria-hidden sx={{ width: 40, height: 40 }} />;
+  if (!mode) return <IconButton aria-hidden sx={{ width: 40, height: 40 }} />;
 
   const resolved = mode === 'system' ? systemMode : mode;
   const next = resolved === 'dark' ? 'light' : 'dark';
