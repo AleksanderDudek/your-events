@@ -20,6 +20,8 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
+import Spark from '@/components/common/Spark/Spark';
+import ThemeToggle from '@/components/common/ThemeToggle/ThemeToggle';
 import LanguageSwitcher from './LanguageSwitcher';
 import CitySwitcher from './CitySwitcher';
 import styles from './AppHeader.module.scss';
@@ -54,8 +56,8 @@ export default function AppHeader() {
         backgroundColor: 'var(--color-surface-glass)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--color-border)',
-        boxShadow: '0 1px 0 rgba(236, 72, 153, 0.05)',
+        borderBottom: '1px solid var(--border)',
+        boxShadow: 'none',
       }}
     >
       <Toolbar
@@ -67,15 +69,22 @@ export default function AppHeader() {
           px: { xs: 2, sm: 3, md: 4 },
         }}
       >
-        <Link href="/" className={styles.logo}>
+        <Link
+          href="/"
+          className={styles.logo}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
+        >
+          <span style={{ color: 'var(--primary)', display: 'inline-flex' }}>
+            <Spark size={26} />
+          </span>
           <Typography
             variant="h6"
             component="span"
             sx={{
               fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              letterSpacing: '-0.01em',
+              fontWeight: 800,
+              color: 'var(--ink)',
+              letterSpacing: '-0.02em',
             }}
           >
             {t.APP_NAME}
@@ -95,11 +104,13 @@ export default function AppHeader() {
             ))}
             <CitySwitcher />
             <LanguageSwitcher />
+            <ThemeToggle />
           </Box>
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CitySwitcher />
             <LanguageSwitcher />
+            <ThemeToggle />
             <IconButton
               onClick={() => setDrawerOpen(true)}
               aria-label={t.NAV_OPEN_MENU}

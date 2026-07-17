@@ -71,33 +71,35 @@ $card-h-md: 232px;
   object-fit: cover;
 }
 
-.dateOverlay {
+.dateBadge {
   position: absolute;
   top: 6px;
-  right: 6px;
+  left: 6px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  padding: 3px 6px;
+  align-items: center;
+  padding: 3px 7px;
   border-radius: var(--radius-sm);
-  background-color: rgba(255, 255, 255, 0.94);
-  font-family: var(--font-mono);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-card);
   line-height: 1;
   pointer-events: none;
 }
 
-.dateText {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.dateDay {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--ink);
 }
 
-.timeText {
-  font-size: 0.5625rem;
-  color: var(--color-text-secondary);
+.dateMonth {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
 }
 
 // =============================================================================

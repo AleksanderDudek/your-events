@@ -34,7 +34,7 @@ export default function Providers({ children }: Readonly<ProvidersProps>) {
     <QueryClientProvider client={queryClient}>
       <LocaleProvider>
         <CityProvider>
-          <ThemeProvider theme={theme}>
+          <ThemeProvider theme={theme} defaultMode="system">
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={pl}>
               <CssBaseline />
               {children}

@@ -1,58 +1,27 @@
-// Bright, vivid palette. Anchors:
-//   - Cream/peach background to warm up the whole canvas
-//   - Hot pink + tangerine accents echoing the saturated category-icon palette
-//     (Taniec #F472B6, Sztuka #EC4899, Warsztaty #F97316, Wellness #06B6D4,
-//      Muzyka #8B5CF6, Sport #10B981, Imprezy #FBBF24…)
-//   - Deep aubergine text for high contrast against the cream
-//
-// Component code should pull from these tokens via var(--color-*) rather than
-// hardcoding hex/rgba so the palette can move in one place.
+// "Idź na miasto" design system tokens (brief §1).
+//   Brief tokens are the source of truth; the legacy --color-* names are kept
+//   as aliases so existing var(--color-*) consumers keep working untouched.
+//   Dark mode flips on [data-theme="dark"] ONLY — MUI's InitColorSchemeScript
+//   always writes that attribute (resolving `system` to light/dark), so a
+//   prefers-color-scheme media query here would override explicit user choice.
 
 :root {
-  // Surfaces
-  --color-bg-base: #fffaf3;        // warm cream — main canvas
-  --color-bg-surface: #ffffff;     // cards
-  --color-bg-elevated: #fff5e8;    // slightly warmer raised surface
+  // --- Brand (brief §1) ---
+  --primary: #f4553b;
+  --primary-hover: #d9432f;
+  --primary-tint: #fde9e4;
+  --accent: #ffc53d;
 
-  // Accents (drawn from / harmonise with the category palette)
-  --color-accent-primary: #ec4899;       // hot pink (sztuka/taniec family)
-  --color-accent-primary-dark: #be1a6b;
-  --color-accent-primary-light: #f472b6;
-  --color-accent-warm: #f97316;          // tangerine (warsztaty)
-  --color-accent-cool: #06b6d4;          // cyan (wellness)
-  --color-accent-violet: #8b5cf6;        // muzyka
+  // --- Warm neutrals ---
+  --bg: #fbf8f3;
+  --surface: #ffffff;
+  --surface-2: #f4efe7;
+  --ink: #221c26;
+  --ink-muted: #6e6575;
+  --border: #e9e2d9;
+  --shadow: 0 2px 8px rgba(34, 28, 38, 0.07), 0 8px 24px rgba(34, 28, 38, 0.06);
 
-  // Translucent accent washes used for hover/selected backgrounds
-  --color-accent-tint-soft: rgba(236, 72, 153, 0.06);
-  --color-accent-tint: rgba(236, 72, 153, 0.12);
-  --color-accent-tint-strong: rgba(236, 72, 153, 0.18);
-
-  // Text
-  --color-text-primary: #1a0f2e;     // deep aubergine — almost black, warm
-  --color-text-secondary: #564b6e;
-  --color-text-muted: #9b93a8;
-
-  // Status
-  --color-status-active: #10b981;    // emerald
-  --color-status-few: #f59e0b;       // amber
-  --color-status-sold: #ef4444;      // red
-  --color-status-cancelled: #9ca3af; // neutral
-
-  // Borders + state
-  --color-border: #f3e2d1;           // warm peach border
-  --color-border-strong: #e8c8a8;
-  --color-border-accent: #ec4899;
-  --color-error: #ef4444;
-
-  // Glassmorphism — translucent overlay used by sticky header, drawers etc.
-  --color-surface-glass: rgba(255, 250, 243, 0.85);
-
-  // Typography
-  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', monospace;
-
-  // Geometry
+  // --- Radii & motion ---
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -60,11 +29,142 @@
   --transition-base: 200ms ease;
   --transition-slow: 400ms ease;
 
-  // Shadows — colored to feel like soft glows from the category palette
-  --shadow-card: 0 2px 12px rgba(124, 58, 237, 0.07);
-  --shadow-card-hover: 0 14px 36px rgba(236, 72, 153, 0.22);
-  --shadow-elevated: 0 16px 48px rgba(124, 58, 237, 0.16);
+  // --- Typography (families set in Task 4) ---
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  // --- Legacy aliases → brief tokens (do not remove; many components use these) ---
+  --color-bg-base: var(--bg);
+  --color-bg-surface: var(--surface);
+  --color-bg-elevated: var(--surface-2);
+  --color-accent-primary: var(--primary);
+  --color-accent-primary-dark: var(--primary-hover);
+  --color-accent-primary-light: #f86a50;
+  --color-accent-warm: #f07a1f;
+  --color-accent-cool: #1fa8a0;
+  --color-accent-violet: #7c5ce0;
+  // rgba (not color-mix) so Dart Sass parses these without issue; coral @ alpha.
+  --color-accent-tint-soft: rgba(244, 85, 59, 0.05);
+  --color-accent-tint: rgba(244, 85, 59, 0.12);
+  --color-accent-tint-strong: rgba(244, 85, 59, 0.18);
+  --color-text-primary: var(--ink);
+  --color-text-secondary: var(--ink-muted);
+  --color-text-muted: #9c93a6;
+  --color-status-active: #2fa860;
+  --color-status-few: #c98a1d;
+  --color-status-sold: #e0533f;
+  --color-status-cancelled: #9c93a6;
+  --color-border: var(--border);
+  --color-border-strong: #d8cec1;
+  --color-border-accent: var(--primary);
+  --color-error: #e0533f;
+  --color-surface-glass: rgba(251, 248, 243, 0.8); // = --bg @ 80% (light)
+
+  --shadow-card: var(--shadow);
+  --shadow-card-hover: 0 12px 30px rgba(34, 28, 38, 0.14);
+  --shadow-elevated: 0 16px 40px rgba(34, 28, 38, 0.16);
 
   --sidebar-width: 280px;
   --header-height: 64px;
+
+  // --- Category hues (brief §2). Base = chip text / icon on light. ---
+  --cat-muzyka: #7c5ce0;
+  --cat-film: #4f74e3;
+  --cat-teatr-i-widowiska: #b44fd6;
+  --cat-sztuka-i-wystawy: #e8557d;
+  --cat-taniec: #ee4f86;
+  --cat-sport-i-fitness: #2fa860;
+  --cat-wellness-i-duchowosc: #1fa8a0;
+  --cat-warsztaty: #c98a1d;
+  --cat-edukacja: #2e8fd8;
+  --cat-imprezy-i-rozrywka: #f07a1f;
+  --cat-dla-dzieci: #35b7df;
+  --cat-zwierzeta: #b07b3f;
+  --cat-inne: #8a8494;
+
+  // Solid, non-flipping variants (selected chip fill, color-box last resort).
+  --cat-muzyka-solid: #7c5ce0;
+  --cat-film-solid: #4f74e3;
+  --cat-teatr-i-widowiska-solid: #b44fd6;
+  --cat-sztuka-i-wystawy-solid: #e8557d;
+  --cat-taniec-solid: #ee4f86;
+  --cat-sport-i-fitness-solid: #2fa860;
+  --cat-wellness-i-duchowosc-solid: #1fa8a0;
+  --cat-warsztaty-solid: #c98a1d;
+  --cat-edukacja-solid: #2e8fd8;
+  --cat-imprezy-i-rozrywka-solid: #f07a1f;
+  --cat-dla-dzieci-solid: #35b7df;
+  --cat-zwierzeta-solid: #b07b3f;
+  --cat-inne-solid: #8a8494;
+
+  // Darker text-only variants for chip LABELS (brief §7 wants ≥4.5:1). Each is
+  // the same hue darkened to ≥4.6:1 on its light 14% tint; icons/other uses keep
+  // the base --cat-* hue. In dark mode these reference the flipped light hue
+  // below (already ≥4.8:1 on the dark tint).
+  --cat-muzyka-ink: #704ddd;
+  --cat-film-ink: #355fdf;
+  --cat-teatr-i-widowiska-ink: #a22fc9;
+  --cat-sztuka-i-wystawy-ink: #cc1c4c;
+  --cat-taniec-ink: #cd1454;
+  --cat-sport-i-fitness-ink: #227a46;
+  --cat-wellness-i-duchowosc-ink: #167872;
+  --cat-warsztaty-ink: #906315;
+  --cat-edukacja-ink: #206ea9;
+  --cat-imprezy-i-rozrywka-ink: #ac510c;
+  --cat-dla-dzieci-ink: #177693;
+  --cat-zwierzeta-ink: #8c6232;
+  --cat-inne-ink: #6e6877;
+}
+
+[data-theme='dark'] {
+  --primary: #f86a50;
+  --primary-hover: #f4553b;
+  --primary-tint: #3a2521;
+  --bg: #17131c;
+  --surface: #221c29;
+  --surface-2: #2b2434;
+  --ink: #f5f1ea;
+  --ink-muted: #9c93a6;
+  --border: #332b3d;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+
+  --color-text-muted: #857c90;
+  --color-border-strong: #453b52;
+  --color-surface-glass: rgba(23, 19, 28, 0.8); // = --bg @ 80% (dark)
+  --shadow-card: var(--shadow);
+  --shadow-card-hover: 0 12px 30px rgba(0, 0, 0, 0.45);
+  --shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.5);
+
+  // Category text/icon variants for dark (brief §2 "Dark-mode text").
+  --cat-muzyka: #a78bfa;
+  --cat-film: #8ca5f2;
+  --cat-teatr-i-widowiska: #d48beb;
+  --cat-sztuka-i-wystawy: #f48ba8;
+  --cat-taniec: #f78bb4;
+  --cat-sport-i-fitness: #5fcb8b;
+  --cat-wellness-i-duchowosc: #54ccc5;
+  --cat-warsztaty: #e3ac4e;
+  --cat-edukacja: #6bb4ea;
+  --cat-imprezy-i-rozrywka: #f79c55;
+  --cat-dla-dzieci: #6fd0ee;
+  --cat-zwierzeta: #ce9e68;
+  --cat-inne: #a79fb2;
+  // (-solid variants intentionally NOT flipped: solid fills keep the saturated base.)
+
+  // On dark, chip label text uses the flipped light hue (already ≥4.8:1 on the
+  // dark tint), so -ink just tracks --cat-* rather than the light-mode dark hue.
+  --cat-muzyka-ink: var(--cat-muzyka);
+  --cat-film-ink: var(--cat-film);
+  --cat-teatr-i-widowiska-ink: var(--cat-teatr-i-widowiska);
+  --cat-sztuka-i-wystawy-ink: var(--cat-sztuka-i-wystawy);
+  --cat-taniec-ink: var(--cat-taniec);
+  --cat-sport-i-fitness-ink: var(--cat-sport-i-fitness);
+  --cat-wellness-i-duchowosc-ink: var(--cat-wellness-i-duchowosc);
+  --cat-warsztaty-ink: var(--cat-warsztaty);
+  --cat-edukacja-ink: var(--cat-edukacja);
+  --cat-imprezy-i-rozrywka-ink: var(--cat-imprezy-i-rozrywka);
+  --cat-dla-dzieci-ink: var(--cat-dla-dzieci);
+  --cat-zwierzeta-ink: var(--cat-zwierzeta);
+  --cat-inne-ink: var(--cat-inne);
 }

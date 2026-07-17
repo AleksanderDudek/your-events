@@ -28,4 +28,19 @@ describe('CategoryChip', () => {
     render(<CategoryChip category="Muzyka" selected />);
     expect(screen.getByText('Muzyka')).toBeInTheDocument();
   });
+
+  it('renders a category icon glyph', () => {
+    const { container } = render(<CategoryChip category="Muzyka" />);
+    expect(container.querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('renders selected and unselected without crashing', () => {
+    // Note: color/background come from MUI sx → Emotion classes, which jsdom
+    // does not resolve to computed styles, so we assert on structure/behavior,
+    // not on the CSS var value (verified visually in Task 16 instead).
+    const { rerender } = render(<CategoryChip category="Taniec" />);
+    expect(screen.getByText('Taniec')).toBeInTheDocument();
+    rerender(<CategoryChip category="Taniec" selected />);
+    expect(screen.getByText('Taniec')).toBeInTheDocument();
+  });
 });

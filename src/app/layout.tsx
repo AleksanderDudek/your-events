@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import Providers from './providers';
 import AppLayout from '@/components/common/AppLayout/AppLayout';
 import { messages, DEFAULT_LOCALE } from '@/i18n';
@@ -38,13 +39,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang={DEFAULT_LOCALE}>
+    <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
       <head>
         <meta name="security-scan" content="wirtualnatarcza-verify-b910f78bb326f4ab115e4637d25e134410a83076" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap&subset=latin-ext"
           rel="stylesheet"
         />
         <link rel="icon" type="image/png" href="/your-events/favicons/favicon-96x96.png" sizes="96x96" />
@@ -55,6 +56,7 @@ export default function RootLayout({
         <link rel="manifest" href="/your-events/favicons/site.webmanifest" />
       </head>
       <body>
+        <InitColorSchemeScript attribute="data-theme" defaultMode="system" />
         <Providers>
           <AppLayout>{children}</AppLayout>
         </Providers>

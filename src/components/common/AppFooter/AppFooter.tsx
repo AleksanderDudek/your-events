@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
+import Spark from '@/components/common/Spark/Spark';
 import styles from './AppFooter.module.scss';
 
 export default function AppFooter() {
@@ -15,17 +16,17 @@ export default function AppFooter() {
     <Box component="footer" role="contentinfo" className={styles.footer}>
       <Box className={styles.inner}>
         <Box className={styles.col}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              mb: 0.5,
-            }}
-          >
-            {t.APP_NAME}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <span style={{ color: 'var(--primary)', display: 'inline-flex' }}>
+              <Spark size={22} />
+            </span>
+            <Typography
+              variant="h6"
+              sx={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--ink)' }}
+            >
+              {t.APP_NAME}
+            </Typography>
+          </Box>
           <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
             {t.APP_TAGLINE(city.locativeForm[locale])}
           </Typography>
