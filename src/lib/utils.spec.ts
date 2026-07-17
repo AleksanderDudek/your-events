@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { slugify, categoryColorVar, categoryFallbackImage } from './utils';
+import { slugify, categoryColorVar, categoryColorInkVar, categoryFallbackImage } from './utils';
 
 describe('slugify', () => {
   it('strips Polish diacritics and lowercases', () => {
@@ -15,6 +15,12 @@ describe('categoryColorVar', () => {
   });
   it('uses a neutral fallback when none supplied', () => {
     expect(categoryColorVar('Taniec')).toBe('var(--cat-taniec, #8a8494)');
+  });
+});
+
+describe('categoryColorInkVar', () => {
+  it('maps a display name to its darker --cat-*-ink label var', () => {
+    expect(categoryColorInkVar('Warsztaty')).toBe('var(--cat-warsztaty-ink, #5f5968)');
   });
 });
 

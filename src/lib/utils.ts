@@ -103,6 +103,12 @@ export function categoryColorSolidVar(displayName: string, fallback = '#8a8494')
   return `var(--cat-${slugify(displayName || 'inne')}-solid, ${fallback})`;
 }
 
+// Darker text-only variant for chip LABELS so they meet WCAG AA on the light
+// tint (brief §7); icons and other uses keep the base --cat-* hue.
+export function categoryColorInkVar(displayName: string, fallback = '#5f5968'): string {
+  return `var(--cat-${slugify(displayName || 'inne')}-ink, ${fallback})`;
+}
+
 // Deterministic pick of one of the 10 category-art placeholders (1..10) from a
 // stable seed (event id/key) so the same event always shows the same art.
 export function categoryFallbackImage(displayName: string, seed: string): string {

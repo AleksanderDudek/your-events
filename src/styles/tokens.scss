@@ -97,6 +97,24 @@
   --cat-dla-dzieci-solid: #35b7df;
   --cat-zwierzeta-solid: #b07b3f;
   --cat-inne-solid: #8a8494;
+
+  // Darker text-only variants for chip LABELS (brief §7 wants ≥4.5:1). Each is
+  // the same hue darkened to ≥4.6:1 on its light 14% tint; icons/other uses keep
+  // the base --cat-* hue. In dark mode these reference the flipped light hue
+  // below (already ≥4.8:1 on the dark tint).
+  --cat-muzyka-ink: #704ddd;
+  --cat-film-ink: #355fdf;
+  --cat-teatr-i-widowiska-ink: #a22fc9;
+  --cat-sztuka-i-wystawy-ink: #cc1c4c;
+  --cat-taniec-ink: #cd1454;
+  --cat-sport-i-fitness-ink: #227a46;
+  --cat-wellness-i-duchowosc-ink: #167872;
+  --cat-warsztaty-ink: #906315;
+  --cat-edukacja-ink: #206ea9;
+  --cat-imprezy-i-rozrywka-ink: #ac510c;
+  --cat-dla-dzieci-ink: #177693;
+  --cat-zwierzeta-ink: #8c6232;
+  --cat-inne-ink: #6e6877;
 }
 
 [data-theme='dark'] {
@@ -133,4 +151,20 @@
   --cat-zwierzeta: #ce9e68;
   --cat-inne: #a79fb2;
   // (-solid variants intentionally NOT flipped: solid fills keep the saturated base.)
+
+  // On dark, chip label text uses the flipped light hue (already ≥4.8:1 on the
+  // dark tint), so -ink just tracks --cat-* rather than the light-mode dark hue.
+  --cat-muzyka-ink: var(--cat-muzyka);
+  --cat-film-ink: var(--cat-film);
+  --cat-teatr-i-widowiska-ink: var(--cat-teatr-i-widowiska);
+  --cat-sztuka-i-wystawy-ink: var(--cat-sztuka-i-wystawy);
+  --cat-taniec-ink: var(--cat-taniec);
+  --cat-sport-i-fitness-ink: var(--cat-sport-i-fitness);
+  --cat-wellness-i-duchowosc-ink: var(--cat-wellness-i-duchowosc);
+  --cat-warsztaty-ink: var(--cat-warsztaty);
+  --cat-edukacja-ink: var(--cat-edukacja);
+  --cat-imprezy-i-rozrywka-ink: var(--cat-imprezy-i-rozrywka);
+  --cat-dla-dzieci-ink: var(--cat-dla-dzieci);
+  --cat-zwierzeta-ink: var(--cat-zwierzeta);
+  --cat-inne-ink: var(--cat-inne);
 }
