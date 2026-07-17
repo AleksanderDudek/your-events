@@ -66,4 +66,12 @@ describe('EventCard', () => {
     render(<EventCard event={mockEvent} />);
     expect(screen.getByRole('article')).toBeInTheDocument();
   });
+
+  it('shows the day number and month in the date badge', () => {
+    render(<EventCard event={mockEvent} />);
+    expect(screen.getByText('14')).toBeInTheDocument();   // 2026-03-14
+    // pl-PL short month, uppercased. Regex (not exact) because some ICU builds
+    // append a period ("mar." → "MAR."); substring match is stable across both.
+    expect(screen.getByText(/MAR/)).toBeInTheDocument();
+  });
 });

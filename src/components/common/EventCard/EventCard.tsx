@@ -11,7 +11,14 @@ import { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
-import { formatDateShort, formatEventTime, getCategoryIconPath } from '@/lib/utils';
+import {
+  formatDateShort,
+  formatDay,
+  formatMonth,
+  formatEventTime,
+  categoryFallbackImage,
+  categoryColorSolidVar,
+} from '@/lib/utils';
 import { useCity } from '@/config/CityProvider';
 import { eventPath } from '@/lib/slug';
 import styles from './EventCard.module.scss';
@@ -45,9 +52,9 @@ export default function EventCard({ event }: EventCardProps) {
       >
         <Box className={styles.imageWrapper}>
           <ImageWrapper event={event} />
-          <div className={styles.dateOverlay} aria-hidden>
-            <span className={styles.dateText}>{formatDateShort(event.date)}</span>
-            {time && <span className={styles.timeText}>{time}</span>}
+          <div className={styles.dateBadge} aria-hidden>
+            <span className={styles.dateDay}>{formatDay(event.date)}</span>
+            <span className={styles.dateMonth}>{formatMonth(event.date)}</span>
           </div>
         </Box>
 
@@ -95,21 +102,15 @@ export default function EventCard({ event }: EventCardProps) {
 }
 
 function ImageWrapper({ event }: { event: Event }) {
-  const { byDisplayName } = useCategories();
-  const categoryData = byDisplayName.get(event.categoryMain) ?? byDisplayName.get('Inne');
-  const iconPath = getCategoryIconPath(event.categoryMain || 'inne');
-
-  // Image source chain: real event image (poster / source logo) → category
-  // icon → solid color box with emoji. `stage` advances on each onError:
-  //   0 = real imageUrl, 1 = category icon, 2 = color box.
-  const hasRealImage = Boolean(event.imageUrl);
-  const [stage, setStage] = useState<0 | 1 | 2>(hasRealImage ? 0 : 1);
+  const artSrc = categoryFallbackImage(event.categoryMain, event.id || event.eventKey);
+  // stage 0 = real imageUrl, 1 = category art PNG, 2 = solid color box
+  const [stage, setStage] = useState<0 | 1 | 2>(event.imageUrl ? 0 : 1);
 
   if (stage < 2) {
     return (
       <Image
-        src={stage === 0 ? event.imageUrl : iconPath}
-        alt={categoryData?.display_name ?? event.categoryMain}
+        src={stage === 0 ? event.imageUrl : artSrc}
+        alt={event.categoryMain}
         fill
         sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
         className={styles.image}
@@ -124,14 +125,8 @@ function ImageWrapper({ event }: { event: Event }) {
       sx={{
         width: '100%',
         height: '100%',
-        bgcolor: categoryData?.color ?? '#6B7280',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '2rem',
+        bgcolor: categoryColorSolidVar(event.categoryMain),
       }}
-    >
-      {categoryData?.icon ?? '●'}
-    </Box>
+    />
   );
 }
