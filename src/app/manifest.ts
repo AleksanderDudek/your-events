@@ -13,8 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: m.META_DESCRIPTION(cityLocative),
     start_url: '/your-events/',
     display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#000000',
+    background_color: '#fbf8f3',
+    theme_color: '#f4553b',
     icons: [
       {
         src: '/your-events/favicons/web-app-manifest-192x192.png',
