@@ -67,6 +67,36 @@
 
   --sidebar-width: 280px;
   --header-height: 64px;
+
+  // --- Category hues (brief §2). Base = chip text / icon on light. ---
+  --cat-muzyka: #7c5ce0;
+  --cat-film: #4f74e3;
+  --cat-teatr-i-widowiska: #b44fd6;
+  --cat-sztuka-i-wystawy: #e8557d;
+  --cat-taniec: #ee4f86;
+  --cat-sport-i-fitness: #2fa860;
+  --cat-wellness-i-duchowosc: #1fa8a0;
+  --cat-warsztaty: #c98a1d;
+  --cat-edukacja: #2e8fd8;
+  --cat-imprezy-i-rozrywka: #f07a1f;
+  --cat-dla-dzieci: #35b7df;
+  --cat-zwierzeta: #b07b3f;
+  --cat-inne: #8a8494;
+
+  // Solid, non-flipping variants (selected chip fill, color-box last resort).
+  --cat-muzyka-solid: #7c5ce0;
+  --cat-film-solid: #4f74e3;
+  --cat-teatr-i-widowiska-solid: #b44fd6;
+  --cat-sztuka-i-wystawy-solid: #e8557d;
+  --cat-taniec-solid: #ee4f86;
+  --cat-sport-i-fitness-solid: #2fa860;
+  --cat-wellness-i-duchowosc-solid: #1fa8a0;
+  --cat-warsztaty-solid: #c98a1d;
+  --cat-edukacja-solid: #2e8fd8;
+  --cat-imprezy-i-rozrywka-solid: #f07a1f;
+  --cat-dla-dzieci-solid: #35b7df;
+  --cat-zwierzeta-solid: #b07b3f;
+  --cat-inne-solid: #8a8494;
 }
 
 [data-theme='dark'] {
@@ -87,4 +117,20 @@
   --shadow-card: var(--shadow);
   --shadow-card-hover: 0 12px 30px rgba(0, 0, 0, 0.45);
   --shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.5);
+
+  // Category text/icon variants for dark (brief §2 "Dark-mode text").
+  --cat-muzyka: #a78bfa;
+  --cat-film: #8ca5f2;
+  --cat-teatr-i-widowiska: #d48beb;
+  --cat-sztuka-i-wystawy: #f48ba8;
+  --cat-taniec: #f78bb4;
+  --cat-sport-i-fitness: #5fcb8b;
+  --cat-wellness-i-duchowosc: #54ccc5;
+  --cat-warsztaty: #e3ac4e;
+  --cat-edukacja: #6bb4ea;
+  --cat-imprezy-i-rozrywka: #f79c55;
+  --cat-dla-dzieci: #6fd0ee;
+  --cat-zwierzeta: #ce9e68;
+  --cat-inne: #a79fb2;
+  // (-solid variants intentionally NOT flipped: solid fills keep the saturated base.)
 }

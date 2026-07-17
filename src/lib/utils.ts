@@ -82,7 +82,7 @@ export function totalPages(total: number, pageSize: number): number {
   return Math.max(1, Math.ceil(total / pageSize));
 }
 
-function slugify(value: string): string {
+export function slugify(value: string): string {
   return value
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
@@ -95,4 +95,26 @@ function slugify(value: string): string {
 export function getCategoryIconPath(category: string): string {
   const name = category || 'inne';
   return `/category-icons/${slugify(name)}.svg`;
+}
+
+// Resolves a category display name to its --cat-<slug> CSS variable (brief §2),
+// with a fallback color for categories outside the curated 13.
+export function categoryColorVar(displayName: string, fallback = '#8a8494'): string {
+  return `var(--cat-${slugify(displayName || 'inne')}, ${fallback})`;
+}
+
+// The solid, non-flipping variant (selected chips, color-box last resort).
+export function categoryColorSolidVar(displayName: string, fallback = '#8a8494'): string {
+  return `var(--cat-${slugify(displayName || 'inne')}-solid, ${fallback})`;
+}
+
+// Deterministic pick of one of the 10 category-art placeholders (1..10) from a
+// stable seed (event id/key) so the same event always shows the same art.
+export function categoryFallbackImage(displayName: string, seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  const variant = (hash % 10) + 1;
+  return `/fallbacks/${slugify(displayName || 'inne')}-${variant}.png`;
 }
