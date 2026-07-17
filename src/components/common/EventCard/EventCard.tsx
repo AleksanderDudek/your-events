@@ -15,7 +15,6 @@ import {
   formatDateShort,
   formatDay,
   formatMonth,
-  formatEventTime,
   categoryFallbackImage,
   categoryColorSolidVar,
 } from '@/lib/utils';
@@ -39,7 +38,6 @@ export default function EventCard({ event }: EventCardProps) {
   const maxChips = 2;
   const visibleCategories = chips.slice(0, maxChips);
   const extraCount = chips.length - maxChips;
-  const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
   const sourceLabel = event.sources.join(' · ');
 
   return (
