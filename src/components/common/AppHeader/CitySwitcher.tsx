@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -42,7 +43,6 @@ export default function CitySwitcher() {
         aria-haspopup="listbox"
         aria-expanded={open}
         sx={{
-          ml: 1,
           color: 'var(--color-text-primary)',
           borderColor: 'var(--color-border)',
           fontFamily: 'var(--font-body)',
@@ -57,7 +57,13 @@ export default function CitySwitcher() {
           },
         }}
       >
-        {city.displayName[locale]}
+        {/* The name is dropped on the narrowest phones: with it, the header row
+            is wider than a 393px viewport, the whole page scrolls sideways and
+            the fixed filter Fab lands partly off-screen (taps hit a card
+            instead). The pin + aria-label still name the control. */}
+        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+          {city.displayName[locale]}
+        </Box>
       </Button>
       <Menu
         anchorEl={anchorEl}

@@ -72,9 +72,18 @@ export default function AppHeader() {
         <Link
           href="/"
           className={styles.logo}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
+          // minWidth: 0 lets the wordmark truncate instead of pushing the row
+          // wider than the viewport — a header that overflows makes the whole
+          // page pan sideways and the fixed filter Fab drift off-screen.
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            textDecoration: 'none',
+            minWidth: 0,
+          }}
         >
-          <span style={{ color: 'var(--primary)', display: 'inline-flex' }}>
+          <span style={{ color: 'var(--primary)', display: 'inline-flex', flexShrink: 0 }}>
             <Spark size={26} />
           </span>
           <Typography
@@ -85,6 +94,9 @@ export default function AppHeader() {
               fontWeight: 800,
               color: 'var(--ink)',
               letterSpacing: '-0.02em',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
             {t.APP_NAME}
@@ -107,7 +119,7 @@ export default function AppHeader() {
             <ThemeToggle />
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>
             <CitySwitcher />
             <LanguageSwitcher />
             <ThemeToggle />
