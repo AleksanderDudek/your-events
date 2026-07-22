@@ -1,0 +1,117 @@
+@use '../../../styles/mixins' as *;
+
+// Shared type scale for card metadata. Both EventCard and EventRow pull from
+// here, so grid/list and mobile/desktop can't drift apart again.
+
+// =============================================================================
+// Date badge
+// =============================================================================
+
+.dateBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.dateBadge.overlay {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.dateDay {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.dateMonth {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+// The overlay sits on an arbitrary image, so it uses the badge surface's own
+// ink; inline sits on the card and uses the accent, matching the list view's
+// established look.
+.overlay {
+  .dateDay {
+    color: var(--ink);
+  }
+
+  .dateMonth {
+    color: var(--ink-muted);
+  }
+}
+
+.inline {
+  .dateDay,
+  .dateMonth {
+    color: var(--color-accent-primary);
+  }
+}
+
+// =============================================================================
+// Time
+// =============================================================================
+
+.time {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @include md {
+    font-size: 0.75rem;
+  }
+}
+
+.time.overlay {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  // Never collide with the date badge on the opposite corner.
+  max-width: calc(100% - 76px);
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-card);
+  color: var(--ink-muted);
+  pointer-events: none;
+}
+
+.time.inline {
+  // min-height holds the slot open when the event has no time, so whatever is
+  // stacked below keeps its y-offset.
+  min-height: 1.4em;
+  color: var(--color-text-secondary);
+}
+
+// =============================================================================
+// Venue
+// =============================================================================
+
+.venue {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.venueText {
+  @include text-ellipsis;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}

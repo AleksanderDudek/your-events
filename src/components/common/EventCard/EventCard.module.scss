@@ -71,36 +71,8 @@ $card-h-md: 232px;
   object-fit: cover;
 }
 
-.dateBadge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 3px 7px;
-  border-radius: var(--radius-sm);
-  background-color: var(--surface);
-  box-shadow: var(--shadow-card);
-  line-height: 1;
-  pointer-events: none;
-}
-
-.dateDay {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--ink);
-}
-
-.dateMonth {
-  font-family: var(--font-body);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-muted);
-}
+// The date badge (top-left) and time label (top-right) that overlay this band
+// live in ui/EventMeta — shared with the list view so the two stay identical.
 
 // =============================================================================
 // Content area — CSS Grid with fixed row heights
@@ -156,22 +128,12 @@ $card-h-md: 232px;
 }
 
 // ---- Venue slot ----
+// Just the grid cell; the icon + ellipsised text come from ui/EventMeta.
 .locationSlot {
   display: flex;
   align-items: center;
-  gap: 4px;
   overflow: hidden;
   min-width: 0;
-}
-
-.venue {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  flex: 1;
 }
 
 // ---- Chips slot ----
