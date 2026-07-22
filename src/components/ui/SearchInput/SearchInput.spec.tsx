@@ -7,7 +7,7 @@ import SearchInput from './SearchInput';
 describe('SearchInput', () => {
   it('renders without crashing', () => {
     render(<SearchInput value="" onChange={vi.fn()} />);
-    expect(screen.getByPlaceholderText('Szukaj wydarzeń...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Szukaj wydarzenia lub miejsca...')).toBeInTheDocument();
   });
 
   it('passes accessibility check', async () => {

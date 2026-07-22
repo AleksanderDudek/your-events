@@ -16,7 +16,7 @@ type SingleResult = { data: unknown | null; error: { message: string; code?: str
 
 // The PostgREST filter/order/range methods eventsApi chains. Each is a spy that
 // returns the builder, so we can assert exactly which query was constructed.
-const QUERY_METHODS = ['select', 'ilike', 'in', 'or', 'eq', 'gte', 'lte', 'order', 'range'] as const;
+const QUERY_METHODS = ['select', 'in', 'or', 'eq', 'gte', 'lte', 'order', 'range'] as const;
 type QueryMethod = (typeof QUERY_METHODS)[number];
 type Builder = Record<QueryMethod, ReturnType<typeof vi.fn>> & {
   single: ReturnType<typeof vi.fn>;
@@ -329,12 +329,48 @@ describe('eventsApi', () => {
       expect(s.eventsBuilder.range).toHaveBeenCalledWith(15, 29);
     });
 
-    it('applies a search term with ilike on name', async () => {
+    it('matches a search term against both the event name and the venue', async () => {
       const s = setup();
 
       await fetchEvents('szczecin', makeFilters({ search: 'jazz' }));
 
-      expect(s.eventsBuilder.ilike).toHaveBeenCalledWith('name', '%jazz%');
+      expect(s.eventsBuilder.or).toHaveBeenCalledWith('name.ilike."%jazz%",venue.ilike."%jazz%"');
+    });
+
+    it('quotes a multi-word search term so commas and spaces do not split the OR group', async () => {
+      const s = setup();
+
+      await fetchEvents('szczecin', makeFilters({ search: 'jazz, blues (live)' }));
+
+      expect(s.eventsBuilder.or).toHaveBeenCalledWith(
+        'name.ilike."%jazz, blues (live)%",venue.ilike."%jazz, blues (live)%"'
+      );
+    });
+
+    it('escapes quotes and backslashes in the search term', async () => {
+      const s = setup();
+
+      await fetchEvents('szczecin', makeFilters({ search: 'a"b\\c' }));
+
+      expect(s.eventsBuilder.or).toHaveBeenCalledWith(
+        'name.ilike."%a\\"b\\\\c%",venue.ilike."%a\\"b\\\\c%"'
+      );
+    });
+
+    it('keeps the search OR separate from the category OR', async () => {
+      const s = setup();
+
+      await fetchEvents('szczecin', makeFilters({ search: 'jazz' }), {
+        topLevelMains: [],
+        subPairs: [{ main: 'dance', sub: 'dance-hip-hop' }],
+      });
+
+      // Two `or=` params — PostgREST ANDs them: (name|venue) AND (category).
+      expect(s.eventsBuilder.or).toHaveBeenCalledTimes(2);
+      expect(s.eventsBuilder.or).toHaveBeenCalledWith('name.ilike."%jazz%",venue.ilike."%jazz%"');
+      expect(s.eventsBuilder.or).toHaveBeenCalledWith(
+        'and(category_main.eq."dance",category_sub.eq."dance-hip-hop")'
+      );
     });
 
     it('orders by date then time_start', async () => {

@@ -46,6 +46,6 @@ describe('FilterPanel', () => {
 
   it('shows search input', () => {
     render(<FilterPanel />);
-    expect(screen.getByPlaceholderText('Szukaj wydarzeń...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Szukaj wydarzenia lub miejsca...')).toBeInTheDocument();
   });
 });

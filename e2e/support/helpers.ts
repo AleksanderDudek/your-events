@@ -26,7 +26,7 @@ export const CITY_OTHER = 'szczecin';
 // app renders Polish on first paint (DEFAULT_LOCALE = 'pl'); the stored
 // preference is only applied after hydration.
 export const TEXT = {
-  searchPlaceholder: 'Szukaj wydarzeń...',
+  searchPlaceholder: 'Szukaj wydarzenia lub miejsca...',
   resultsCount: /Znaleziono \d+ wydarzeń/,
   emptyTitle: 'Nie znaleziono wydarzeń',
   back: 'Wróć',
