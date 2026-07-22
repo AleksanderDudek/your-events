@@ -79,11 +79,13 @@
   line-height: 1.25;
   color: var(--color-text-primary);
   font-family: var(--font-body);
+  // 2 lines on mobile (matching the grid card's clamp, and the only way a long
+  // title is readable at 375px), 1 line from md where there's width to spare.
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 
   @include md {
     font-size: 0.9375rem;
@@ -108,28 +110,18 @@
   overflow: hidden;
 }
 
+// Wrapper only — the icon and ellipsised text come from ui/EventMeta.
 .venue {
   display: flex;
   align-items: center;
-  gap: 3px;
   min-width: 0;
   overflow: hidden;
   flex: 1 1 auto;
-
-  > .venueText {
-    @include text-ellipsis;
-    font-size: 0.75rem;
-    color: var(--color-text-secondary);
-  }
 }
 
-.time {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
-}
-
+// md+ only. The row shares its meta line between venue and chips, and at 375px
+// the chips squeeze the venue out entirely — so below md the venue wins. (The
+// grid card has a dedicated chip row, so it shows them at every width.)
 .chips {
   display: none;
 
@@ -137,16 +129,51 @@
     display: flex;
     flex-shrink: 0;
     gap: 4px;
+    overflow: hidden;
   }
 }
 
+// Stretches the row's full height so time pins to the top-right corner and
+// price to the bottom-right — both anchored to the right edge, so neither
+// moves when the venue name or title changes length.
 .rightCol {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  justify-content: center;
-  gap: 2px;
+  justify-content: space-between;
+  align-self: stretch;
+  gap: 4px;
   flex-shrink: 0;
+  padding: 2px 0;
+  // No max-width: the column shrink-wraps its price, and the time above it is
+  // always narrower. A percentage cap here resolves against the whole row, not
+  // the leftover space, which starves the title column on mobile.
+}
+
+// Price with the source as a muted prefix, mirroring the grid card's footer.
+.priceLine {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+// Hidden on mobile — at 375px the row has no horizontal budget for it, and the
+// price must win. The grid card shows it at every size because it has a
+// full-width footer to spend.
+.source {
+  display: none;
+
+  @include md {
+    display: inline;
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
 }
 
 .chevron {

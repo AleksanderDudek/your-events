@@ -74,4 +74,23 @@ describe('EventCard', () => {
     // append a period ("mar." → "MAR."); substring match is stable across both.
     expect(screen.getByText(/MAR/)).toBeInTheDocument();
   });
+
+  describe('time badge', () => {
+    it('shows the time range on the hero band', () => {
+      render(<EventCard event={mockEvent} />);
+      expect(screen.getByText('18:00–19:15')).toBeInTheDocument();
+    });
+
+    it('omits the badge entirely when the event has no time', () => {
+      render(<EventCard event={{ ...mockEvent, startTime: '', endTime: '', durationMin: null }} />);
+      expect(screen.queryByText('18:00–19:15')).not.toBeInTheDocument();
+    });
+
+    it('carries the time in the article aria-label (the badge is aria-hidden)', () => {
+      render(<EventCard event={mockEvent} />);
+      expect(screen.getByRole('article')).toHaveAccessibleName(
+        expect.stringContaining('18:00–19:15') as unknown as string
+      );
+    });
+  });
 });

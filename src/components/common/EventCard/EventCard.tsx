@@ -6,15 +6,14 @@ import { useState } from 'react';
 import type { Route } from 'next';
 import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
-import PlaceIcon from '@mui/icons-material/Place';
 import { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
+import { EventDateBadge, EventTimeLabel, EventVenue } from '@/components/ui/EventMeta/EventMeta';
 import {
   formatDateShort,
-  formatDay,
-  formatMonth,
+  formatEventTime,
   categoryFallbackImage,
   categoryColorSolidVar,
 } from '@/lib/utils';
@@ -39,21 +38,25 @@ export default function EventCard({ event }: EventCardProps) {
   const visibleCategories = chips.slice(0, maxChips);
   const extraCount = chips.length - maxChips;
   const sourceLabel = event.sources.join(' · ');
+  const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
 
   return (
     <Link href={href as Route} className={styles.link}>
       <Card
         component="article"
         role="article"
-        aria-label={`${event.name}, ${formatDateShort(event.date)}, ${event.location.name}`}
+        aria-label={[event.name, formatDateShort(event.date), time, event.location.name]
+          .filter(Boolean)
+          .join(', ')}
         className={styles.card}
       >
         <Box className={styles.imageWrapper}>
           <ImageWrapper event={event} />
-          <div className={styles.dateBadge} aria-hidden>
-            <span className={styles.dateDay}>{formatDay(event.date)}</span>
-            <span className={styles.dateMonth}>{formatMonth(event.date)}</span>
-          </div>
+          {/* Date top-left, time top-right — both overlay the band so the
+              content grid below keeps its fixed row heights. The article's
+              aria-label already carries both, so the badges are aria-hidden. */}
+          <EventDateBadge date={event.date} variant="overlay" />
+          <EventTimeLabel time={time} variant="overlay" />
         </Box>
 
         {/* Grid container — row heights are locked in EventCard.module.scss
@@ -65,8 +68,7 @@ export default function EventCard({ event }: EventCardProps) {
           </div>
 
           <div className={styles.locationSlot}>
-            <PlaceIcon sx={{ fontSize: 14, color: 'var(--color-text-muted)', flexShrink: 0 }} />
-            <span className={styles.venue}>{event.location.name}</span>
+            <EventVenue name={event.location.name} />
           </div>
 
           {/* Always rendered (even when empty) so the chip row reserves its

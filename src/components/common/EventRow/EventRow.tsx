@@ -5,12 +5,12 @@ import type { Route } from 'next';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import PlaceIcon from '@mui/icons-material/Place';
 import { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
-import { formatDay, formatEventTime, formatMonth } from '@/lib/utils';
+import { EventDateBadge, EventTimeLabel, EventVenue } from '@/components/ui/EventMeta/EventMeta';
+import { formatEventTime } from '@/lib/utils';
 import { useCity } from '@/config/CityProvider';
 import { eventPath } from '@/lib/slug';
 import styles from './EventRow.module.scss';
@@ -30,6 +30,9 @@ export default function EventRow({ event }: EventRowProps) {
   const chips = Array.from(
     new Set([event.categoryMain, event.categorySub].filter((c): c is string => Boolean(c)))
   );
+  // Same cap as the grid card, so a given event shows the same chips in both views.
+  const visibleCategories = chips.slice(0, 2);
+  const sourceLabel = event.sources.join(' · ');
 
   return (
     <Link href={href as Route} className={styles.link}>
@@ -40,30 +43,7 @@ export default function EventRow({ event }: EventRowProps) {
         className={styles.row}
       >
         <Box className={styles.dateCol}>
-          <Typography
-            component="span"
-            sx={{
-              fontFamily: 'var(--font-mono)',
-              fontWeight: 700,
-              color: 'var(--color-accent-primary)',
-              fontSize: '1.375rem',
-              lineHeight: 1,
-            }}
-          >
-            {formatDay(event.date)}
-          </Typography>
-          <Typography
-            component="span"
-            sx={{
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--color-accent-primary)',
-              fontSize: '0.625rem',
-              letterSpacing: '0.08em',
-              lineHeight: 1.2,
-            }}
-          >
-            {formatMonth(event.date)}
-          </Typography>
+          <EventDateBadge date={event.date} />
         </Box>
 
         <Box
@@ -81,17 +61,11 @@ export default function EventRow({ event }: EventRowProps) {
 
           <Box className={styles.metaLine}>
             <Box className={styles.venue}>
-              <PlaceIcon
-                sx={{ fontSize: 13, color: 'var(--color-text-muted)', flexShrink: 0 }}
-              />
-              <Typography component="span" className={styles.venueText}>
-                {event.location.name}
-              </Typography>
+              <EventVenue name={event.location.name} />
             </Box>
-            {time && <span className={styles.time}>{time}</span>}
-            {chips.length > 0 && (
+            {visibleCategories.length > 0 && (
               <Box className={styles.chips}>
-                {chips.map((label) => (
+                {visibleCategories.map((label) => (
                   <CategoryChip key={label} category={label} />
                 ))}
               </Box>
@@ -99,8 +73,24 @@ export default function EventRow({ event }: EventRowProps) {
           </Box>
         </Box>
 
+        {/* Time sits above the price in the right column rather than inline in
+            the meta line: anchored to the row's right edge it lands at the same
+            spot on every row, instead of drifting with the venue name's length
+            (and getting clipped by the meta line's overflow on narrow screens). */}
+        {/* Mirrors the grid card's corner semantics: time top, price bottom,
+            source as the muted footnote beside the price. Anchored to the
+            row's right edge, so none of it drifts with the title or venue
+            length the way the inline time used to. */}
         <Box className={styles.rightCol}>
-          <PriceLabel amount={event.price.amount} currency={event.price.currency} label={event.price.label} showLabel={event.price.showLabel} />
+          <EventTimeLabel time={time} reserveSpace />
+          <Box className={styles.priceLine}>
+            {sourceLabel && (
+              <span className={styles.source} title={sourceLabel}>
+                {sourceLabel}
+              </span>
+            )}
+            <PriceLabel amount={event.price.amount} currency={event.price.currency} label={event.price.label} showLabel={event.price.showLabel} />
+          </Box>
         </Box>
 
         <Box className={styles.chevron}>
