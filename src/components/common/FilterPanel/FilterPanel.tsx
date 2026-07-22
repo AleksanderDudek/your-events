@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -19,35 +18,31 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { EventFilters } from '@/types/filter.types';
-import {
-  parseFiltersFromParams,
-  filtersToSearchParams,
-  countActiveFilters,
-  getDefaultFilters,
-} from '@/lib/filterUtils';
+import { countActiveFilters } from '@/lib/filterUtils';
 import { useTranslation } from '@/i18n';
 import { useCategories } from '@/components/service/useCategories';
-import { useCity } from '@/config/CityProvider';
+import { useFilterNavigation } from '@/components/service/useFilterNavigation';
 import SearchInput from '@/components/ui/SearchInput/SearchInput';
-import DateRangePicker from '@/components/ui/DateRangePicker/DateRangePicker';
+import DateRangePicker, { DatePatch } from '@/components/ui/DateRangePicker/DateRangePicker';
 import HourRangePicker from '@/components/ui/HourRangePicker/HourRangePicker';
 import CategoryIcon from '@/components/ui/CategoryIcon/CategoryIcon';
 import { categoryColorVar } from '@/lib/utils';
 import styles from './FilterPanel.module.scss';
 
 export default function FilterPanel() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const filters = parseFiltersFromParams(searchParams);
+  const { filters, readCurrentFilters, updateFilters, clearFilters } = useFilterNavigation();
   const activeCount = countActiveFilters(filters);
   const { t } = useTranslation();
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Bumped on "clear filters" to remount SearchInput. The box keeps the typed
+  // text in local state (it debounces), and when the term never made it into the
+  // URL there is no prop change to reset it from — remounting is what actually
+  // empties the field and kills any in-flight debounce.
+  const [resetToken, setResetToken] = useState(0);
 
-  const { city } = useCity();
   const { topLevel, byParent } = useCategories();
 
   const toggleExpanded = useCallback((slug: string) => {
@@ -59,36 +54,14 @@ export default function FilterPanel() {
     });
   }, []);
 
-  // Always merge against the *live* URL, not a closure-captured snapshot.
-  // Without this, a quick "Clear → re-select category" sequence would merge
-  // the new category back into the pre-clear filters (because React hasn't
-  // re-rendered FilterPanel yet), resurrecting the date/hour filters the
-  // user just cleared.
-  const readCurrentFilters = useCallback(() => {
-    const live =
-      typeof window !== 'undefined'
-        ? new URLSearchParams(window.location.search)
-        : new URLSearchParams();
-    return parseFiltersFromParams(live);
-  }, []);
-
-  const updateFilters = useCallback(
-    (updates: Partial<EventFilters>) => {
-      const newFilters = { ...readCurrentFilters(), ...updates, page: 1 };
-      const params = filtersToSearchParams(newFilters);
-      router.push(`/${city.id}/wydarzenia?${params.toString()}`);
-    },
-    [readCurrentFilters, router, city.id]
-  );
-
-  const clearFilters = useCallback(() => {
-    const current = readCurrentFilters();
-    const defaults = getDefaultFilters();
-    defaults.viewMode = current.viewMode;
-    defaults.pageSize = current.pageSize;
-    const params = filtersToSearchParams(defaults);
-    router.push(`/${city.id}/wydarzenia?${params.toString()}`);
-  }, [readCurrentFilters, router, city.id]);
+  // Reset every filter AND every piece of panel-local state, so the panel looks
+  // exactly like a first visit: no text in the search box, no expanded
+  // subcategory lists.
+  const handleClearAll = useCallback(() => {
+    clearFilters();
+    setExpanded(new Set());
+    setResetToken((n) => n + 1);
+  }, [clearFilters]);
 
   const handleCategoryToggle = useCallback(
     (slug: string) => {
@@ -101,6 +74,17 @@ export default function FilterPanel() {
     [readCurrentFilters, updateFilters]
   );
 
+  // Dropping the date mode must drop the hour range too: it only applies within
+  // a chosen date, and a leftover hour would linger invisibly in the URL.
+  const handleDateChange = useCallback(
+    (patch: DatePatch) => {
+      updateFilters(
+        patch.dateMode === null ? { ...patch, hourFrom: null, hourTo: null } : patch
+      );
+    },
+    [updateFilters]
+  );
+
   const filterContent = (
     <Box className={styles.content} aria-label={t.FILTER_TITLE} role="search">
       <Box className={styles.header}>
@@ -108,7 +92,7 @@ export default function FilterPanel() {
           {t.FILTER_TITLE}
         </Typography>
         {activeCount > 0 && (
-          <Button size="small" onClick={clearFilters} sx={{ color: 'var(--color-accent-primary)' }}>
+          <Button size="small" onClick={handleClearAll} sx={{ color: 'var(--color-accent-primary)' }}>
             {t.FILTER_CLEAR}
           </Button>
         )}
@@ -116,6 +100,7 @@ export default function FilterPanel() {
 
       <Box className={styles.section}>
         <SearchInput
+          key={resetToken}
           value={filters.search}
           onChange={(search) => updateFilters({ search })}
         />
@@ -142,10 +127,7 @@ export default function FilterPanel() {
             dateSingle={filters.dateSingle}
             dateFrom={filters.dateFrom}
             dateTo={filters.dateTo}
-            onDateModeChange={(dateMode) => updateFilters({ dateMode })}
-            onDateSingleChange={(dateSingle) => updateFilters({ dateSingle })}
-            onDateFromChange={(dateFrom) => updateFilters({ dateFrom })}
-            onDateToChange={(dateTo) => updateFilters({ dateTo })}
+            onChange={handleDateChange}
           />
         </AccordionDetails>
       </Accordion>
@@ -320,12 +302,12 @@ export default function FilterPanel() {
         }}
       >
         <Box className={styles.dragHandle} />
-        <Box sx={{ overflow: 'auto', pb: 10 }}>{filterContent}</Box>
+        <Box>{filterContent}</Box>
         <Box className={styles.drawerFooter}>
           <Button
             variant="outlined"
             onClick={() => {
-              clearFilters();
+              handleClearAll();
               setDrawerOpen(false);
             }}
             sx={{ flex: 1 }}

@@ -6,17 +6,21 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { format, parseISO, isValid } from 'date-fns';
 import { useTranslation } from '@/i18n';
-import { DateMode } from '@/types/filter.types';
+import { DateMode, EventFilters } from '@/types/filter.types';
+
+export type DatePatch = Partial<
+  Pick<EventFilters, 'dateMode' | 'dateSingle' | 'dateFrom' | 'dateTo'>
+>;
 
 interface DateRangePickerProps {
   dateMode: DateMode;
   dateSingle: string | null;
   dateFrom: string | null;
   dateTo: string | null;
-  onDateModeChange: (mode: DateMode) => void;
-  onDateSingleChange: (date: string | null) => void;
-  onDateFromChange: (date: string | null) => void;
-  onDateToChange: (date: string | null) => void;
+  // One patch per interaction, never a setter per field: each call navigates,
+  // and four navigations fired from one handler used to race each other into a
+  // no-op (deselecting "Jeden dzień" left the date filter stuck in the URL).
+  onChange: (patch: DatePatch) => void;
 }
 
 function toDate(value: string | null): Date | null {
@@ -48,20 +52,18 @@ export default function DateRangePicker({
   dateSingle,
   dateFrom,
   dateTo,
-  onDateModeChange,
-  onDateSingleChange,
-  onDateFromChange,
-  onDateToChange,
+  onChange,
 }: Readonly<DateRangePickerProps>) {
   const { t } = useTranslation();
+  // Switching mode drops the values belonging to the other mode, so a stale
+  // dateSingle can never leak back in when the user returns to "single".
   const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: string | null) => {
     if (newMode === null) {
-      onDateModeChange(null);
-      onDateSingleChange(null);
-      onDateFromChange(null);
-      onDateToChange(null);
+      onChange({ dateMode: null, dateSingle: null, dateFrom: null, dateTo: null });
+    } else if (newMode === 'single') {
+      onChange({ dateMode: 'single', dateFrom: null, dateTo: null });
     } else {
-      onDateModeChange(newMode as DateMode);
+      onChange({ dateMode: 'range' as DateMode, dateSingle: null });
     }
   };
 
@@ -96,7 +98,7 @@ export default function DateRangePicker({
         <DatePicker
           label={t.FILTER_DATE_SINGLE}
           value={toDate(dateSingle)}
-          onChange={(date) => onDateSingleChange(fromDate(date))}
+          onChange={(date) => onChange({ dateSingle: fromDate(date) })}
           slotProps={pickerSlotProps}
         />
       )}
@@ -106,14 +108,14 @@ export default function DateRangePicker({
           <DatePicker
             label={t.FILTER_DATE_FROM}
             value={toDate(dateFrom)}
-            onChange={(date) => onDateFromChange(fromDate(date))}
+            onChange={(date) => onChange({ dateFrom: fromDate(date) })}
             maxDate={toDate(dateTo) ?? undefined}
             slotProps={pickerSlotProps}
           />
           <DatePicker
             label={t.FILTER_DATE_TO}
             value={toDate(dateTo)}
-            onChange={(date) => onDateToChange(fromDate(date))}
+            onChange={(date) => onChange({ dateTo: fromDate(date) })}
             minDate={toDate(dateFrom) ?? undefined}
             slotProps={pickerSlotProps}
           />

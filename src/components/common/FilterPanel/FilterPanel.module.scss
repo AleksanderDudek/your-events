@@ -54,15 +54,22 @@
   margin: 12px auto;
 }
 
+// Sticky, not fixed: `position: fixed` is measured against the visual viewport,
+// which mobile browsers move under you when the URL bar collapses or the soft
+// keyboard opens — the bar could then sit outside the drawer and swallow or miss
+// taps. Sticky pins it to the bottom of the drawer's own scroll box instead.
 .drawerFooter {
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 0;
-  right: 0;
   display: flex;
   gap: 12px;
   padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
   background-color: var(--color-bg-surface);
   border-top: 1px solid var(--color-border);
-  z-index: 1;
+  z-index: 2;
+
+  button {
+    min-height: 48px; // comfortable touch target
+  }
 }

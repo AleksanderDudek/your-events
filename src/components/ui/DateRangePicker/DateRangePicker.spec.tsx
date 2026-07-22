@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi } from 'vitest';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -16,10 +17,7 @@ const defaultProps = {
   dateSingle: null,
   dateFrom: null,
   dateTo: null,
-  onDateModeChange: vi.fn(),
-  onDateSingleChange: vi.fn(),
-  onDateFromChange: vi.fn(),
-  onDateToChange: vi.fn(),
+  onChange: vi.fn(),
 };
 
 describe('DateRangePicker', () => {
@@ -42,6 +40,49 @@ describe('DateRangePicker', () => {
       </WithLocalization>
     );
     expect(screen.getAllByLabelText('Jeden dzień').length).toBeGreaterThan(0);
+  });
+
+  // Each call navigates, so the whole reset has to travel in ONE patch —
+  // emitting a setter per field raced itself into a no-op and left the date
+  // filter stuck in the URL.
+  it('clears mode and every date in a single patch when the mode is deselected', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <WithLocalization>
+        <DateRangePicker
+          {...defaultProps}
+          dateMode="single"
+          dateSingle="2026-07-23"
+          onChange={onChange}
+        />
+      </WithLocalization>
+    );
+    await user.click(screen.getByRole('button', { name: 'Jeden dzień' }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith({
+      dateMode: null,
+      dateSingle: null,
+      dateFrom: null,
+      dateTo: null,
+    });
+  });
+
+  it('drops the other mode’s value when switching mode', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <WithLocalization>
+        <DateRangePicker
+          {...defaultProps}
+          dateMode="single"
+          dateSingle="2026-07-23"
+          onChange={onChange}
+        />
+      </WithLocalization>
+    );
+    await user.click(screen.getByRole('button', { name: 'Zakres dat' }));
+    expect(onChange).toHaveBeenCalledWith({ dateMode: 'range', dateSingle: null });
   });
 
   it('shows range inputs when mode is range', () => {
