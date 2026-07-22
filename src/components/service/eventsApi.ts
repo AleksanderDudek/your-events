@@ -116,8 +116,11 @@ export interface ResolvedCategoryFilter {
 
 const EMPTY_CATEGORY_FILTER: ResolvedCategoryFilter = { topLevelMains: [], subPairs: [] };
 
+// PostgREST needs values inside an `or=` group double-quoted once they contain
+// reserved chars (comma, dot, parens, spaces). Inside those quotes `\` is the
+// escape char, so it has to be doubled too — free-text search reaches here.
 function quoteForOr(value: string): string {
-  return `"${value.replace(/"/g, '\\"')}"`;
+  return `"${value.replace(/[\\"]/g, '\\$&')}"`;
 }
 
 export async function fetchEvents(
@@ -134,7 +137,12 @@ export async function fetchEvents(
 
   let query = supabase.from('events').select('*', { count: 'exact' });
 
-  if (filters.search) query = query.ilike('name', `%${filters.search}%`);
+  // People search either for what ("jazz") or for where ("Filharmonia"), so one
+  // box matches both columns. This `or=` group ANDs with the category one below.
+  if (filters.search) {
+    const term = quoteForOr(`%${filters.search}%`);
+    query = query.or(`name.ilike.${term},venue.ilike.${term}`);
+  }
 
   const { topLevelMains, subPairs } = categoryFilter;
   const hasMains = topLevelMains.length > 0;
