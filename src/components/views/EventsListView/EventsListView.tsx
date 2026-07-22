@@ -1,7 +1,5 @@
 'use client';
 
-import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Select from '@mui/material/Select';
@@ -22,12 +20,8 @@ import AppPagination from '@/components/common/AppPagination/AppPagination';
 import EmptyState from '@/components/ui/EmptyState/EmptyState';
 import ErrorState from '@/components/ui/ErrorState/ErrorState';
 import { useCity } from '@/config/CityProvider';
-import {
-  filtersToSearchParams,
-  getDefaultFilters,
-  countActiveFilters,
-  parseFiltersFromParams,
-} from '@/lib/filterUtils';
+import { useFilterNavigation } from '@/components/service/useFilterNavigation';
+import { countActiveFilters } from '@/lib/filterUtils';
 import { PAGE_SIZE_OPTIONS, withBasePath } from '@/lib/constants';
 import { eventPath } from '@/lib/slug';
 import { useTranslation } from '@/i18n';
@@ -116,49 +110,12 @@ export default function EventsListView() {
   const { bySlug, displayNameToSlug } = useCategories();
   const { city } = useCity();
   const { t } = useTranslation();
-  const router = useRouter();
-
-  // Always merge against the *live* URL, not a closure-captured snapshot.
-  // Without this, rapid actions (e.g. delete chip → change page) racing the
-  // next React render would merge into stale filters and undo each other.
-  const readCurrentFilters = useCallback(() => {
-    const live =
-      typeof window !== 'undefined'
-        ? new URLSearchParams(window.location.search)
-        : new URLSearchParams();
-    return parseFiltersFromParams(live);
-  }, []);
-
-  const navigate = useCallback(
-    (params: URLSearchParams) => {
-      router.push(`/${city.id}/wydarzenia?${params.toString()}`);
-    },
-    [router, city.id]
-  );
-
-  const updateFilter = useCallback(
-    (updates: Record<string, unknown>) => {
-      const newFilters = { ...readCurrentFilters(), ...updates, page: 1 };
-      navigate(filtersToSearchParams(newFilters));
-    },
-    [readCurrentFilters, navigate]
-  );
-
-  const updatePagination = useCallback(
-    (updates: Record<string, unknown>) => {
-      const newFilters = { ...readCurrentFilters(), ...updates };
-      navigate(filtersToSearchParams(newFilters));
-    },
-    [readCurrentFilters, navigate]
-  );
-
-  const clearAll = useCallback(() => {
-    const current = readCurrentFilters();
-    const defaults = getDefaultFilters();
-    defaults.viewMode = current.viewMode;
-    defaults.pageSize = current.pageSize;
-    navigate(filtersToSearchParams(defaults));
-  }, [readCurrentFilters, navigate]);
+  const {
+    readCurrentFilters,
+    updateFilters: updateFilter,
+    updatePagination,
+    clearFilters: clearAll,
+  } = useFilterNavigation();
 
   const activeChips: { key: string; label: string }[] = [];
   if (filters.search) {

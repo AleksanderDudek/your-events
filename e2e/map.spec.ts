@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, CITY, firstCard, gotoEvents, closeFilters, search } from './support/helpers';
+import { TEXT, CITY } from './support/helpers';
 
 const PERMALINK = new RegExp(`/${CITY}/[a-z0-9-]+/[a-z0-9-]+-[0-9a-f]{8}/?$`);
 
@@ -9,23 +9,33 @@ const PERMALINK = new RegExp(`/${CITY}/[a-z0-9-]+/[a-z0-9-]+-[0-9a-f]{8}/?$`);
 // test can't reach it.
 test.describe('Map: pin → popup → detail', () => {
   test('a marker popup routes to that event\'s detail page', async ({ page }) => {
-    await gotoEvents(page);
-
-    // Narrow to a handful of results first. With few events the map renders
-    // individual pins rather than clusters — a clustered marker would zoom on
-    // click instead of opening a popup, which isn't what we're testing.
-    const title = (await firstCard(page).locator('h3').innerText()).trim();
-    const term = title.split(/\s+/).find((w) => w.length >= 5) ?? title.slice(0, 5);
-    await search(page, term);
-    await closeFilters(page);
-
-    await page.getByRole('button', { name: TEXT.viewMap }).click();
+    // Deep-link straight into the map view. Narrowing the list by a term taken
+    // from the first card (the previous approach) coupled the test to the day's
+    // data: online-only events carry no coordinates, so whenever one happened to
+    // lead the list the map legitimately rendered "no pins" and the test failed
+    // on the scrape rather than on a regression.
+    await page.goto(`/${CITY}/wydarzenia?viewMode=map`);
     await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 20000 });
 
-    // An individual (non-cluster) pin. If everything clustered, skip rather than
-    // flake — clustering geometry depends on the day's data, not on a regression.
     const pin = page.locator('.leaflet-marker-icon:not(.marker-cluster)').first();
-    if (!(await pin.isVisible({ timeout: 15000 }).catch(() => false))) {
+    const cluster = page.locator('.marker-cluster').first();
+
+    // Markers only mount once the events query resolves.
+    await expect(pin.or(cluster).first()).toBeVisible({ timeout: 20000 });
+
+    // Pins normally start clustered, and clicking a cluster zooms instead of
+    // opening a popup. Drill in until a single marker surfaces — markercluster
+    // spiderfies at max zoom, so this terminates even for events sharing a venue.
+    for (let i = 0; i < 8; i++) {
+      if (await pin.isVisible().catch(() => false)) break;
+      if (!(await cluster.isVisible().catch(() => false))) break;
+      await cluster.click();
+      await page.waitForTimeout(700); // zoom + cluster animation
+    }
+
+    // If everything is still clustered, skip rather than flake — clustering
+    // geometry depends on the day's data, not on a regression.
+    if (!(await pin.isVisible().catch(() => false))) {
       test.skip(true, 'No un-clustered pin for this data slice');
     }
     await pin.click();
