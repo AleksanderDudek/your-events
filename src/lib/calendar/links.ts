@@ -59,7 +59,6 @@ export function outlookCalendarUrl(event: CalendarEvent): string {
     body: event.description,
     location: event.location,
   });
-  // The end stays exclusive for all-day entries, matching the .ics rule.
   if (event.allDay) params.set('allday', 'true');
 
   return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
