@@ -100,6 +100,11 @@ export interface CalendarEvent {
 The builders never see an `Event`. If the scraper's shape changes, only
 `toCalendarEvent` changes.
 
+`toCalendarEvent(event, endGuessNote)` takes the localised estimate sentence as
+a parameter rather than importing the message table, so `src/lib/` stays free of
+i18n and the function stays pure. The component supplies
+`t.CALENDAR_END_GUESS`.
+
 ## 2. Time rules
 
 All rules live in `toCalendarEvent`, evaluated in this order — the first match
@@ -109,13 +114,21 @@ wins:
    data, but the guard costs one branch.
 2. `startTime === '00:00' && endTime === '23:59'` → `allDay: true`. Start and end
    are dates; no times are emitted.
-3. `endTime` present → use it verbatim.
+3. `endTime` present **and different from `startTime`** → use it verbatim. An end
+   earlier than the start means the event runs past midnight and rolls to the
+   next day.
 4. `durationMin > 0` → `start + durationMin`.
 5. Otherwise → `start + DEFAULT_DURATION_MIN` (120), and append
    `CALENDAR_END_GUESS` to the description.
 
 Only rule 5 marks the end time as estimated. Rules 1 and 2 produce all-day
 entries, which make no claim about an end time at all.
+
+> **Refined during implementation.** Rule 3 originally read "use it verbatim",
+> which sent an end *equal* to the start down the past-midnight branch and
+> produced a silent 24-hour block. Duplicate scrape values carry no real end
+> time, so they now fall through to the duration ladder and are marked estimated
+> like any other missing end.
 
 ### Composed fields
 
@@ -174,8 +187,19 @@ https://outlook.live.com/calendar/0/deeplink/compose
   &location=<location>
 ```
 
-All-day adds `&allday=true` and reduces both `startdt` and `enddt` to bare dates
-(`2026-07-24` / `2026-07-25`, end exclusive, matching the `.ics` rule).
+All-day adds `&allday=true` and reduces both `startdt` and `enddt` to bare dates.
+
+> **Refined during implementation.** This originally said the end stays
+> exclusive, matching the `.ics` rule. It does not: Outlook's
+> `deeplink/compose` endpoint reads an all-day `enddt` as the **last day** of the
+> event, so a single-day event sent with the exclusive value would span two.
+> `enddt` is therefore stepped back one day for Outlook only — `2026-07-24` /
+> `2026-07-24` for a one-day event — while `.ics` and Google keep the exclusive
+> end. The endpoint is undocumented; this follows the maintained
+> `add-to-calendar-button` library, which applies the +1 bump to Microsoft's
+> desktop compose URL and deliberately skips it for this one. **Not verified
+> against a live Outlook.com account — see the manual check in the plan's Task
+> 9.**
 
 ### iCalendar (`.ics`)
 
@@ -185,7 +209,13 @@ Required properties: `BEGIN/END:VCALENDAR`, `VERSION:2.0`, `PRODID`,
 
 Correctness requirements, each of which real data already exercises:
 
-- Escape `\` → `\\`, `;` → `\;`, `,` → `\,`, newline → literal `\n`.
+- Escape `\` → `\\`, `;` → `\;`, `,` → `\,`, and every line-break form
+  (`\r\n`, `\r`, `\n`) → a literal `\n`.
+- Drop control characters before escaping. RFC 5545 admits none in a value
+  except horizontal tab, and scraped text carries them. The `URL` property is a
+  URI, not TEXT, so its commas and semicolons must survive unescaped — but a
+  stray newline there would masquerade as a line fold and split the property, so
+  control characters are stripped from it too.
 - Fold lines at 75 **octets**, not characters — Polish diacritics are two bytes
   in UTF-8.
 - Terminate every line with **CRLF**; Outlook desktop rejects LF-only files.
@@ -217,11 +247,24 @@ both calls to action stay in one block.
 `outlined`, not `contained`, so the ticket link stays the page's primary action.
 `minHeight: 44` matching `.externalLink`.
 
+> **Refined during implementation.** The calendar button gets its own full-width
+> row (`.calendarCta`) beneath the price/ticket row, not a slot inside it.
+> `.priceCtaRow` is a flex row below the `md` breakpoint and only becomes a
+> column above it, so a third item there put 491 px of content in a 393 px
+> viewport: the button overflowed the card by 127 px and the whole page scrolled
+> sideways. Desktop was unaffected, which is why the unit tests and the build
+> stayed green — it took looking at the rendered page to see it.
+
 | menu entry | action |
 |---|---|
-| Google Calendar | `window.open(url, '_blank', 'noopener')` |
+| Google Calendar | an `<a target="_blank" rel="noopener noreferrer">` |
 | Outlook | same, different URL template |
 | Pobierz plik (.ics) | an `<a download>` whose `href` is the `data:` URI |
+
+> **Refined during implementation.** All three entries are real anchors rather
+> than the `window.open` calls this section originally specified. Middle-click
+> and "copy link address" behave, assistive tech announces them as links, and the
+> e2e test can read an `href` instead of chasing a new tab.
 
 The file is under 2 kB, so a `data:text/calendar;charset=utf-8,…` URI is
 comfortable and avoids the `URL.createObjectURL` / `revokeObjectURL` lifecycle
@@ -229,6 +272,9 @@ altogether. It also sidesteps iOS Safari's unreliable handling of `blob:`
 downloads — one code path for every platform, no user-agent branching.
 
 Filename: `slugify(event.name)` + date, e.g. `koncert-jazzowy-2026-07-24.ics`.
+`slugify` strips everything outside `[a-z0-9\s-]`, so a title written entirely
+in Cyrillic or CJK leaves nothing behind; the stem then falls back to
+`CALENDAR_FILE_FALLBACK` rather than a hardcoded Polish word.
 
 The whole button is omitted when `event.date` is empty.
 
@@ -238,7 +284,7 @@ anchor, not a button, so screen readers announce it as a download link.
 
 ### i18n
 
-Five new keys in both `pl` and `en` tables:
+Six new keys in both `pl` and `en` tables:
 
 | key | pl | en |
 |---|---|---|
@@ -247,6 +293,7 @@ Five new keys in both `pl` and `en` tables:
 | `CALENDAR_OUTLOOK` | `Outlook` | `Outlook` |
 | `CALENDAR_ICS` | `Pobierz plik (.ics)` | `Download file (.ics)` |
 | `CALENDAR_END_GUESS` | `Godzina zakończenia szacowana.` | `End time is an estimate.` |
+| `CALENDAR_FILE_FALLBACK` | `wydarzenie` | `event` |
 
 `CALENDAR_END_GUESS` is written into the calendar entry's description, not shown
 on the page. The description also carries the source link so the entry stays
