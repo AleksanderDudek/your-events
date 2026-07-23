@@ -8,13 +8,19 @@ const MAX_OCTETS = 75;
  * Escape a TEXT value. Comma and semicolon are value separators in iCalendar,
  * so real venue names like "CAL Widawa, Dekarska 3" corrupt the file unless
  * escaped. The backslash goes first, otherwise it would escape our own escapes.
+ *
+ * Stray control bytes are dropped first: RFC 5545 admits no control character
+ * in a value except horizontal tab, and scraped text does carry them. Tab, CR
+ * and LF survive that pass — the line-break normalisation below still needs to
+ * see CR and LF, and every break form collapses to a single escaped newline.
  */
 export function escapeIcsText(value: string): string {
   return value
+    .replace(/\p{Cc}/gu, (char) => (char === '\t' || char === '\r' || char === '\n' ? char : ''))
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n');
+    .replace(/\r\n|\r|\n/g, '\\n');
 }
 
 /**
@@ -46,6 +52,15 @@ export function foldIcsLine(line: string): string {
   segments.push(current);
 
   return segments.join(`${CRLF} `);
+}
+
+/**
+ * A URI value is not TEXT, so comma and semicolon must NOT be escaped — that
+ * would corrupt the link. Control characters still have to go: a stray newline
+ * inside a scraped URL would masquerade as a line fold and split the property.
+ */
+function sanitiseUri(value: string): string {
+  return value.replace(/\p{Cc}/gu, '');
 }
 
 const pad = (value: number): string => String(value).padStart(2, '0');
@@ -83,8 +98,7 @@ export function buildIcs(event: CalendarEvent): string {
 
   if (event.location) lines.push(`LOCATION:${escapeIcsText(event.location)}`);
   if (event.description) lines.push(`DESCRIPTION:${escapeIcsText(event.description)}`);
-  // URL is a URI value, not TEXT — escaping would corrupt a link with a comma.
-  if (event.url) lines.push(`URL:${event.url}`);
+  if (event.url) lines.push(`URL:${sanitiseUri(event.url)}`);
 
   lines.push('END:VEVENT', 'END:VCALENDAR');
 

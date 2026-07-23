@@ -36,6 +36,22 @@ describe('escapeIcsText', () => {
   it('escapes a backslash before it can be read as an escape', () => {
     expect(escapeIcsText('a\\,b')).toBe('a\\\\\\,b');
   });
+
+  it('normalises every line-break form, including a lone carriage return', () => {
+    expect(escapeIcsText('a\rb')).toBe('a\\nb');
+    expect(escapeIcsText('a\r\nb')).toBe('a\\nb');
+    expect(escapeIcsText('a\nb')).toBe('a\\nb');
+  });
+
+  it('drops stray control characters that a strict parser would reject', () => {
+    const bell = String.fromCharCode(7);
+    const startOfHeading = String.fromCharCode(1);
+    expect(escapeIcsText(`a${bell}b${startOfHeading}c`)).toBe('abc');
+  });
+
+  it('keeps a horizontal tab, which is a legal value character', () => {
+    expect(escapeIcsText('a\tb')).toBe('a\tb');
+  });
 });
 
 describe('foldIcsLine', () => {
@@ -51,18 +67,31 @@ describe('foldIcsLine', () => {
     }
   });
 
-  it('starts every continuation with a single space', () => {
+  it('keeps every continuation within the octet budget, space included', () => {
     const folded = foldIcsLine(`DESCRIPTION:${'x'.repeat(200)}`);
     const [, ...continuations] = folded.split('\r\n');
     expect(continuations.length).toBeGreaterThan(0);
     for (const line of continuations) {
       expect(line.startsWith(' ')).toBe(true);
+      // The leading space counts against the 75 — this is what pins the
+      // budget adjustment that a naive fold gets wrong.
+      expect(byteLength(line)).toBeLessThanOrEqual(75);
     }
   });
 
   it('round-trips: unfolding restores the original line', () => {
     const line = `DESCRIPTION:Wydarzenie w Łodzi ${'ó'.repeat(120)} koniec`;
     expect(foldIcsLine(line).split('\r\n ').join('')).toBe(line);
+  });
+
+  it('leaves a line of exactly 75 octets unfolded, and folds at 76', () => {
+    const exactly75 = 'SUMMARY:' + 'x'.repeat(75 - 'SUMMARY:'.length);
+    expect(byteLength(exactly75)).toBe(75);
+    expect(foldIcsLine(exactly75)).toBe(exactly75);
+
+    const seventySix = `${exactly75}x`;
+    expect(byteLength(seventySix)).toBe(76);
+    expect(foldIcsLine(seventySix)).toContain('\r\n ');
   });
 });
 
@@ -114,6 +143,15 @@ describe('buildIcs', () => {
     expect(ics).not.toContain('LOCATION:');
     expect(ics).not.toContain('DESCRIPTION:');
     expect(ics).not.toContain('URL:');
+  });
+
+  it('strips control characters from the URL without escaping its punctuation', () => {
+    const ics = buildIcs(
+      makeCalendarEvent({ url: 'https://example.test/a,b?x=1\n&y=2' })
+    );
+    // Commas and semicolons are legal in a URI value and must survive intact;
+    // a newline would otherwise masquerade as a line fold.
+    expect(ics).toContain('URL:https://example.test/a,b?x=1&y=2');
   });
 });
 
