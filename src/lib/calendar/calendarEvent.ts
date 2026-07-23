@@ -23,7 +23,12 @@ export interface CalendarEvent {
   description: string;
   url: string;
   uid: string;
-  /** DTSTAMP. Derived, never `now()`, so the output stays testable. */
+  /**
+   * DTSTAMP. Derived from the event rather than `now()` so the .ics output is a
+   * pure function of its input and can be asserted as a whole string. RFC 5545
+   * defines this as the revision time, so the fallback can sit in the future for
+   * an event months away — a deliberate trade, and no client we target reads it.
+   */
   stamp: Date;
 }
 
@@ -59,7 +64,11 @@ export function toCalendarEvent(event: Event, endGuessNote: string): CalendarEve
     endUtc = utcMidnight(event.date, 1);
   } else {
     startUtc = warsawToUtc(event.date, event.startTime);
-    if (event.endTime) {
+    // An end equal to the start is degenerate scraped data, not a zero-length
+    // event: fall through to the duration ladder so it still gets a real block
+    // and is honestly marked as estimated.
+    const hasUsableEnd = Boolean(event.endTime) && event.endTime !== event.startTime;
+    if (hasUsableEnd) {
       const sameDay = warsawToUtc(event.date, event.endTime);
       // "22:00-02:00" means the event runs past midnight into the next day.
       endUtc =
@@ -75,7 +84,7 @@ export function toCalendarEvent(event: Event, endGuessNote: string): CalendarEve
   }
 
   return {
-    title: event.name,
+    title: event.name.trim(),
     startUtc,
     endUtc,
     allDay,

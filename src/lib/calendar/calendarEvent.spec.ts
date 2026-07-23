@@ -111,4 +111,33 @@ describe('toCalendarEvent', () => {
   it('builds a stable UID from the event key', () => {
     expect(toCalendarEvent(makeEvent(), NOTE).uid).toBe('evt-key@idznamiasto');
   });
+
+  // Duplicate scrape values, not a zero-length event: it takes the same route
+  // as a missing end and is marked estimated, rather than becoming a 24h block.
+  it('treats an end equal to the start as no end at all', () => {
+    const ce = toCalendarEvent(makeEvent({ startTime: '20:00', endTime: '20:00' }), NOTE);
+    expect(ce.startUtc.toISOString()).toBe('2026-07-24T18:00:00.000Z');
+    expect(ce.endUtc.toISOString()).toBe('2026-07-24T20:00:00.000Z');
+    expect(ce.description).toContain(NOTE);
+  });
+
+  it('still prefers durationMin over the default when the end equals the start', () => {
+    const ce = toCalendarEvent(
+      makeEvent({ startTime: '20:00', endTime: '20:00', durationMin: 45 }),
+      NOTE
+    );
+    expect(ce.endUtc.toISOString()).toBe('2026-07-24T18:45:00.000Z');
+    expect(ce.description).not.toContain(NOTE);
+  });
+
+  it('ignores a negative duration and falls back to the default', () => {
+    const ce = toCalendarEvent(makeEvent({ durationMin: -30 }), NOTE);
+    expect(ce.endUtc.toISOString()).toBe('2026-07-24T18:00:00.000Z');
+    expect(ce.description).toContain(NOTE);
+  });
+
+  it('falls back to the event date when updatedAt does not parse', () => {
+    const ce = toCalendarEvent(makeEvent({ updatedAt: 'not-a-date' }), NOTE);
+    expect(ce.stamp.toISOString()).toBe('2026-07-24T00:00:00.000Z');
+  });
 });
