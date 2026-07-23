@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { EventFilters } from '@/types/filter.types';
 import {
   parseFiltersFromParams,
@@ -61,7 +61,6 @@ function liveQuery(fallback: string): string {
  * consecutive updates within one tick accumulate instead of overwriting.
  */
 export function useFilterNavigation() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { city } = useCity();
   const query = searchParams.toString();
@@ -88,24 +87,25 @@ export function useFilterNavigation() {
       pending.query = nextQuery;
       pending.filters = next;
 
-      if (nextQuery) {
-        router.push(`/${city.id}/wydarzenia/?${nextQuery}`);
-        return;
-      }
-
-      // Resetting to NO query needs its own path. After a cold load of a
-      // filtered permalink (a shared link, or just a reload with filters on),
-      // the App Router's canonical URL for this statically exported page is the
-      // query-LESS one, so it treats a push back to it as "you are already
-      // here" and silently drops it — "clear filters" and deselecting the date
-      // mode then did nothing at all. Writing history ourselves and replaying a
-      // popstate is what makes the router re-read the location; it stays a soft
-      // navigation, no reload.
-      const href = withBasePath(`/${city.id}/wydarzenia/`);
+      // Why not router.push(): in the STATIC EXPORT (what GitHub Pages serves —
+      // dev is fine, which is why this survived) the App Router pins the page's
+      // canonical URL to the query string the document was cold-loaded with. A
+      // push to the same route then does not navigate: it replaceState()s the
+      // loaded query back over the requested one. Land on ?viewMode=row, switch
+      // to grid, click page 2 → the URL snapped back to ?viewMode=row, the list
+      // flipped to rows and stayed on page 1. Clearing filters hit the same wall
+      // from the other side (a push to the query-LESS URL read as "already
+      // here").
+      //
+      // Writing history ourselves and replaying a popstate is what makes the
+      // router re-read the location — a soft navigation, no reload, and immune
+      // to that deduping. history.pushState is not base-path-aware the way
+      // router.push is, so the prefix goes on by hand.
+      const href = withBasePath(`/${city.id}/wydarzenia/${nextQuery ? `?${nextQuery}` : ''}`);
       window.history.pushState(null, '', href);
       window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
     },
-    [router, city.id, query]
+    [city.id, query]
   );
 
   /** Change a filter. Always returns to page 1 — the old page may not exist. */
