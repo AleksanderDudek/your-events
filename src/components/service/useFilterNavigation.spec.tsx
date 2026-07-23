@@ -47,7 +47,7 @@ describe('useFilterNavigation', () => {
       });
     });
 
-    expect(push).toHaveBeenLastCalledWith('/wroclaw/wydarzenia/?categories=muzyka%2Cfilm');
+    expect(window.location.search).toBe('?categories=muzyka%2Cfilm');
   });
 
   it('clears every filter but keeps the view preferences', async () => {
@@ -57,7 +57,24 @@ describe('useFilterNavigation', () => {
 
     act(() => result.current.clearFilters());
 
-    expect(push).toHaveBeenLastCalledWith('/wroclaw/wydarzenia/?pageSize=30&viewMode=map');
+    expect(window.location.pathname).toBe(withBasePath('/wroclaw/wydarzenia/'));
+    expect(window.location.search).toBe('?pageSize=30&viewMode=map');
+  });
+
+  // The exported build's router dedupes ANY same-route push against the URL the
+  // page was cold-loaded with: it replaces the requested query with the loaded
+  // one, which flipped the view back and pinned the list on page 1. Every
+  // navigation therefore writes history itself — never router.push.
+  it('never routes through router.push, even for a filtered URL', async () => {
+    const useFilterNavigation = await loadHook();
+    settleUrl('viewMode=row');
+    const { result } = renderHook(() => useFilterNavigation());
+
+    act(() => result.current.updatePagination({ page: 2 }));
+
+    expect(push).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe(withBasePath('/wroclaw/wydarzenia/'));
+    expect(window.location.search).toBe('?page=2&viewMode=row');
   });
 
   // The router drops a push back to the query-less URL when the page was loaded

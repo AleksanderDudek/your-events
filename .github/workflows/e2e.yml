@@ -11,6 +11,10 @@ name: E2E (insights · non-blocking)
 #
 # To make this a real merge gate later: drop `continue-on-error` on the test
 # step and add "E2E (insights · non-blocking) / e2e" to branch protection.
+#
+# Two jobs run in parallel: `e2e` drives `next dev`, `e2e-export` drives the
+# static export that actually ships. They catch different classes of bug — see
+# the comment above each.
 
 on:
   pull_request:
@@ -29,6 +33,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The dev-server suite: broad coverage of the whole app.
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -103,3 +108,41 @@ jobs:
             } else {
               await github.rest.issues.createComment({ owner, repo, issue_number, body });
             }
+
+  # The static-export suite: the artifact GitHub Pages actually serves. `next
+  # dev` keeps a real server and an RSC endpoint behind the app, so App Router
+  # behaviour that only differs under `output: 'export'` is invisible to the job
+  # above — that is how a list whose paging silently snapped back to the
+  # cold-load URL in production shipped with every dev-server test green.
+  # Separate job so it runs in parallel with the dev suite.
+  e2e-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser (chromium)
+        run: pnpm exec playwright install --with-deps chromium
+
+      # Builds the export and serves out/ with a plain file server — the config
+      # owns both (playwright.export.config.ts).
+      - name: Run static-export E2E tests
+        continue-on-error: true # insights only, same policy as the job above
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+        run: pnpm test:e2e:export

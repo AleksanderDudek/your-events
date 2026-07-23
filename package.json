@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:export": "playwright test --config=playwright.export.config.ts",
     "prepare": "husky"
   },
   "devDependencies": {
