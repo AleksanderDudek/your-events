@@ -265,11 +265,12 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                   {t.EXTERNAL_LINK}
                 </Button>
               )}
+            </Box>
 
-              {/* Secondary CTA: the ticket link stays the primary action. */}
-              <Box className={styles.externalLink}>
-                <AddToCalendar event={event} />
-              </Box>
+            {/* Its own row: below md the price and the ticket link already
+                share one, and a third item there overflowed the card. */}
+            <Box className={styles.calendarCta}>
+              <AddToCalendar event={event} />
             </Box>
 
             {/* Sources */}
