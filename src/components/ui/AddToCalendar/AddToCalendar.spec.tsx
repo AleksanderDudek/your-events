@@ -54,16 +54,18 @@ describe('AddToCalendar', () => {
     expect(screen.getByRole('menuitem', { name: /Pobierz plik/ })).toBeInTheDocument();
   });
 
-  it('points Google at a prefilled template in a new tab', async () => {
+  it.each([
+    ['Google', /Google Calendar/, 'calendar.google.com/calendar/render?action=TEMPLATE'],
+    ['Outlook', /Outlook/, 'outlook.live.com/calendar/0/deeplink/compose'],
+  ])('points %s at a prefilled form in a new tab', async (_name, label, hrefFragment) => {
     const user = userEvent.setup();
     render(<AddToCalendar event={makeEvent()} />);
     await user.click(screen.getByRole('button', { name: 'Dodaj do kalendarza' }));
 
-    const item = screen.getByRole('menuitem', { name: /Google Calendar/ });
-    expect(item.getAttribute('href')).toContain(
-      'calendar.google.com/calendar/render?action=TEMPLATE'
-    );
+    const item = screen.getByRole('menuitem', { name: label });
+    expect(item.getAttribute('href')).toContain(hrefFragment);
     expect(item).toHaveAttribute('target', '_blank');
+    // Dropping rel on either item used to pass the whole file green.
     expect(item.getAttribute('rel')).toContain('noopener');
   });
 
@@ -83,10 +85,25 @@ describe('AddToCalendar', () => {
     expect(payload).toContain('DTSTART:20260724T160000Z');
   });
 
-  it('marks the trigger as a menu button for assistive tech', () => {
+  it('falls back to a generic filename when the name has nothing to slugify', async () => {
+    const user = userEvent.setup();
+    render(<AddToCalendar event={makeEvent({ name: 'Концерт' })} />);
+    await user.click(screen.getByRole('button', { name: 'Dodaj do kalendarza' }));
+
+    expect(screen.getByRole('menuitem', { name: /Pobierz plik/ })).toHaveAttribute(
+      'download',
+      'wydarzenie-2026-07-24.ics'
+    );
+  });
+
+  it('marks the trigger as a menu button for assistive tech', async () => {
+    const user = userEvent.setup();
     render(<AddToCalendar event={makeEvent()} />);
     const trigger = screen.getByRole('button', { name: 'Dodaj do kalendarza' });
     expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
   });
 });

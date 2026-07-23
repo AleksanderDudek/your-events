@@ -48,7 +48,7 @@ export default function AddToCalendar({ event }: Readonly<AddToCalendarProps>) {
     [calendarEvent]
   );
 
-  const fileName = `${slugify(event.name) || 'wydarzenie'}-${event.date}.ics`;
+  const fileName = `${slugify(event.name) || t.CALENDAR_FILE_FALLBACK}-${event.date}.ics`;
   const close = useCallback(() => setAnchorEl(null), []);
 
   // Without a date there is nothing to put in a calendar.

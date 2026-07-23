@@ -105,6 +105,9 @@ const pl = {
   CALENDAR_ICS: 'Pobierz plik (.ics)',
   // Written into the calendar entry's description, never shown on the page.
   CALENDAR_END_GUESS: 'Godzina zakończenia szacowana.',
+  // Filename stem for the .ics when the event name has no Latin characters
+  // to slugify — a Cyrillic or CJK title leaves nothing behind.
+  CALENDAR_FILE_FALLBACK: 'wydarzenie',
   OPEN_IN_GOOGLE_MAPS: 'Pokaż na mapie Google',
   LISTED_ON: 'Źródła',
   LAST_UPDATED: (when: string) => `Aktualizacja: ${when}`,
@@ -246,6 +249,7 @@ const en: Messages = {
   CALENDAR_OUTLOOK: 'Outlook',
   CALENDAR_ICS: 'Download file (.ics)',
   CALENDAR_END_GUESS: 'End time is an estimate.',
+  CALENDAR_FILE_FALLBACK: 'event',
   OPEN_IN_GOOGLE_MAPS: 'Open in Google Maps',
   LISTED_ON: 'Sources',
   LAST_UPDATED: (when: string) => `Updated: ${when}`,
