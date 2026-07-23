@@ -63,4 +63,9 @@ describe('EventDetailView', () => {
     render(<EventDetailView event={noUrl} />);
     expect(screen.queryByText('Przejdź do strony')).not.toBeInTheDocument();
   });
+
+  it('offers the calendar menu', () => {
+    render(<EventDetailView event={mockEvent} />);
+    expect(screen.getByRole('button', { name: 'Dodaj do kalendarza' })).toBeInTheDocument();
+  });
 });
