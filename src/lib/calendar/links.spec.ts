@@ -39,19 +39,20 @@ describe('googleCalendarUrl', () => {
 
 describe('outlookCalendarUrl', () => {
   it('builds a compose URL for a timed event', () => {
-    const url = outlookCalendarUrl(makeCalendarEvent());
-    expect(url.startsWith('https://outlook.live.com/calendar/0/deeplink/compose?')).toBe(true);
-    expect(url).toContain('rru=addevent');
-    expect(url).toContain('subject=Koncert');
-    expect(url).toContain('startdt=2026-07-24T16%3A00%3A00Z');
-    expect(url).toContain('enddt=2026-07-24T18%3A00%3A00Z');
-    expect(url).not.toContain('allday');
+    expect(outlookCalendarUrl(makeCalendarEvent())).toBe(
+      'https://outlook.live.com/calendar/0/deeplink/compose' +
+        '?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&subject=Koncert' +
+        '&startdt=2026-07-24T16%3A00%3A00Z&enddt=2026-07-24T18%3A00%3A00Z' +
+        '&body=Opis.&location=CAL+Widawa%2C+Dekarska+3'
+    );
   });
 
-  it('uses bare dates and the allday flag for an all-day event', () => {
-    const url = outlookCalendarUrl(allDayEvent);
-    expect(url).toContain('startdt=2026-07-24&');
-    expect(url).toContain('enddt=2026-07-25&');
-    expect(url).toContain('allday=true');
+  it('sends an inclusive end date and the allday flag for an all-day event', () => {
+    expect(outlookCalendarUrl(allDayEvent)).toBe(
+      'https://outlook.live.com/calendar/0/deeplink/compose' +
+        '?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&subject=Koncert' +
+        '&startdt=2026-07-24&enddt=2026-07-24' +
+        '&body=Opis.&location=CAL+Widawa%2C+Dekarska+3&allday=true'
+    );
   });
 });
