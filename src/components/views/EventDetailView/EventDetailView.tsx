@@ -17,6 +17,7 @@ import MapIcon from '@mui/icons-material/Map';
 import { Event } from '@/types/event.types';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
+import AddToCalendar from '@/components/ui/AddToCalendar/AddToCalendar';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
 import { formatDate, formatEventTime } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
@@ -264,6 +265,12 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                   {t.EXTERNAL_LINK}
                 </Button>
               )}
+            </Box>
+
+            {/* Its own row: below md the price and the ticket link already
+                share one, and a third item there overflowed the card. */}
+            <Box className={styles.calendarCta}>
+              <AddToCalendar event={event} />
             </Box>
 
             {/* Sources */}

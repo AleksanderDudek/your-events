@@ -239,6 +239,14 @@
   }
 }
 
+.calendarCta {
+  margin-top: 12px;
+
+  @include md {
+    margin-top: 16px;
+  }
+}
+
 .infoRow {
   display: flex;
   flex-direction: column;
