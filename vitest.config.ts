@@ -8,7 +8,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
-    exclude: ['e2e/**', 'node_modules/**'],
+    // Both e2e suites are Playwright's (dev server / static export).
+    exclude: ['e2e/**', 'e2e-export/**', 'node_modules/**'],
     css: {
       modules: {
         classNameStrategy: 'non-scoped',
