@@ -28,6 +28,15 @@ describe('AppHeader', () => {
     render(<AppHeader />);
     expect(screen.getByText('Strona główna')).toBeInTheDocument();
     expect(screen.getByText('Wydarzenia')).toBeInTheDocument();
+    expect(screen.getByText('Rozwijaj z nami')).toBeInTheDocument();
+  });
+
+  it('links to the community page outside the city subtree', () => {
+    render(<AppHeader />);
+    expect(screen.getByRole('link', { name: 'Rozwijaj z nami' })).toHaveAttribute(
+      'href',
+      '/rozwijaj-z-nami'
+    );
   });
 
   it('has correct nav aria-label', () => {

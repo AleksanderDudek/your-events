@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { AVAILABLE_CITIES } from '@/config/cities';
 import { SITE_URL } from '@/config/site';
+import { GROW_WITH_US_PATH } from '@/config/community';
 import { getCityEvents, fetchCategories } from '@/components/service/eventsApi';
 import { buildCategorySlugMap, resolveCategorySlug, eventPath } from '@/lib/slug';
 
@@ -12,6 +13,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const routes: MetadataRoute.Sitemap = [
     { url: SITE_URL, lastModified, changeFrequency: 'daily', priority: 1 },
+    {
+      url: `${SITE_URL}${GROW_WITH_US_PATH}`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
   ];
 
   for (const city of AVAILABLE_CITIES) {
