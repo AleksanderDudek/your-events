@@ -58,6 +58,12 @@ export const TEXT = {
   cityOther: /Szczecin/,
   // SEO: the events-list document <title> (a title template appends the brand).
   metaEventsTitle: /Wydarzenia w Wroc/,
+  // "Rozwijaj z nami" — the city-agnostic community page.
+  growNav: 'Rozwijaj z nami',
+  growPunch: 'Otwierasz i wiesz.',
+  growDiscordCta: 'Wejdź na serwer',
+  growFormCta: 'Wypełnij ankietę',
+  growHeadlineEn: 'Grow with us',
 } as const;
 
 // The mobile filter Fab is labelled "Filtry (N)"; the leading word is stable.

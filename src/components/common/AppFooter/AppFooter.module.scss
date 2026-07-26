@@ -26,6 +26,30 @@
   flex: 1;
 }
 
+.links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.link {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+
+  @include focus-visible;
+
+  @include motion-safe {
+    transition: color var(--transition-base);
+  }
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}
+
 .bottom {
   max-width: 1400px;
   margin: 32px auto 0;

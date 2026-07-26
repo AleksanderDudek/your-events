@@ -48,6 +48,12 @@ test.describe('Accessibility (axe)', () => {
     await expectNoSeriousViolations(page);
   });
 
+  test('grow-with-us page has no serious violations', async ({ page }) => {
+    await page.goto('/rozwijaj-z-nami');
+    await expect(page.getByText(TEXT.growPunch)).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+
   test('event detail has no serious violations', async ({ page }) => {
     await gotoEvents(page);
     await firstCard(page).click();

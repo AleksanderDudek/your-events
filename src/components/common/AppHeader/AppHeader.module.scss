@@ -23,7 +23,13 @@
 .nav {
   display: flex;
   align-items: center;
-  gap: 32px;
+  // Tighter at the md breakpoint: three nav links plus the city/language/theme
+  // controls only fit at 32px once there is real width to spend.
+  gap: 20px;
+
+  @include lg {
+    gap: 32px;
+  }
 }
 
 .navLink {

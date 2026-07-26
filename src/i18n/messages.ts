@@ -149,6 +149,36 @@ const pl = {
   NOTFOUND_BODY: 'Ta strona nie istnieje lub wydarzenie się już zakończyło.',
   NOTFOUND_REDIRECT: (s: number) => `Przekierujemy Cię do wyszukiwania za ${s} s…`,
   NOTFOUND_CTA: 'Szukaj wydarzeń',
+  NAV_GROW: 'Rozwijaj z nami',
+  GROW_PROMPT: 'Buduj to z nami',
+  GROW_HEADLINE: 'Rozwijaj z nami',
+  GROW_LEAD: 'Ta apka nie jest skończona i nie ma być. Powiedz nam, czego jej brakuje.',
+  GROW_STORY_1:
+    'Znasz to: masz wolne, chce Ci się wyjść — i te dwadzieścia minut przewijania telefonu, po których stwierdzasz „a, nieważne” i włączasz serial. Albo znowu idziesz w to samo miejsce.',
+  GROW_STORY_2:
+    'Najgorsze w wolnym wieczorze nie jest to, że nie ma co robić. Najgorsze jest to, że coś się dzieje, a Ty dowiadujesz się o tym za późno — ze zdjęć znajomych albo w momencie, w którym nie da się już zmienić planów.',
+  GROW_STORY_3:
+    'Żeby znaleźć to wcześniej, trzeba wiedzieć, gdzie szukać: grupa na Facebooku, której nie obserwujesz, fanpage szkoły tańca, której nie znasz, wydarzenie wrzucone trzy dni temu i już przykryte przez dwadzieścia innych postów. Szukanie zajmuje więcej czasu niż samo wyjście — więc zostajesz w domu i scrollujesz.',
+  // The city list is injected so the copy follows AVAILABLE_CITIES instead of
+  // going stale the moment a new city is wired up.
+  GROW_STORY_4: (cities: string) =>
+    `Idź na miasto to próba załatwienia tego jednym widokiem. Wybierasz miasto (na razie ${cities}), widzisz, co się dzieje: taniec, fitness, warsztaty kulinarne, koncerty. Bez zakładania konta, bez instalowania.`,
+  GROW_STORY_PUNCH: 'Otwierasz i wiesz.',
+  GROW_CHANNELS_TITLE: 'Apka działa. Teraz chcemy usłyszeć Ciebie.',
+  GROW_CHANNELS_SUB:
+    'Powiedz nam, co się sprawdza, co irytuje i czego brakuje. Wybierz kanał, który Ci pasuje.',
+  GROW_DISCORD_TITLE: 'Discord',
+  GROW_DISCORD_BODY:
+    'To zwykły, mały serwer. Wrzucamy tam, nad czym akurat siedzimy, pytamy o zdanie przy większych decyzjach i zbieramy wszystko, co nie działa albo irytuje. Jak czegoś brakuje — piszesz, my to widzimy. Nie ma tam zadań ani zobowiązań, można po prostu obserwować. Ale jeśli chcesz mieć wpływ na to, jak ta apka będzie wyglądać za pół roku, to teraz jest najlepszy moment.',
+  GROW_DISCORD_CTA: 'Wejdź na serwer',
+  GROW_FORM_TITLE: 'Krótki formularz',
+  GROW_FORM_BODY:
+    'A jeśli Discord to nie Twoja bajka — wystarczy kilka pytań. Bez konta, bez zapisywania się na cokolwiek. Zajmie mniej niż te dwadzieścia minut przewijania telefonu.',
+  GROW_FORM_CTA: 'Wypełnij ankietę',
+  GROW_EXTERNAL_HINT: 'Otwiera się w nowej karcie',
+  GROW_META_TITLE: 'Rozwijaj z nami',
+  GROW_META_DESCRIPTION:
+    'Dołącz do naszego Discorda albo wypełnij krótką ankietę i współdecyduj, w którą stronę rozwija się Idź na miasto.',
 };
 
 export type Messages = typeof pl;
@@ -289,6 +319,34 @@ const en: Messages = {
   NOTFOUND_BODY: 'This page does not exist or the event has already ended.',
   NOTFOUND_REDIRECT: (s: number) => `Redirecting you to search in ${s}s…`,
   NOTFOUND_CTA: 'Search events',
+  NAV_GROW: 'Grow with us',
+  GROW_PROMPT: 'Build it with us',
+  GROW_HEADLINE: 'Grow with us',
+  GROW_LEAD: 'This app is not finished, and it is not meant to be. Tell us what it is missing.',
+  GROW_STORY_1:
+    'You know the feeling: the evening is free, you actually want to go out — and then come those twenty minutes of scrolling, after which you shrug, say "never mind" and put on a series. Or you end up in the same place as always.',
+  GROW_STORY_2:
+    'The worst part of a free evening is not that there is nothing on. It is that something is on and you hear about it too late — from a friend\'s photos, or at a point where plans can no longer change.',
+  GROW_STORY_3:
+    'To find it earlier you have to know where to look: a Facebook group you do not follow, the page of a dance school you have never heard of, an event posted three days ago and already buried under twenty other posts. Searching takes longer than going out — so you stay home and scroll.',
+  GROW_STORY_4: (cities: string) =>
+    `Go to city is an attempt to settle that in a single view. You pick a city (${cities} for now) and see what is happening: dance, fitness, cooking workshops, concerts. No account, nothing to install.`,
+  GROW_STORY_PUNCH: 'Open it and you know.',
+  GROW_CHANNELS_TITLE: 'The app works. Now we want to hear you.',
+  GROW_CHANNELS_SUB:
+    'Tell us what lands, what annoys you and what is missing. Pick whichever channel suits you.',
+  GROW_DISCORD_TITLE: 'Discord',
+  GROW_DISCORD_BODY:
+    'It is a small, ordinary server. We post whatever we are working on, ask for opinions before the bigger calls, and collect everything that is broken or irritating. If something is missing — you write it, we see it. No tasks, no commitments; lurking is perfectly fine. But if you want a say in what this app looks like in six months, now is the best moment.',
+  GROW_DISCORD_CTA: 'Join the server',
+  GROW_FORM_TITLE: 'Short form',
+  GROW_FORM_BODY:
+    'And if Discord is not your thing — a handful of questions is enough. No account, no signing up for anything. It takes less than those twenty minutes of scrolling.',
+  GROW_FORM_CTA: 'Fill in the survey',
+  GROW_EXTERNAL_HINT: 'Opens in a new tab',
+  GROW_META_TITLE: 'Grow with us',
+  GROW_META_DESCRIPTION:
+    'Join our Discord or fill in a short survey and help decide where Go to city goes next.',
 };
 
 export const messages: Record<Locale, Messages> = { pl, en };
