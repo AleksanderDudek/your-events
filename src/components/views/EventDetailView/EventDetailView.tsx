@@ -19,12 +19,19 @@ import MediaFill from '@/components/ui/MediaFill/MediaFill';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import AddToCalendar from '@/components/ui/AddToCalendar/AddToCalendar';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
+import RelatedEvents, { type RelatedEventLink } from '@/components/common/RelatedEvents/RelatedEvents';
 import { formatDate, formatEventTime } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import styles from './EventDetailView.module.scss';
 
 interface EventDetailViewProps {
   event: Event;
+  /**
+   * Similar events, chosen and given their permalinks at build time — the
+   * category map needed to build those paths only exists there. Empty when too
+   * little cleared the relevance bar to be worth a rail.
+   */
+  related?: RelatedEventLink[];
 }
 
 // Saturated gradients picked from the category palette so the hero block
@@ -77,7 +84,7 @@ function formatUpdatedAt(iso: string | null): string | null {
   return d.toLocaleDateString('pl-PL', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-export default function EventDetailView({ event }: EventDetailViewProps) {
+export default function EventDetailView({ event, related = [] }: EventDetailViewProps) {
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -308,6 +315,10 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
           </Box>
         </Box>
       </Box>
+
+      {/* Below the whole two-column block, so it reads as "more like this" once
+          the event itself has been taken in — not as part of its details. */}
+      <RelatedEvents items={related} />
     </Box>
   );
 }

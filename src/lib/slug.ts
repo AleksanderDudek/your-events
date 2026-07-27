@@ -55,5 +55,19 @@ export function resolveCategorySlug(categoryMain: string, slugMap: Map<string, s
 /** Canonical event permalink: /{city}/{category}/{name}-{shortid}. */
 export function eventPath(citySlug: string, event: Event, slugMap: Map<string, string>): string {
   const category = resolveCategorySlug(event.categoryMain, slugMap);
-  return `/${citySlug}/${category}/${nameSlug(event.name)}-${shortId(event.eventKey)}`;
+  return eventPathIn(citySlug, category, event);
+}
+
+/**
+ * The same permalink, for callers that already know the category segment.
+ *
+ * The category hub is exactly that case: it selects events whose category
+ * resolves to the route's own segment, so every card on it shares one. Building
+ * the path from that, rather than from a slug map, is what lets a server-
+ * rendered page emit correct hrefs — `eventPath` needs a map that only exists
+ * on the client once useCategories has resolved, and falls back to "inne"
+ * before then.
+ */
+export function eventPathIn(citySlug: string, categorySlug: string, event: Event): string {
+  return `/${citySlug}/${categorySlug}/${nameSlug(event.name)}-${shortId(event.eventKey)}`;
 }

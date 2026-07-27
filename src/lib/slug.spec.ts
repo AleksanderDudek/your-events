@@ -5,6 +5,7 @@ import {
   buildCategorySlugMap,
   resolveCategorySlug,
   eventPath,
+  eventPathIn,
   CATEGORY_FALLBACK_SLUG,
 } from './slug';
 import type { Event } from '@/types/event.types';
@@ -72,5 +73,29 @@ describe('eventPath', () => {
   it('uses the fallback category for unknown category_main', () => {
     const path = eventPath('szczecin', { ...event, categoryMain: 'Kultura' } as Event, slugMap);
     expect(path.startsWith('/szczecin/inne/')).toBe(true);
+  });
+});
+
+describe('eventPathIn', () => {
+  const event = {
+    id: '112',
+    eventKey: 'https://wroclaw.pl/vsjf-jazzy-tram',
+    name: 'VSJF: Jazzy Tram',
+    categoryMain: 'Muzyka',
+  } as Event;
+
+  it('agrees with eventPath when the map would resolve the same category', () => {
+    const slugMap = new Map([['Muzyka', 'muzyka']]);
+    expect(eventPathIn('wroclaw', 'muzyka', event)).toBe(eventPath('wroclaw', event, slugMap));
+  });
+
+  it('does not fall back to "inne" when no map is available', () => {
+    // This is the whole point: a server-rendered page knows its category
+    // segment, so it must not depend on a lookup that is empty during a
+    // prerender and would silently emit a route that was never generated.
+    expect(eventPathIn('wroclaw', 'muzyka', event)).toMatch(
+      /^\/wroclaw\/muzyka\/vsjf-jazzy-tram-[0-9a-f]{8}$/
+    );
+    expect(eventPath('wroclaw', event, new Map())).toContain('/inne/');
   });
 });

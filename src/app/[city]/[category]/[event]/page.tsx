@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getCityEvents, fetchCategories } from '@/components/service/eventsApi';
-import { buildCategorySlugMap, resolveCategorySlug, shortId, nameSlug } from '@/lib/slug';
+import { buildCategorySlugMap, resolveCategorySlug, shortId, nameSlug, eventPath } from '@/lib/slug';
+import { pickRelatedEvents } from '@/lib/relatedEvents';
+import type { RelatedEventLink } from '@/components/common/RelatedEvents/RelatedEvents';
 import { AVAILABLE_CITIES, getCity, isCityId, DEFAULT_CITY_ID } from '@/config/cities';
 import EventDetailView from '@/components/views/EventDetailView/EventDetailView';
 import { Event } from '@/types/event.types';
@@ -62,6 +64,18 @@ export default async function EventDetailPage({ params }: DetailProps) {
   const found = await resolveEvent(city, event);
   if (!found) notFound();
 
+  // Similar events, resolved here rather than in the browser: the city's events
+  // are already loaded for generateStaticParams (getCityEvents caches them for
+  // the build), so this costs no extra query and ships as plain HTML. Building
+  // the permalinks here also matters — the category map they need does not
+  // exist on the client until useCategories resolves.
+  const slugMap = buildCategorySlugMap(await fetchCategories());
+  const related: RelatedEventLink[] = pickRelatedEvents({
+    target: found,
+    candidates: await getCityEvents(city),
+    now: new Date(),
+  }).map((e) => ({ event: e, href: eventPath(city, e, slugMap) }));
+
   const cityName = getCity(isCityId(city) ? city : DEFAULT_CITY_ID).displayName.pl;
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -89,7 +103,7 @@ export default async function EventDetailPage({ params }: DetailProps) {
         // the inline JSON-LD block (XSS-safe serialization of trusted data).
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
-      <EventDetailView event={found} />
+      <EventDetailView event={found} related={related} />
     </>
   );
 }

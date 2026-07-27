@@ -1,0 +1,81 @@
+@use '../../../styles/mixins' as *;
+
+.section {
+  margin-top: 32px;
+
+  @include md {
+    margin-top: 48px;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+
+  @include md {
+    font-size: 1.5rem;
+  }
+}
+
+// Pointer affordance only. Touch and keyboard already scroll the rail, and on a
+// narrow screen the arrows would eat room the cards need.
+.arrows {
+  display: none;
+
+  @include md {
+    display: flex;
+    gap: 4px;
+  }
+}
+
+.rail {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 12px;
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  // Cards sit flush with the page text; the padding above only clears the card
+  // shadow, which would otherwise be clipped by the scroll container.
+  scroll-padding-left: 0;
+  // Firefox and Chrome respectively — a thin bar reads as "there is more here"
+  // without the weight of a full-size one.
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: var(--radius-pill);
+  }
+}
+
+.item {
+  // Fixed width so every card in the rail matches, and the next one peeks in
+  // from the edge — the cheapest possible hint that the list scrolls.
+  flex: 0 0 240px;
+  scroll-snap-align: start;
+
+  @include sm {
+    flex-basis: 260px;
+  }
+
+  @include md {
+    flex-basis: 280px;
+  }
+}

@@ -278,21 +278,41 @@ export async function fetchCategories(): Promise<DbCategory[]> {
 // generateStaticParams and every static detail/hub page so we never refetch.
 const cityEventsCache = new Map<string, Promise<Event[]>>();
 
+// PostgREST caps a response at 1000 rows, so the whole-city read is paged.
+// The page cap is a runaway guard, not a product limit — 50 pages is 50k events
+// in one city, far past anything the scraper produces.
+const CITY_EVENTS_PAGE_SIZE = 1000;
+const CITY_EVENTS_MAX_PAGES = 50;
+
 export function getCityEvents(cityId: CityId | string): Promise<Event[]> {
   const city = getCity(cityId);
   const cached = cityEventsCache.get(city.id);
   if (cached) return cached;
   const promise = (async () => {
     const supabase = getSupabaseForCity(city.id);
-    // NOTE: no .range() — relies on the 1000-row default; add pagination before a city exceeds it.
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .order('date')
-      .order('time_start');
-    if (error) throw new ServerError(error.message);
+
+    // Paged rather than relying on PostgREST's 1000-row default. Everything
+    // built from this list — the static routes, the sitemap, the related-events
+    // rail — degrades silently and without an error when the city outgrows one
+    // page: pages simply stop being generated for the events past the cut.
+    const rows: SupabaseEventRow[] = [];
+    for (let page = 0; page < CITY_EVENTS_MAX_PAGES; page += 1) {
+      const from = page * CITY_EVENTS_PAGE_SIZE;
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date')
+        .order('time_start')
+        .range(from, from + CITY_EVENTS_PAGE_SIZE - 1);
+      if (error) throw new ServerError(error.message);
+
+      const batch = (data as SupabaseEventRow[]) ?? [];
+      rows.push(...batch);
+      if (batch.length < CITY_EVENTS_PAGE_SIZE) break;
+    }
+
     const cityName = city.displayName.pl;
-    const mapped = (data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName));
+    const mapped = rows.map((row) => mapRow(row, cityName));
 
     // Permalinks derive from shortId(event_key); a collision would make two
     // events resolve to the same page. Astronomically unlikely at this scale,
