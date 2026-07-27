@@ -9,6 +9,17 @@ import 'leaflet.markercluster';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import type { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
+import {
+  FALLBACK_COLOR,
+  PIN_ANCHOR,
+  PIN_POPUP_ANCHOR,
+  PIN_SIZE,
+  clusterMarkup,
+  clusterRadiusForZoom,
+  clusterSize,
+  pinMarkup,
+  uniformValue,
+} from './markerVisuals';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -30,21 +41,43 @@ export interface EventsMapInnerProps {
   renderPopup?: (event: Event) => string;
 }
 
-const FALLBACK_COLOR = '#ec4899';
+// Category of the events under a marker, stashed on the Leaflet marker so a
+// cluster can ask its children what they are without carrying Event objects.
+interface CategorisedMarkerOptions extends L.MarkerOptions {
+  categoryName?: string;
+  categoryColor?: string;
+}
 
-function createPinIcon(color: string): L.DivIcon {
-  // Inline SVG pin — avoids Leaflet's default icon URLs (which break in Next's
-  // static export) and lets us tint each pin by category.
-  const safeColor = color || FALLBACK_COLOR;
+function createPinIcon(category: string, color: string): L.DivIcon {
+  // Inline SVG — avoids Leaflet's default icon URLs (which break in Next's
+  // static export) and lets each pin carry its category's colour and glyph.
   return L.divIcon({
-    html: `<svg width="30" height="38" viewBox="0 0 30 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M15 0C6.72 0 0 6.72 0 15c0 10.5 15 23 15 23s15-12.5 15-23C30 6.72 23.28 0 15 0z" fill="${safeColor}" stroke="white" stroke-width="2"/>
-        <circle cx="15" cy="15" r="5.5" fill="white"/>
-      </svg>`,
+    html: pinMarkup(category, color),
     className: styles.pinIcon,
-    iconSize: [30, 38],
-    iconAnchor: [15, 38],
-    popupAnchor: [0, -34],
+    iconSize: PIN_SIZE,
+    iconAnchor: PIN_ANCHOR,
+    popupAnchor: PIN_POPUP_ANCHOR,
+  });
+}
+
+function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
+  const children = cluster.getAllChildMarkers();
+  const options = children.map((m) => m.options as CategorisedMarkerOptions);
+  const category = uniformValue(options.map((o) => o.categoryName ?? ''));
+  // The colour is taken from the agreed category rather than checked on its
+  // own: two categories can share a hue, and a bubble tinted like a category it
+  // only half contains is worse than an honestly neutral one.
+  const color = category ? options[0]?.categoryColor ?? null : null;
+  const count = cluster.getChildCount();
+
+  return L.divIcon({
+    html: clusterMarkup(count, category || null, color),
+    // `marker-cluster` is markercluster's own class, normally applied by the
+    // default icon builder we are replacing. Keeping it means everything that
+    // identifies a cluster by that class — the map e2e spec included — still
+    // works; our module class layers the branded artwork on top.
+    className: `marker-cluster ${styles.clusterIcon}`,
+    iconSize: L.point(clusterSize(count), clusterSize(count)),
   });
 }
 
@@ -85,14 +118,24 @@ function MarkersLayer({
         // @types/leaflet.markercluster.
         L.markerClusterGroup({
           showCoverageOnHover: false,
-          maxClusterRadius: 50,
+          // Radius tightens as you zoom, so each step buys real separation —
+          // see clusterRadiusForZoom.
+          maxClusterRadius: clusterRadiusForZoom,
+          iconCreateFunction: createClusterIcon,
+          // Events sharing a venue sit on identical coordinates, so no amount of
+          // zoom pulls them apart. Clicking such a cluster fans them out instead
+          // of zooming into a point that never resolves.
+          spiderfyOnMaxZoom: true,
+          spiderfyDistanceMultiplier: 1.6,
         });
 
     for (const ev of usable) {
       const marker = L.marker([ev.location.lat as number, ev.location.lng as number], {
-        icon: createPinIcon(colorFor(ev)),
+        icon: createPinIcon(ev.categoryMain, colorFor(ev)),
         title: ev.name,
-      });
+        categoryName: ev.categoryMain,
+        categoryColor: colorFor(ev),
+      } as CategorisedMarkerOptions);
       if (renderPopup) {
         marker.bindPopup(renderPopup(ev), { maxWidth: 240, className: styles.popup });
       }
