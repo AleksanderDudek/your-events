@@ -123,10 +123,11 @@ export default function AppHeader() {
             <ThemeToggle />
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>
-            <CitySwitcher />
-            <LanguageSwitcher />
-            <ThemeToggle />
+          // Everything but the wordmark lives in the drawer on a phone. The bar
+          // used to carry the city, language and theme controls alongside the
+          // burger, which left the wordmark competing with four controls for a
+          // 390px row.
+          <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <IconButton
               onClick={() => setDrawerOpen(true)}
               aria-label={t.NAV_OPEN_MENU}
@@ -139,18 +140,53 @@ export default function AppHeader() {
               open={drawerOpen}
               onClose={() => setDrawerOpen(false)}
               PaperProps={{
-                sx: { width: 280, pt: 2 },
+                sx: { width: 288, display: 'flex', flexDirection: 'column' },
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 1 }}>
+              {/* The drawer repeats the wordmark so it reads as the same site
+                  once it covers the header. Not a link: the header logo already
+                  goes home, and a second one here would be a duplicate target
+                  a screen-reader user has to step past. */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 1,
+                  px: 2,
+                  py: 1.5,
+                  borderBottom: '1px solid var(--color-border)',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                  <span style={{ color: 'var(--primary)', display: 'inline-flex', flexShrink: 0 }}>
+                    <Spark size={22} />
+                  </span>
+                  <Typography
+                    variant="h6"
+                    component="span"
+                    sx={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 800,
+                      color: 'var(--ink)',
+                      letterSpacing: '-0.02em',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {t.APP_NAME}
+                  </Typography>
+                </Box>
                 <IconButton
                   onClick={() => setDrawerOpen(false)}
                   aria-label={t.NAV_CLOSE_MENU}
-                  sx={{ color: 'var(--color-text-primary)' }}
+                  sx={{ color: 'var(--color-text-primary)', flexShrink: 0 }}
                 >
                   <CloseIcon />
                 </IconButton>
               </Box>
+
               <Box component="nav" aria-label={t.NAV_MAIN}>
                 <List>
                   {navItems.map((item) => (
@@ -178,6 +214,27 @@ export default function AppHeader() {
                     </ListItem>
                   ))}
                 </List>
+              </Box>
+
+              {/* Pushed to the bottom: these are settings, not destinations, so
+                  they sit below the navigation rather than above it. */}
+              <Box
+                sx={{
+                  mt: 'auto',
+                  px: 2,
+                  py: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  gap: 1.5,
+                  borderTop: '1px solid var(--color-border)',
+                }}
+              >
+                <CitySwitcher onSelected={() => setDrawerOpen(false)} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LanguageSwitcher />
+                  <ThemeToggle />
+                </Box>
               </Box>
             </Drawer>
           </Box>
