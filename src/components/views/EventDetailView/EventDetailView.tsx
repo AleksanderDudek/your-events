@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -16,6 +15,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import MapIcon from '@mui/icons-material/Map';
 import { Event } from '@/types/event.types';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
+import MediaFill from '@/components/ui/MediaFill/MediaFill';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import AddToCalendar from '@/components/ui/AddToCalendar/AddToCalendar';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
@@ -53,15 +53,13 @@ function HeroBackground({ event }: { event: Event }) {
   const [errored, setErrored] = useState(false);
   if (event.imageUrl && !errored) {
     return (
-      <Image
+      <MediaFill
         src={event.imageUrl}
+        // Decorative: the hero's own overlay carries the event title, and the
+        // <h1> below repeats it.
         alt=""
-        aria-hidden
-        fill
         sizes="(max-width: 900px) 100vw, 900px"
-        className={styles.heroImage}
         onError={() => setErrored(true)}
-        unoptimized
         priority
       />
     );
