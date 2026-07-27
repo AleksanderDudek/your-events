@@ -63,39 +63,43 @@ export default function RelatedEvents({ items }: RelatedEventsProps) {
 
   return (
     <section className={styles.section} aria-labelledby="related-events-title">
-      <div className={styles.header}>
-        <h2 className={styles.title} id="related-events-title">
-          {t.RELATED_TITLE}
-        </h2>
-        <div className={styles.arrows} aria-hidden="true">
-          <IconButton
-            size="small"
-            onClick={() => scrollByPage(-1)}
-            disabled={atStart}
-            // aria-hidden on the wrapper: the rail scrolls with the keyboard on
-            // its own, so these would only add duplicate stops to the tab order.
-            tabIndex={-1}
-          >
-            <ChevronLeftIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => scrollByPage(1)}
-            disabled={atEnd}
-            tabIndex={-1}
-          >
-            <ChevronRightIcon fontSize="small" />
-          </IconButton>
-        </div>
-      </div>
+      <h2 className={styles.title} id="related-events-title">
+        {t.RELATED_TITLE}
+      </h2>
 
-      <ul className={styles.rail} ref={railRef} onScroll={syncArrows}>
-        {items.map(({ event, href }) => (
-          <li key={event.id} className={styles.item}>
-            <EventCard event={event} href={href} />
-          </li>
-        ))}
-      </ul>
+      {/* The arrows flank the rail rather than sitting in the header: at the
+          ends of what they scroll, they read as belonging to it. aria-hidden
+          because the rail already scrolls with the keyboard on its own — these
+          would only add duplicate stops to the tab order. */}
+      <div className={styles.railWrap}>
+        <IconButton
+          className={`${styles.arrow} ${styles.arrowPrev}`}
+          onClick={() => scrollByPage(-1)}
+          disabled={atStart}
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          <ChevronLeftIcon fontSize="small" />
+        </IconButton>
+
+        <ul className={styles.rail} ref={railRef} onScroll={syncArrows}>
+          {items.map(({ event, href }) => (
+            <li key={event.id} className={styles.item}>
+              <EventCard event={event} href={href} />
+            </li>
+          ))}
+        </ul>
+
+        <IconButton
+          className={`${styles.arrow} ${styles.arrowNext}`}
+          onClick={() => scrollByPage(1)}
+          disabled={atEnd}
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          <ChevronRightIcon fontSize="small" />
+        </IconButton>
+      </div>
     </section>
   );
 }
