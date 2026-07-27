@@ -15,6 +15,7 @@ import EventGridSkeleton from '@/components/common/EventGrid/EventGridSkeleton';
 import EventList from '@/components/common/EventList/EventList';
 import EventListSkeleton from '@/components/common/EventList/EventListSkeleton';
 import ViewToggle from '@/components/common/ViewToggle/ViewToggle';
+import SavePresetButton from '@/components/common/SavePresetButton/SavePresetButton';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
 import AppPagination from '@/components/common/AppPagination/AppPagination';
 import EmptyState from '@/components/ui/EmptyState/EmptyState';
@@ -170,6 +171,11 @@ export default function EventsListView() {
           </Box>
 
           <Box className={styles.headerRight}>
+            {/* Only offered once there is something worth keeping — saving the
+                unfiltered list would just be a link to the list. */}
+            {countActiveFilters(filters) > 0 && (
+              <SavePresetButton filters={filters} cityId={city.id} />
+            )}
             <ViewToggle
               value={filters.viewMode}
               onChange={(viewMode: ViewMode) => updatePagination({ viewMode })}
