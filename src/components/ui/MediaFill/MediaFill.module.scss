@@ -1,0 +1,19 @@
+// Blur pulls transparent pixels in from outside the frame, which would show as
+// a pale halo along the slot's edges. Scaling the backdrop past the frame keeps
+// the blurred edge outside the visible area. brightness() pushes it back so the
+// sharp copy on top stays the thing the eye lands on.
+.backdrop {
+  object-fit: cover;
+  transform: scale(1.25);
+  filter: blur(18px) saturate(1.3) brightness(0.75);
+}
+
+.foreground {
+  object-fit: contain;
+}
+
+// Chosen only when the crop stays under MediaFill's MAX_CROP, so there is no
+// backdrop behind it — the image itself covers every pixel of the slot.
+.foregroundCover {
+  object-fit: cover;
+}

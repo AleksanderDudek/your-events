@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState } from 'react';
 import type { Route } from 'next';
 import Card from '@mui/material/Card';
@@ -9,6 +8,7 @@ import Box from '@mui/material/Box';
 import { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
+import MediaFill from '@/components/ui/MediaFill/MediaFill';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import { EventDateBadge, EventTimeLabel, EventVenue } from '@/components/ui/EventMeta/EventMeta';
 import {
@@ -108,16 +108,13 @@ function ImageWrapper({ event }: { event: Event }) {
 
   if (stage < 2) {
     return (
-      <Image
+      <MediaFill
         src={stage === 0 ? event.imageUrl : artSrc}
         // Real poster gets the event name; the category-art fallback is
         // decorative (the article's aria-label already names the event).
         alt={stage === 0 ? event.name : ''}
-        fill
         sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        className={styles.image}
         onError={() => setStage((s) => (s === 0 ? 1 : 2))}
-        unoptimized
       />
     );
   }

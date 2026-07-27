@@ -111,11 +111,16 @@ export function categoryColorInkVar(displayName: string, fallback = '#5f5968'): 
 
 // Deterministic pick of one of the 10 category-art placeholders (1..10) from a
 // stable seed (event id/key) so the same event always shows the same art.
+//
+// The art is 800×450 WebP — cut to the image band's 16:9 so it fills the slot
+// instead of being cropped to a strip. It used to be 1080×1080 PNG, 83 MB for
+// the set; the same 130 frames are now 904 KB, and every byte of that shipped
+// on every deploy for the handful of events whose source gives us no image.
 export function categoryFallbackImage(displayName: string, seed: string): string {
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
     hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   }
   const variant = (hash % 10) + 1;
-  return `/fallbacks/${slugify(displayName || 'inne')}-${variant}.png`;
+  return `/fallbacks/${slugify(displayName || 'inne')}-${variant}.webp`;
 }
