@@ -13,17 +13,25 @@
 // so min-height on a <Typography> was being clobbered. Grid sizes the row
 // from the container, not the child — the cascade war becomes irrelevant.
 
-$band-h-mobile: 72px;
-$band-h-md: 80px;
+// The image band is sized by RATIO, not by a fixed height. Event art runs from
+// 0.67 (portrait flyer) to 2.70 (banner) with a median near 1.5, and most cards
+// carry a generated 800×500 (1.6) cover with the title drawn into it. The old
+// fixed 72/80px band made the slot ~4.1:1 — wider than anything we are ever
+// handed, so `cover` threw most of every image away and the drawn-in title got
+// sliced. 16/9 sits just past the top of that range: art fills the slot, and
+// the outliers letterbox onto MediaFill's blurred backdrop instead of cropping.
+//
+// Card height follows from the band + the fixed content rows, so it is no
+// longer hardcoded — every card in a row shares a column width, hence the same
+// band height, hence the same card height.
+// Quoted + interpolated at the use site: bare `16 / 9` reads as Sass division
+// (deprecated in Dart Sass 2) rather than the CSS ratio we want.
+$band-ratio: '16 / 9';
 
 $title-row: 36px;      // 2 lines × (0.875rem × 1.25) ≈ 35px + 1px slack
 $venue-row: 18px;
 $chips-row: 26px;      // MUI Chip size="small" is 24px, +2px slack
 $footer-row: 26px;     // price (~18px) + 6px padding-top + 1px border
-
-$card-h-mobile: 220px;
-$card-h-sm: 226px;
-$card-h-md: 232px;
 
 .link {
   text-decoration: none;
@@ -34,19 +42,13 @@ $card-h-md: 232px;
 }
 
 .card {
-  height: $card-h-mobile;
+  // Fills the grid cell, which stretches to the tallest card in the row — so a
+  // title that wraps to two lines cannot make one card shorter than its row.
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   cursor: pointer;
-
-  @include sm {
-    height: $card-h-sm;
-  }
-
-  @include md {
-    height: $card-h-md;
-  }
 
   @include card-hover;
 }
@@ -58,18 +60,13 @@ $card-h-md: 232px;
 .imageWrapper {
   position: relative;
   width: 100%;
-  height: $band-h-mobile;
+  aspect-ratio: #{$band-ratio};
   overflow: hidden;
   flex-shrink: 0;
-
-  @include md {
-    height: $band-h-md;
-  }
 }
 
-.image {
-  object-fit: cover;
-}
+// The image layers themselves come from ui/MediaFill — the band only sets the
+// slot they fill.
 
 // The date badge (top-left) and time label (top-right) that overlay this band
 // live in ui/EventMeta — shared with the list view so the two stay identical.
