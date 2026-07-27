@@ -23,12 +23,23 @@ import styles from './EventCard.module.scss';
 
 interface EventCardProps {
   event: Event;
+  /**
+   * Permalink, when the caller already knows it.
+   *
+   * Without it the path is derived from useCategories(), which is a client
+   * query — empty while the page is being prerendered, so the category segment
+   * falls back to "inne" and the href baked into the static HTML points at a
+   * route that was never generated. It repairs itself on hydration, so a normal
+   * click is fine, but a crawler (or a click that beats hydration) gets a 404.
+   * Server-rendered callers hold the real category map and should pass it.
+   */
+  href?: string;
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, href: hrefOverride }: EventCardProps) {
   const { city } = useCity();
   const { displayNameToSlug } = useCategories();
-  const href = eventPath(city.id, event, displayNameToSlug);
+  const href = hrefOverride ?? eventPath(city.id, event, displayNameToSlug);
   // Dedupe — some events have categoryMain === categorySub (e.g. both "Warsztaty"),
   // which would render two identical chips and collide on React keys.
   const chips = Array.from(

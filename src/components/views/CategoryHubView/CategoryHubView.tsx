@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import EventGrid from '@/components/common/EventGrid/EventGrid';
+import { eventPathIn } from '@/lib/slug';
 import { Event } from '@/types/event.types';
 import { useTranslation } from '@/i18n';
 
@@ -26,7 +27,11 @@ export default function CategoryHubView({ citySlug, categorySlug, categoryName, 
       <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 3 }}>
         {t.CATEGORY_HUB_INTRO(categoryName)}
       </Typography>
-      <EventGrid events={events} />
+      {/* Every event on this page resolved to the route's own category — that
+          is how the page selected them — so the permalink can be built here
+          instead of from a client-side category lookup that is still empty
+          while the page is being prerendered. */}
+      <EventGrid events={events} hrefFor={(event) => eventPathIn(citySlug, categorySlug, event)} />
       <Box sx={{ textAlign: 'center', mt: 4 }}>
         <Button
           component={Link}
