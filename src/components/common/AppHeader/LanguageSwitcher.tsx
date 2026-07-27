@@ -19,7 +19,9 @@ export default function LanguageSwitcher() {
       size="small"
       aria-label={t.LANG_LABEL}
       sx={{
-        ml: 1,
+        // No left margin of its own: both callers space their children (the
+        // desktop nav row and the drawer's settings block), and the extra 8px
+        // knocked this out of alignment with everything above it in the drawer.
         '& .MuiToggleButton-root': {
           color: 'var(--color-text-muted)',
           borderColor: 'var(--color-border)',

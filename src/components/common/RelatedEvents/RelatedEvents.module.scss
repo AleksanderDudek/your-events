@@ -1,5 +1,12 @@
 @use '../../../styles/mixins' as *;
 
+// Card width at the breakpoint where the arrows appear, and the image band's
+// ratio (EventCard sizes its band 16/9). The arrows are positioned from these,
+// so the three have to move together.
+$card-width-md: 280px;
+$band-ratio: 0.5625;
+$rail-top-padding: 4px;
+
 .section {
   margin-top: 32px;
 
@@ -8,16 +15,8 @@
   }
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
 .title {
-  margin: 0;
+  margin: 0 0 12px;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.25rem;
@@ -29,21 +28,66 @@
   }
 }
 
-// Pointer affordance only. Touch and keyboard already scroll the rail, and on a
-// narrow screen the arrows would eat room the cards need.
-.arrows {
+.railWrap {
+  position: relative;
+}
+
+// Pointer affordance only. Touch and keyboard already scroll the rail, so below
+// md — where there is no mouse and no room to spare — they are not rendered at
+// all rather than shrunk.
+//
+// They sit in the container's own padding, level with the middle of the cards,
+// so nothing is covered up: the detail page keeps 32px either side at this
+// breakpoint, which is where the negative offsets land.
+// The class is doubled throughout. MUI's .MuiButtonBase-root sets both
+// `position: relative` and `display: inline-flex` at single-class specificity,
+// and its emotion styles are injected at the end of <head> — so a single class
+// here loses the tie and the buttons stay in the flow, visible on mobile and
+// nowhere near the ends of the rail.
+.arrow.arrow {
   display: none;
 
   @include md {
-    display: flex;
-    gap: 4px;
+    display: inline-flex;
+    position: absolute;
+    z-index: 2;
+    // Level with the middle of the card's image band rather than the middle of
+    // the card. The disc has to overlap the rail — pushing it fully clear would
+    // put it outside the container on a narrow desktop — and over artwork that
+    // costs nothing, whereas over the lower half it sits on the title.
+    top: calc(#{$card-width-md} * #{$band-ratio} / 2 + #{$rail-top-padding});
+    // `top` is the disc's edge; this brings its centre onto that line.
+    transform: translateY(-50%);
+    background: var(--surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    color: var(--color-text-primary);
+
+    &:hover {
+      background: var(--surface-2);
+    }
+
+    // Hidden rather than dimmed at the ends. A greyed-out disc floating beside
+    // the cards looks like a rendering fault; absent, it just means "no further
+    // this way". Kept in the layout so nothing shifts when it comes back.
+    &:disabled {
+      visibility: hidden;
+    }
   }
+}
+
+.arrowPrev.arrowPrev {
+  left: -18px;
+}
+
+.arrowNext.arrowNext {
+  right: -18px;
 }
 
 .rail {
   list-style: none;
   margin: 0;
-  padding: 4px 0 12px;
+  padding: $rail-top-padding 0 12px;
   display: flex;
   gap: 16px;
   overflow-x: auto;
@@ -76,6 +120,6 @@
   }
 
   @include md {
-    flex-basis: 280px;
+    flex-basis: $card-width-md;
   }
 }

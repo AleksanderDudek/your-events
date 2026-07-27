@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -16,7 +15,16 @@ import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import { CityId } from '@/config/cities';
 
-export default function CitySwitcher() {
+interface CitySwitcherProps {
+  /**
+   * Called after a city is chosen. Picking one navigates, so a caller that
+   * lives inside an overlay — the mobile drawer — needs to close itself, or it
+   * stays open on top of the page it just sent you to.
+   */
+  onSelected?: () => void;
+}
+
+export default function CitySwitcher({ onSelected }: CitySwitcherProps = {}) {
   const { city, setCity, availableCities, cities } = useCity();
   const { locale, t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -29,6 +37,7 @@ export default function CitySwitcher() {
     setCity(id);
     setAnchorEl(null);
     router.push(`/${id}` as Route);
+    onSelected?.();
   };
 
   return (
@@ -57,13 +66,11 @@ export default function CitySwitcher() {
           },
         }}
       >
-        {/* The name is dropped on the narrowest phones: with it, the header row
-            is wider than a 393px viewport, the whole page scrolls sideways and
-            the fixed filter Fab lands partly off-screen (taps hit a card
-            instead). The pin + aria-label still name the control. */}
-        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-          {city.displayName[locale]}
-        </Box>
+        {/* The name used to be hidden below sm, because this sat in the mobile
+            header row and pushed it wider than a 393px viewport. It no longer
+            does — on a phone the switcher lives in the drawer, which has room —
+            and a bare pin gives no clue which city is selected. */}
+        {city.displayName[locale]}
       </Button>
       <Menu
         anchorEl={anchorEl}
