@@ -2,6 +2,7 @@ import { Event, DbCategory } from '@/types/event.types';
 import { EventFilters } from '@/types/filter.types';
 import { NotFoundError, ServerError } from '@/lib/utils';
 import { getSupabaseForCity } from '@/lib/supabase';
+import { expandWeekdayDates } from '@/lib/weekdays';
 import { CityId, getCity, CATEGORIES_CITY_ID } from '@/config/cities';
 import { shortId } from '@/lib/slug';
 
@@ -166,6 +167,21 @@ function buildFilteredQuery(
   if (filters.dateSingle) query = query.eq('date', filters.dateSingle);
   if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
   if (filters.dateTo) query = query.lte('date', filters.dateTo);
+
+  // Day-of-week has no column to compare against, so the selection is expanded
+  // into the dates it covers and sent as a set membership test. A `null` back
+  // means the selection excludes nothing and the query must stay as it is; an
+  // empty list means it excludes everything, and `in.()` is exactly that.
+  const weekdayDates = expandWeekdayDates(
+    filters.weekdays,
+    {
+      from: filters.dateSingle ?? filters.dateFrom,
+      to: filters.dateSingle ?? filters.dateTo,
+    },
+    new Date()
+  );
+  if (weekdayDates !== null) query = query.in('date', weekdayDates);
+
   if (filters.dateMode && filters.hourFrom) query = query.gte('time_start', filters.hourFrom);
   if (filters.dateMode && filters.hourTo) query = query.lte('time_start', filters.hourTo);
 
