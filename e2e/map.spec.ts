@@ -7,6 +7,53 @@ const PERMALINK = new RegExp(`/${CITY}/[a-z0-9-]+/[a-z0-9-]+-[0-9a-f]{8}/?$`);
 // injected into a Leaflet popup — it lives OUTSIDE React, so only a real
 // end-to-end click can prove its href routes to the correct permalink. A unit
 // test can't reach it.
+// The marker artwork is built as raw markup and handed to Leaflet, then styled
+// against markercluster's own stylesheet. Both of those only resolve in a real
+// browser, so the unit tests around markerVisuals cannot prove what actually
+// lands on the map — these can.
+test.describe('Map: markers carry their category', () => {
+  test('pins are drawn with their category glyph', async ({ page }) => {
+    await page.goto(`/${CITY}/wydarzenia?viewMode=map&pageSize=60`);
+    await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 20000 });
+
+    const marker = page.locator('.leaflet-marker-icon:not(.marker-cluster)').first();
+    const cluster = page.locator('.marker-cluster').first();
+    await expect(marker.or(cluster).first()).toBeVisible({ timeout: 20000 });
+
+    if (!(await marker.isVisible().catch(() => false))) {
+      test.skip(true, 'Everything is clustered for this data slice');
+    }
+
+    // A tinted teardrop with a glyph inside it, not the old plain white dot.
+    const pinSvg = marker.locator('svg');
+    await expect(pinSvg).toBeVisible();
+    await expect(pinSvg.locator('path, circle, rect, line').first()).toBeAttached();
+    expect(await pinSvg.locator('path, circle, rect, line').count()).toBeGreaterThan(1);
+  });
+
+  test('cluster bubbles show a count, and a glyph when they hold one category', async ({ page }) => {
+    await page.goto(`/${CITY}/wydarzenia?viewMode=map&pageSize=60`);
+    await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 20000 });
+
+    const cluster = page.locator('.marker-cluster').first();
+    if (!(await cluster.isVisible({ timeout: 20000 }).catch(() => false))) {
+      test.skip(true, 'Nothing clustered for this data slice');
+    }
+
+    // Every bubble states how many events it holds.
+    await expect(cluster.locator('span')).toHaveText(/^\d+$/);
+
+    // Single-category bubbles also carry the glyph — and it must have a painted
+    // box, not merely exist: markercluster's own `span { line-height: 30px }`
+    // once collapsed it to zero inside the flex bubble.
+    const glyphs = page.locator('.marker-cluster svg');
+    if ((await glyphs.count()) > 0) {
+      const box = await glyphs.first().boundingBox();
+      expect(box?.height ?? 0).toBeGreaterThan(8);
+    }
+  });
+});
+
 test.describe('Map: pin → popup → detail', () => {
   test('a marker popup routes to that event\'s detail page', async ({ page }) => {
     // Deep-link straight into the map view. Narrowing the list by a term taken
