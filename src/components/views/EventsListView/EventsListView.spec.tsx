@@ -39,6 +39,7 @@ vi.mock('@/components/service/useEvents', () => ({
       dateSingle: null,
       dateFrom: null,
       dateTo: null,
+      weekdays: [],
       hourFrom: null,
       hourTo: null,
       freeOnly: false,

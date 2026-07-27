@@ -25,6 +25,7 @@ import { useFilterNavigation } from '@/components/service/useFilterNavigation';
 import SearchInput from '@/components/ui/SearchInput/SearchInput';
 import DateRangePicker, { DatePatch } from '@/components/ui/DateRangePicker/DateRangePicker';
 import HourRangePicker from '@/components/ui/HourRangePicker/HourRangePicker';
+import WeekdayPicker from '@/components/ui/WeekdayPicker/WeekdayPicker';
 import CategoryIcon from '@/components/ui/CategoryIcon/CategoryIcon';
 import { categoryColorVar } from '@/lib/utils';
 import styles from './FilterPanel.module.scss';
@@ -128,6 +129,30 @@ export default function FilterPanel() {
             dateFrom={filters.dateFrom}
             dateTo={filters.dateTo}
             onChange={handleDateChange}
+          />
+        </AccordionDetails>
+      </Accordion>
+
+      <Divider sx={{ borderColor: 'var(--color-border)' }} />
+
+      {/* Weekdays — stands on its own, unlike the hour range, so it is never
+          disabled by the absence of a date mode. */}
+      <Accordion disableGutters>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
+          <Badge
+            badgeContent={filters.weekdays.length || undefined}
+            color="primary"
+            sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
+          >
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
+              {t.FILTER_WEEKDAYS}
+            </Typography>
+          </Badge>
+        </AccordionSummary>
+        <AccordionDetails>
+          <WeekdayPicker
+            value={filters.weekdays}
+            onChange={(weekdays) => updateFilters({ weekdays })}
           />
         </AccordionDetails>
       </Accordion>

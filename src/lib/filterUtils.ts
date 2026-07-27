@@ -1,5 +1,6 @@
 import { DateMode, EventFilters, PageSize, ViewMode } from '@/types/filter.types';
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from './constants';
+import { parseWeekdays, serializeWeekdays } from './weekdays';
 
 const VALID_PAGE_SIZES = new Set([15, 30, 60]);
 const VALID_VIEW_MODES = new Set(['grid', 'row', 'map']);
@@ -80,6 +81,9 @@ export function parseFiltersFromParams(
     dateSingle: dateMode === 'single' ? parseDate(get('dateSingle')) : null,
     dateFrom: dateMode === 'range' ? parseDate(get('dateFrom')) : null,
     dateTo: dateMode === 'range' ? parseDate(get('dateTo')) : null,
+    // Not gated on dateMode the way the hour range is: "only on Mondays" is a
+    // complete filter by itself.
+    weekdays: parseWeekdays(get('weekdays')),
     hourFrom: dateMode ? parseTime(get('hourFrom')) : null,
     hourTo: dateMode ? parseTime(get('hourTo')) : null,
     freeOnly: parseBoolean(get('freeOnly')),
@@ -102,6 +106,7 @@ export function filtersToSearchParams(filters: Partial<EventFilters>): URLSearch
   setIfTruthy(params, 'dateSingle', filters.dateSingle);
   setIfTruthy(params, 'dateFrom', filters.dateFrom);
   setIfTruthy(params, 'dateTo', filters.dateTo);
+  if (filters.weekdays?.length) params.set('weekdays', serializeWeekdays(filters.weekdays));
   setIfTruthy(params, 'hourFrom', filters.hourFrom);
   setIfTruthy(params, 'hourTo', filters.hourTo);
   if (filters.freeOnly) params.set('freeOnly', 'true');
@@ -117,6 +122,7 @@ export function countActiveFilters(filters: EventFilters): number {
   if (filters.search) count++;
   if (filters.categories.length) count++;
   if (filters.dateMode) count++;
+  if (filters.weekdays.length) count++;
   if (filters.hourFrom || filters.hourTo) count++;
   if (filters.freeOnly) count++;
   return count;
@@ -130,6 +136,7 @@ export function getDefaultFilters(): EventFilters {
     dateSingle: null,
     dateFrom: null,
     dateTo: null,
+    weekdays: [],
     hourFrom: null,
     hourTo: null,
     freeOnly: false,

@@ -115,6 +115,7 @@ function makeFilters(overrides: Partial<EventFilters> = {}): EventFilters {
     dateSingle: null,
     dateFrom: null,
     dateTo: null,
+    weekdays: [],
     hourFrom: null,
     hourTo: null,
     freeOnly: false,
@@ -533,6 +534,65 @@ describe('eventsApi', () => {
 
         expect(s.eventsBuilder.gte).not.toHaveBeenCalledWith('time_start', '18:00');
         expect(s.eventsBuilder.lte).not.toHaveBeenCalledWith('time_start', '20:00');
+      });
+    });
+
+    // The table has no day-of-week column, so the filter is pushed down as the
+    // set of dates the chosen weekdays cover. These assert the query the list
+    // and the map both send — a client-side pass would silently break paging.
+    describe('weekday filtering', () => {
+      it('narrows to the matching dates inside the date range', async () => {
+        const s = setup();
+
+        await fetchEvents(
+          'szczecin',
+          makeFilters({ weekdays: [1, 3], dateFrom: '2026-07-27', dateTo: '2026-08-02' })
+        );
+
+        expect(s.eventsBuilder.in).toHaveBeenCalledWith('date', [
+          '2026-07-27',
+          '2026-07-29',
+        ]);
+      });
+
+      it('sends an empty set when no date in range falls on a chosen day', async () => {
+        const s = setup();
+
+        // Mon–Tue filtered to Sundays: the query must match nothing rather than
+        // fall through to "no weekday filter at all".
+        await fetchEvents(
+          'szczecin',
+          makeFilters({ weekdays: [0], dateFrom: '2026-07-27', dateTo: '2026-07-28' })
+        );
+
+        expect(s.eventsBuilder.in).toHaveBeenCalledWith('date', []);
+      });
+
+      it('does not touch the query when no weekday is selected', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ weekdays: [] }));
+
+        expect(s.eventsBuilder.in).not.toHaveBeenCalledWith('date', expect.anything());
+      });
+
+      it('does not touch the query when every weekday is selected', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ weekdays: [0, 1, 2, 3, 4, 5, 6] }));
+
+        expect(s.eventsBuilder.in).not.toHaveBeenCalledWith('date', expect.anything());
+      });
+
+      it('applies to the map query too, so the pins match the list', async () => {
+        const s = setup();
+
+        await fetchMapEvents(
+          'szczecin',
+          makeFilters({ weekdays: [6], dateFrom: '2026-07-27', dateTo: '2026-08-02' })
+        );
+
+        expect(s.eventsBuilder.in).toHaveBeenCalledWith('date', ['2026-08-01']);
       });
     });
 

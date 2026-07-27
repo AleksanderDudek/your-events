@@ -69,6 +69,9 @@ export default function MyFiltersView() {
     const when = windowLabel[preset.filters.dateWindow];
     if (when) parts.push(when);
 
+    if (preset.filters.weekdays.length) {
+      parts.push(preset.filters.weekdays.map((day) => t.WEEKDAY_SHORT[day]).join(', '));
+    }
     if (preset.filters.hourFrom && preset.filters.hourTo) {
       parts.push(t.PRESETS_SUMMARY_HOURS(preset.filters.hourFrom, preset.filters.hourTo));
     }

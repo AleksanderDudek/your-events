@@ -41,6 +41,7 @@ describe('FilterPanel', () => {
     render(<FilterPanel />);
     expect(screen.getByText('Kategorie')).toBeInTheDocument();
     expect(screen.getByText('Data')).toBeInTheDocument();
+    expect(screen.getByText('Dni tygodnia')).toBeInTheDocument();
     expect(screen.getByText('Godzina')).toBeInTheDocument();
   });
 

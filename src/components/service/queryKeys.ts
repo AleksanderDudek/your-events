@@ -12,6 +12,7 @@ function queryShape(filters: EventFilters) {
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
     dateMode: filters.dateMode,
+    weekdays: filters.weekdays.join(','),
     hourFrom: filters.hourFrom,
     hourTo: filters.hourTo,
     freeOnly: filters.freeOnly,

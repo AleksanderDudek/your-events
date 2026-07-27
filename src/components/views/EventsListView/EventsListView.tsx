@@ -153,6 +153,9 @@ export default function EventsListView() {
   filters.categories.forEach((cat) => {
     activeChips.push({ key: `cat-${cat}`, label: bySlug.get(cat)?.display_name ?? cat });
   });
+  filters.weekdays.forEach((day) => {
+    activeChips.push({ key: `wd-${day}`, label: t.WEEKDAY_LONG[day] });
+  });
   if (filters.freeOnly) {
     activeChips.push({ key: 'freeOnly', label: t.FILTER_FREE_ONLY });
   }
@@ -244,7 +247,12 @@ export default function EventsListView() {
                 onDelete={() => {
                   if (chip.key === 'search') updateFilter({ search: '' });
                   else if (chip.key === 'freeOnly') updateFilter({ freeOnly: false });
-                  else if (chip.key.startsWith('cat-')) {
+                  else if (chip.key.startsWith('wd-')) {
+                    const day = Number(chip.key.slice(3));
+                    updateFilter({
+                      weekdays: readCurrentFilters().weekdays.filter((w) => w !== day),
+                    });
+                  } else if (chip.key.startsWith('cat-')) {
                     const cat = chip.key.replace('cat-', '');
                     updateFilter({
                       categories: readCurrentFilters().categories.filter((c) => c !== cat),

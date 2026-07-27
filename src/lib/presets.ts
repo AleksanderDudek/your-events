@@ -1,7 +1,8 @@
-import { EventFilters, PageSize, ViewMode } from '@/types/filter.types';
+import { EventFilters, PageSize, ViewMode, Weekday } from '@/types/filter.types';
 import { FilterPreset, PresetDateWindow, PresetFilters } from '@/types/preset.types';
 import { filtersToSearchParams } from './filterUtils';
 import { getUpcomingWeekend } from './homeFilters';
+import { sortWeekdays } from './weekdays';
 import { DEFAULT_PAGE_SIZE } from './constants';
 
 // Everything here is pure: the browser-storage side lives in
@@ -36,6 +37,7 @@ export function emptyPresetFilters(): PresetFilters {
     dateWindow: 'none',
     dateFrom: null,
     dateTo: null,
+    weekdays: [],
     hourFrom: null,
     hourTo: null,
     freeOnly: false,
@@ -58,6 +60,7 @@ export function presetFiltersFromEventFilters(filters: EventFilters): PresetFilt
     dateWindow: hasRange ? 'fixed' : 'none',
     dateFrom: filters.dateSingle ?? filters.dateFrom,
     dateTo: filters.dateSingle ?? filters.dateTo,
+    weekdays: [...filters.weekdays],
     hourFrom: filters.hourFrom,
     hourTo: filters.hourTo,
     freeOnly: filters.freeOnly,
@@ -104,6 +107,9 @@ export function presetToEventFilters(preset: FilterPreset, now: Date): Partial<E
     dateMode: range ? 'range' : null,
     dateFrom: range?.dateFrom ?? null,
     dateTo: range?.dateTo ?? null,
+    // Unlike the hour range, this one does not need a date window to mean
+    // something, so it is carried over as saved.
+    weekdays: preset.filters.weekdays,
     // The list only honours an hour window alongside a date one, so an hour
     // range saved without a date would silently do nothing.
     hourFrom: range ? preset.filters.hourFrom : null,
@@ -134,6 +140,14 @@ function asStringArray(value: unknown): string[] {
   return value.filter((v): v is string => typeof v === 'string' && v.length > 0);
 }
 
+function asWeekdays(value: unknown): Weekday[] {
+  if (!Array.isArray(value)) return [];
+  const days = value.filter(
+    (v): v is Weekday => typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 6
+  );
+  return sortWeekdays(days);
+}
+
 function parsePresetFilters(raw: unknown): PresetFilters {
   const base = emptyPresetFilters();
   if (!raw || typeof raw !== 'object') return base;
@@ -147,6 +161,7 @@ function parsePresetFilters(raw: unknown): PresetFilters {
     dateWindow,
     dateFrom: asPattern(value.dateFrom, DATE_REGEX),
     dateTo: asPattern(value.dateTo, DATE_REGEX),
+    weekdays: asWeekdays(value.weekdays),
     hourFrom: asPattern(value.hourFrom, TIME_REGEX),
     hourTo: asPattern(value.hourTo, TIME_REGEX),
     freeOnly: value.freeOnly === true,
@@ -246,7 +261,11 @@ export function duplicatePreset(
     ...presets[index],
     id: newId,
     name: name.slice(0, MAX_NAME_LENGTH),
-    filters: { ...presets[index].filters, categories: [...presets[index].filters.categories] },
+    filters: {
+      ...presets[index].filters,
+      categories: [...presets[index].filters.categories],
+      weekdays: [...presets[index].filters.weekdays],
+    },
     createdAt,
   };
   const next = [...presets];

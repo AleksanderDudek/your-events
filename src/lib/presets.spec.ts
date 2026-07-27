@@ -128,6 +128,13 @@ describe('presetHref', () => {
   it('produces a bare list URL when nothing is filtered', () => {
     expect(presetHref(makePreset(), MONDAY)).toBe('/wroclaw/wydarzenia');
   });
+
+  it('carries a weekday selection even without a date window', () => {
+    const preset = makePreset({
+      filters: { ...emptyPresetFilters(), weekdays: [1, 5] },
+    });
+    expect(presetHref(preset, MONDAY)).toContain('weekdays=1%2C5');
+  });
 });
 
 describe('presetFiltersFromEventFilters', () => {
@@ -149,6 +156,13 @@ describe('presetFiltersFromEventFilters', () => {
       dateSingle: '2026-08-01',
     });
     expect(saved).toMatchObject({ dateWindow: 'fixed', dateFrom: '2026-08-01', dateTo: '2026-08-01' });
+  });
+
+  it('keeps the weekday selection, and copies rather than aliases it', () => {
+    const filters = { ...getDefaultFilters(), weekdays: [1, 4] as const };
+    const saved = presetFiltersFromEventFilters({ ...filters, weekdays: [...filters.weekdays] });
+    expect(saved.weekdays).toEqual([1, 4]);
+    expect(saved.weekdays).not.toBe(filters.weekdays);
   });
 });
 
@@ -176,6 +190,13 @@ describe('parsePresets', () => {
     expect(presets).toHaveLength(2);
     expect(presets[0].filters.categories).toEqual([]);
     expect(presets[0].filters.dateWindow).toBe('none');
+  });
+
+  it('keeps only real day numbers out of a stored weekday list', () => {
+    const raw = JSON.stringify([
+      { id: 'p1', cityId: 'wroclaw', name: 'Ok', filters: { weekdays: [5, 9, '1', null, 0] } },
+    ]);
+    expect(parsePresets(raw)[0].filters.weekdays).toEqual([5, 0]);
   });
 
   it('drops entries with no id or no city — neither can be opened or edited', () => {
