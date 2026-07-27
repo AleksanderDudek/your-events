@@ -29,7 +29,8 @@ export default function LanguageSwitcher() {
           minWidth: 36,
           fontFamily: 'var(--font-mono)',
           fontSize: '0.6875rem',
-          fontWeight: 600,
+          // DM Mono tops out at 500; 600 would be a synthesised fake bold.
+          fontWeight: 500,
           letterSpacing: '0.04em',
           textTransform: 'uppercase',
           '&.Mui-selected': {
