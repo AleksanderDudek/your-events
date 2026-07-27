@@ -7,7 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useEvents } from '@/components/service/useEvents';
+import { useEvents, useMapEvents } from '@/components/service/useEvents';
 import { useCategories } from '@/components/service/useCategories';
 import FilterPanel from '@/components/common/FilterPanel/FilterPanel';
 import EventGrid from '@/components/common/EventGrid/EventGrid';
@@ -32,6 +32,7 @@ import styles from './EventsListView.module.scss';
 
 function renderBody({
   events,
+  mapEvents,
   isLoading,
   filters,
   clearAll,
@@ -40,8 +41,11 @@ function renderBody({
   citySlug,
   displayNameToSlug,
   mapPopupCta,
+  mapLoading,
 }: {
   events: Event[];
+  mapEvents: Event[];
+  mapLoading: boolean;
   isLoading: boolean;
   filters: EventFilters;
   clearAll: () => void;
@@ -53,19 +57,34 @@ function renderBody({
 }) {
   // Initial fetch (no data cached yet) → render shape-matching skeletons sized
   // to the user's chosen pageSize so the page doesn't reflow when data lands.
-  if (isLoading && events.length === 0) {
-    if (filters.viewMode === 'map') return null;
-    return filters.viewMode === 'grid' ? (
-      <EventGridSkeleton count={filters.pageSize} />
-    ) : (
-      <EventListSkeleton count={filters.pageSize} />
-    );
-  }
-  if (events.length === 0) {
-    return <EmptyState onClear={countActiveFilters(filters) > 0 ? clearAll : undefined} />;
-  }
+  // The map runs its own query, so it has to answer "still loading?" and "found
+  // nothing?" from that one — the list's page could be empty or full without
+  // saying anything about how many pins there are.
   if (filters.viewMode === 'map') {
-    const withCoords = events.filter(
+    if (mapLoading && mapEvents.length === 0) return null;
+    if (mapEvents.length === 0) {
+      return <EmptyState onClear={countActiveFilters(filters) > 0 ? clearAll : undefined} />;
+    }
+  } else {
+    // Initial fetch (no data cached yet) → render shape-matching skeletons sized
+    // to the user's chosen pageSize so the page doesn't reflow when data lands.
+    if (isLoading && events.length === 0) {
+      return filters.viewMode === 'grid' ? (
+        <EventGridSkeleton count={filters.pageSize} />
+      ) : (
+        <EventListSkeleton count={filters.pageSize} />
+      );
+    }
+    if (events.length === 0) {
+      return <EmptyState onClear={countActiveFilters(filters) > 0 ? clearAll : undefined} />;
+    }
+  }
+
+  if (filters.viewMode === 'map') {
+    // Pins come from their own query — every match, not the page the list is on
+    // — so paging must not thin them out here. The coordinate check is belt and
+    // braces: fetchMapEvents already excludes rows without one.
+    const withCoords = mapEvents.filter(
       (e) => e.location.lat !== null && e.location.lng !== null
     );
     if (withCoords.length === 0) {
@@ -108,6 +127,15 @@ function renderBody({
 
 export default function EventsListView() {
   const { events, total, isLoading, isError, isFetching, refetch, filters } = useEvents();
+  // Fetched only while the map is on screen; it is the whole result set, not a
+  // page of it.
+  const isMapView = filters.viewMode === 'map';
+  const {
+    events: mapEvents,
+    total: mapTotal,
+    isLoading: mapLoading,
+    isFetching: mapFetching,
+  } = useMapEvents(isMapView);
   const { bySlug, displayNameToSlug } = useCategories();
   const { city } = useCity();
   const { t } = useTranslation();
@@ -155,7 +183,14 @@ export default function EventsListView() {
             >
               {t.RESULTS_COUNT(total)}
             </Typography>
-            {isFetching && !isLoading && (
+            {/* The pin count visibly disagreeing with the result count needs a
+                stated reason — events with no coordinates cannot be placed. */}
+            {isMapView && !mapLoading && mapTotal < total && (
+              <Typography variant="body2" sx={{ color: 'var(--color-text-muted)' }}>
+                {t.MAP_SHOWN_OF_TOTAL(mapTotal, total)}
+              </Typography>
+            )}
+            {((isFetching && !isLoading) || (isMapView && mapFetching && !mapLoading)) && (
               <Box
                 className={styles.loadingPill}
                 role="status"
@@ -231,6 +266,7 @@ export default function EventsListView() {
         >
           {renderBody({
             events,
+            mapEvents,
             isLoading,
             filters,
             clearAll,
@@ -239,6 +275,7 @@ export default function EventsListView() {
             citySlug: city.id,
             displayNameToSlug,
             mapPopupCta: t.MAP_POPUP_CTA,
+            mapLoading: mapLoading,
           })}
         </Box>
 

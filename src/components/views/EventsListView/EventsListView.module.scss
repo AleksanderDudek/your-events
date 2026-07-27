@@ -43,6 +43,11 @@
 .headerLeft {
   display: flex;
   align-items: center;
+  // The result count can be followed by the map's "N of M" note and the
+  // refetch pill; without a gap those run straight into each other, and on a
+  // narrow viewport they need to be allowed to wrap rather than overflow.
+  flex-wrap: wrap;
+  gap: 4px 10px;
 }
 
 .headerRight {
