@@ -64,6 +64,14 @@ export const TEXT = {
   growDiscordCta: 'Wejdź na serwer',
   growFormCta: 'Wypełnij ankietę',
   growHeadlineEn: 'Grow with us',
+  // "Moje filtry" — user-owned filter presets kept in localStorage.
+  presetsSaveCurrent: 'Zapisz filtry',
+  presetsNew: /Nowy filtr/,
+  presetsName: 'Nazwa',
+  presetsSave: 'Zapisz',
+  presetsWhen: 'Kiedy',
+  presetsWeekend: 'Najbliższy weekend',
+  presetsEmpty: 'Nie masz jeszcze własnych filtrów',
 } as const;
 
 // The mobile filter Fab is labelled "Filtry (N)"; the leading word is stable.
