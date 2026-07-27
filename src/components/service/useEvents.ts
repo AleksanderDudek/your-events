@@ -3,13 +3,18 @@
 import { useMemo } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { fetchEvents, ResolvedCategoryFilter } from './eventsApi';
+import { fetchEvents, fetchMapEvents, ResolvedCategoryFilter } from './eventsApi';
 import { eventsKeys } from './queryKeys';
 import { parseFiltersFromParams } from '@/lib/filterUtils';
 import { useCategories } from './useCategories';
 import { useCity } from '@/config/CityProvider';
 
-export function useEvents() {
+/**
+ * The filters in the URL, with category slugs resolved to the display names the
+ * events table stores. Shared by the list and map queries so the two can never
+ * disagree about what the user asked for.
+ */
+function useResolvedFilters() {
   const searchParams = useSearchParams();
   const filters = parseFiltersFromParams(searchParams);
   const { bySlug } = useCategories();
@@ -31,8 +36,15 @@ export function useEvents() {
     return { topLevelMains, subPairs };
   }, [filters.categories, bySlug]);
 
-  const categoriesReady = bySlug.size > 0;
-  const queryEnabled = filters.categories.length === 0 || categoriesReady;
+  // A category filter cannot be resolved before the category table has loaded,
+  // and querying without it would briefly show unfiltered results.
+  const ready = filters.categories.length === 0 || bySlug.size > 0;
+
+  return { filters, categoryFilter, city, ready };
+}
+
+export function useEvents() {
+  const { filters, categoryFilter, city, ready } = useResolvedFilters();
 
   const { data, isLoading, isError, isFetching, error, refetch } = useQuery({
     queryKey: eventsKeys.list(city.id, filters),
@@ -41,7 +53,7 @@ export function useEvents() {
     placeholderData: keepPreviousData,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-    enabled: queryEnabled,
+    enabled: ready,
   });
 
   return {
@@ -53,5 +65,34 @@ export function useEvents() {
     error,
     refetch,
     filters,
+  };
+}
+
+/**
+ * Every mappable event matching the current filters, not just the page the list
+ * happens to be showing.
+ *
+ * Only runs while the map is the active view: the response is far larger than a
+ * page of results, and there is no reason to pay for it in grid or list view.
+ */
+export function useMapEvents(enabled: boolean) {
+  const { filters, categoryFilter, city, ready } = useResolvedFilters();
+
+  const { data, isLoading, isError, isFetching } = useQuery({
+    queryKey: eventsKeys.map(city.id, filters),
+    queryFn: () => fetchMapEvents(city.id, filters, categoryFilter),
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    enabled: enabled && ready,
+  });
+
+  return {
+    events: data?.events ?? [],
+    total: data?.total ?? 0,
+    isLoading,
+    isError,
+    isFetching,
   };
 }

@@ -46,6 +46,10 @@ const pl = {
   VIEW_MAP: 'Widok mapy',
   MAP_NO_LOCATION: 'Brak lokalizacji na mapie',
   MAP_EVENT_NO_PINS: 'Żadne z wydarzeń nie ma współrzędnych do pokazania na mapie.',
+  // Shown when some matches cannot become pins, so the pin count visibly
+  // disagreeing with the result count has a stated reason.
+  MAP_SHOWN_OF_TOTAL: (shown: number, total: number) =>
+    `Na mapie: ${shown} z ${total} — reszta bez lokalizacji`,
   MAP_POPUP_CTA: 'Zobacz wydarzenie',
   HOME_MAP_TITLE: 'Wydarzenia na mapie',
   HOME_MAP_SUB: 'Zobacz, gdzie się dzieje',
@@ -259,6 +263,8 @@ const en: Messages = {
   VIEW_MAP: 'Map view',
   MAP_NO_LOCATION: 'No map location',
   MAP_EVENT_NO_PINS: 'None of these events have coordinates to show on the map.',
+  MAP_SHOWN_OF_TOTAL: (shown: number, total: number) =>
+    `On the map: ${shown} of ${total} — the rest have no location`,
   MAP_POPUP_CTA: 'See event',
   HOME_MAP_TITLE: 'Events on the map',
   HOME_MAP_SUB: 'See where things are happening',

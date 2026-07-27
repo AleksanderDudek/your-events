@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { fetchEvents, fetchEvent, fetchCategories } from './eventsApi';
+import {
+  fetchEvents,
+  fetchEvent,
+  fetchCategories,
+  fetchMapEvents,
+  MAP_EVENT_LIMIT,
+} from './eventsApi';
 import { getSupabaseForCity } from '@/lib/supabase';
 import { NotFoundError, ServerError } from '@/lib/utils';
 import type { EventFilters } from '@/types/filter.types';
@@ -16,7 +22,19 @@ type SingleResult = { data: unknown | null; error: { message: string; code?: str
 
 // The PostgREST filter/order/range methods eventsApi chains. Each is a spy that
 // returns the builder, so we can assert exactly which query was constructed.
-const QUERY_METHODS = ['select', 'in', 'or', 'eq', 'gte', 'lte', 'order', 'range'] as const;
+const QUERY_METHODS = [
+  'select',
+  'in',
+  'or',
+  'eq',
+  'gte',
+  'lte',
+  'order',
+  'range',
+  // The map query narrows to rows that can become a pin, and caps the response.
+  'not',
+  'limit',
+] as const;
 type QueryMethod = (typeof QUERY_METHODS)[number];
 type Builder = Record<QueryMethod, ReturnType<typeof vi.fn>> & {
   single: ReturnType<typeof vi.fn>;
@@ -327,6 +345,64 @@ describe('eventsApi', () => {
 
       // from = (2 - 1) * 15 = 15, to = 15 + 15 - 1 = 29
       expect(s.eventsBuilder.range).toHaveBeenCalledWith(15, 29);
+    });
+  });
+
+  describe('fetchMapEvents', () => {
+    it('never pages — a map is one view of the whole result, not page N of it', async () => {
+      const s = setup();
+
+      await fetchMapEvents('szczecin', makeFilters({ page: 3, pageSize: 15 }));
+
+      expect(s.eventsBuilder.range).not.toHaveBeenCalled();
+      expect(s.eventsBuilder.limit).toHaveBeenCalledWith(MAP_EVENT_LIMIT);
+    });
+
+    it('excludes rows with no coordinates in the query, not after the fact', async () => {
+      // They can never become a pin, and fetching them would spend the row
+      // budget on events the map cannot show.
+      const s = setup();
+
+      await fetchMapEvents('szczecin', makeFilters());
+
+      expect(s.eventsBuilder.not).toHaveBeenCalledWith('lat', 'is', null);
+      expect(s.eventsBuilder.not).toHaveBeenCalledWith('lng', 'is', null);
+    });
+
+    it('applies the same filters as the list, so the two cannot disagree', async () => {
+      const s = setup();
+
+      await fetchMapEvents('szczecin', makeFilters({ search: 'jazz', dateFrom: '2026-03-01' }));
+
+      expect(s.eventsBuilder.or).toHaveBeenCalledWith(
+        expect.stringContaining('name.ilike')
+      );
+      expect(s.eventsBuilder.gte).toHaveBeenCalledWith('date', '2026-03-01');
+    });
+
+    it('reports the count of mappable matches', async () => {
+      const s = setup();
+      s.results.events = { data: [makeRow(), makeRow({ id: 102 })], count: 572, error: null };
+
+      const { events, total } = await fetchMapEvents('szczecin', makeFilters());
+
+      expect(events.map((e) => e.id)).toEqual(['101', '102']);
+      expect(total).toBe(572);
+    });
+
+    it('recomputes the total when freeOnly is applied client-side', async () => {
+      // freeOnly has no column to filter on, so the server count would be wrong.
+      const s = setup();
+      s.results.events = {
+        data: [makeRow({ is_free: true }), makeRow({ id: 102, is_free: false, price: 40 })],
+        count: 2,
+        error: null,
+      };
+
+      const { events, total } = await fetchMapEvents('szczecin', makeFilters({ freeOnly: true }));
+
+      expect(events).toHaveLength(1);
+      expect(total).toBe(1);
     });
 
     it('matches a search term against both the event name and the venue', async () => {

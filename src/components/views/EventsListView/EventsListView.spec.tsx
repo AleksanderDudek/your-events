@@ -47,6 +47,15 @@ vi.mock('@/components/service/useEvents', () => ({
       viewMode: 'grid',
     },
   }),
+  // The map runs a separate query — it shows every match rather than the page
+  // the list is on — so it has to be stubbed alongside useEvents.
+  useMapEvents: () => ({
+    events: [],
+    total: 0,
+    isLoading: false,
+    isError: false,
+    isFetching: false,
+  }),
 }));
 
 import EventsListView from './EventsListView';

@@ -123,18 +123,21 @@ function quoteForOr(value: string): string {
   return `"${value.replace(/[\\"]/g, '\\$&')}"`;
 }
 
-export async function fetchEvents(
-  cityId: CityId | string,
+// Ceiling on rows the map view pulls in one go. PostgREST caps a response at
+// 1000 rows anyway; naming it here makes the truncation visible to callers
+// instead of it looking like the city simply has no more events.
+export const MAP_EVENT_LIMIT = 1000;
+
+/**
+ * The filter clauses shared by every events query, so the list and the map can
+ * never disagree about what "matching" means. Paging and map-specific narrowing
+ * are left to the caller — that is the only thing the two differ on.
+ */
+function buildFilteredQuery(
+  supabase: ReturnType<typeof getSupabaseForCity>,
   filters: EventFilters,
-  categoryFilter: ResolvedCategoryFilter = EMPTY_CATEGORY_FILTER
-): Promise<{ events: Event[]; total: number }> {
-  const city = getCity(cityId);
-  const supabase = getSupabaseForCity(city.id);
-  const from = (filters.page - 1) * filters.pageSize;
-  const to = from + filters.pageSize - 1;
-
-  const needsClientFilter = filters.freeOnly;
-
+  categoryFilter: ResolvedCategoryFilter
+) {
   let query = supabase.from('events').select('*', { count: 'exact' });
 
   // People search either for what ("jazz") or for where ("Filharmonia"), so one
@@ -166,7 +169,22 @@ export async function fetchEvents(
   if (filters.dateMode && filters.hourFrom) query = query.gte('time_start', filters.hourFrom);
   if (filters.dateMode && filters.hourTo) query = query.lte('time_start', filters.hourTo);
 
-  query = query.order('date').order('time_start');
+  return query.order('date').order('time_start');
+}
+
+export async function fetchEvents(
+  cityId: CityId | string,
+  filters: EventFilters,
+  categoryFilter: ResolvedCategoryFilter = EMPTY_CATEGORY_FILTER
+): Promise<{ events: Event[]; total: number }> {
+  const city = getCity(cityId);
+  const supabase = getSupabaseForCity(city.id);
+  const from = (filters.page - 1) * filters.pageSize;
+  const to = from + filters.pageSize - 1;
+
+  const needsClientFilter = filters.freeOnly;
+
+  let query = buildFilteredQuery(supabase, filters, categoryFilter);
   if (!needsClientFilter) query = query.range(from, to);
 
   const { data, count, error } = await query;
@@ -181,6 +199,46 @@ export async function fetchEvents(
 
   const filtered = applyClientFilters(mapped, filters);
   return { events: filtered.slice(from, to + 1), total: filtered.length };
+}
+
+/**
+ * Every matching event that can actually be placed on a map, ignoring paging.
+ *
+ * The map used to render whatever page the list was on, so a city with 593
+ * matches showed at most `pageSize` pins — a dozen dots standing in for the
+ * whole city. Paging is a reading aid for a list; a map is a single view of the
+ * whole result, and cutting it to 15 rows made it lie.
+ *
+ * Rows without coordinates are excluded in the query rather than dropped after
+ * arriving: they can never become a pin, and leaving them in would spend the
+ * row budget on events the map cannot show. `total` is the count of mappable
+ * matches, so callers can say how many of the results made it onto the map.
+ */
+export async function fetchMapEvents(
+  cityId: CityId | string,
+  filters: EventFilters,
+  categoryFilter: ResolvedCategoryFilter = EMPTY_CATEGORY_FILTER
+): Promise<{ events: Event[]; total: number }> {
+  const city = getCity(cityId);
+  const supabase = getSupabaseForCity(city.id);
+
+  const { data, count, error } = await buildFilteredQuery(supabase, filters, categoryFilter)
+    .not('lat', 'is', null)
+    .not('lng', 'is', null)
+    .limit(MAP_EVENT_LIMIT);
+  if (error) throw new ServerError(error.message);
+
+  const cityName = city.displayName.pl;
+  const mapped = (data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName));
+
+  // freeOnly has no column to filter on, so it is applied here — as in
+  // fetchEvents — which means the total has to be recomputed from the result.
+  if (filters.freeOnly) {
+    const filtered = applyClientFilters(mapped, filters);
+    return { events: filtered, total: filtered.length };
+  }
+
+  return { events: mapped, total: count ?? mapped.length };
 }
 
 function applyClientFilters(events: Event[], filters: EventFilters): Event[] {
