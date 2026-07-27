@@ -42,6 +42,32 @@ test.describe('Filtering the events list', () => {
     await expect(page).toHaveURL(/categories=/);
   });
 
+  // The weekday filter has no column behind it — the selected days are expanded
+  // into concrete dates before the query is sent — so the URL contract and the
+  // "click again to un-pick" behaviour are what there is to guard.
+  test('weekdays can be picked and un-picked, and land in the URL', async ({ page }) => {
+    await gotoEvents(page);
+    await openFilters(page);
+
+    await page.getByText(TEXT.filterWeekdays).click();
+    // Scoped to the picker: a picked day also appears as a removable chip above
+    // the results, under the very same accessible name.
+    const picker = page.getByRole('group', { name: TEXT.filterWeekdays });
+    const monday = picker.getByRole('button', { name: TEXT.weekdayMonday });
+    await expect(monday).toBeVisible();
+
+    await monday.click();
+    await expect(page).toHaveURL(/weekdays=1(&|$)/);
+
+    // A second day adds to the selection rather than replacing it.
+    await picker.getByRole('button', { name: TEXT.weekdayWednesday }).click();
+    await expect(page).toHaveURL(/weekdays=1(%2C|,)3/);
+
+    // Clicking a picked day releases it — the point of a toggle.
+    await monday.click();
+    await expect(page).toHaveURL(/weekdays=3(&|$)/);
+  });
+
   test('pagination advances to page 2 when there are enough events', async ({ page }) => {
     await gotoEvents(page);
     const next = page.getByRole('button', { name: 'Go to next page' });

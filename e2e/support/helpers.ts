@@ -46,6 +46,11 @@ export const TEXT = {
   // "Clear filters" — rendered in the FilterPanel header (desktop) and again in
   // the mobile drawer footer, so locate with .first().
   filterClear: /Wyczyść filtry/,
+  // The weekday section of the FilterPanel, collapsed until clicked, plus two
+  // of the day buttons inside it (their accessible names are the long forms).
+  filterWeekdays: 'Dni tygodnia',
+  weekdayMonday: 'Poniedziałek',
+  weekdayWednesday: 'Środa',
   // The freeOnly active-filter chip. freeOnly is a URL-only filter (no toggle
   // exists in the panel UI), so it is exercised via deep links.
   freeOnlyChip: 'Tylko bezpłatne',
