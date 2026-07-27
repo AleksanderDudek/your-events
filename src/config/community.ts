@@ -8,6 +8,10 @@
 // ahead of the dynamic /[city] segment — no city id can shadow it.
 export const GROW_WITH_US_PATH = '/rozwijaj-z-nami';
 
+// "Moje filtry" — the visitor's own saved filter presets. Also city-agnostic:
+// each preset carries the city it belongs to.
+export const MY_FILTERS_PATH = '/moje-filtry';
+
 // Community Discord invite (non-expiring).
 export const DISCORD_INVITE_URL = 'https://discord.gg/dbSmbbCSa';
 

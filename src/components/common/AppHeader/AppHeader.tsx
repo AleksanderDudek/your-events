@@ -20,7 +20,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
-import { GROW_WITH_US_PATH } from '@/config/community';
+import { GROW_WITH_US_PATH, MY_FILTERS_PATH } from '@/config/community';
 import Spark from '@/components/common/Spark/Spark';
 import ThemeToggle from '@/components/common/ThemeToggle/ThemeToggle';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -38,7 +38,8 @@ export default function AppHeader() {
   const navItems = [
     { label: t.NAV_HOME, href: `/${city.id}` as Route },
     { label: t.NAV_EVENTS, href: `/${city.id}/wydarzenia` as Route },
-    // City-agnostic: the community page lives outside the /{city} subtree.
+    // City-agnostic: these live outside the /{city} subtree.
+    { label: t.NAV_PRESETS, href: MY_FILTERS_PATH as Route },
     { label: t.NAV_GROW, href: GROW_WITH_US_PATH as Route },
   ];
 
