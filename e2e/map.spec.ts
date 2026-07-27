@@ -54,6 +54,53 @@ test.describe('Map: markers carry their category', () => {
   });
 });
 
+test.describe('Map: shows every match, not one page of them', () => {
+  test('renders far more events than the page size allows', async ({ page }) => {
+    // The map used to render whatever page the list was on, so a city with
+    // hundreds of matches showed at most `pageSize` pins. Counting what the
+    // clusters say they hold is the only way to see that from the outside.
+    await page.goto(`/${CITY}/wydarzenia?viewMode=map&pageSize=15`);
+    await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 25000 });
+    await expect(page.locator('.marker-cluster, .leaflet-marker-icon').first()).toBeVisible({
+      timeout: 25000,
+    });
+
+    const represented = await page.evaluate(() => {
+      const clustered = Array.from(document.querySelectorAll('.marker-cluster span')).reduce(
+        (sum, el) => sum + Number(el.textContent || 0),
+        0
+      );
+      const single = document.querySelectorAll(
+        '.leaflet-marker-icon:not(.marker-cluster)'
+      ).length;
+      return clustered + single;
+    });
+
+    const resultText = await page.getByText(TEXT.resultsCount).first().textContent();
+    const total = Number(resultText?.match(/\d+/)?.[0] ?? 0);
+    // Data-independent: assert against the page size and the real total rather
+    // than a pin count that changes with every scrape.
+    test.skip(total <= 15, 'Not enough events in this slice to tell the two apart');
+    expect(represented).toBeGreaterThan(15);
+    expect(represented).toBeLessThanOrEqual(total);
+  });
+
+  test('says how many results could not be placed', async ({ page }) => {
+    await page.goto(`/${CITY}/wydarzenia?viewMode=map`);
+    await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 25000 });
+    await expect(page.getByText(TEXT.resultsCount).first()).toBeVisible({ timeout: 25000 });
+
+    // Only shown when some matches genuinely lack coordinates — otherwise there
+    // is nothing to explain.
+    const note = page.getByText(/Na mapie: \d+ z \d+/);
+    if ((await note.count()) > 0) {
+      const text = (await note.first().textContent()) ?? '';
+      const [shown, total] = [...text.matchAll(/\d+/g)].map((m) => Number(m[0]));
+      expect(shown).toBeLessThan(total);
+    }
+  });
+});
+
 test.describe('Map: pin → popup → detail', () => {
   test('a marker popup routes to that event\'s detail page', async ({ page }) => {
     // Deep-link straight into the map view. Narrowing the list by a term taken
