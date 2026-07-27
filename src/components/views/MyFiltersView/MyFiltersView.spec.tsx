@@ -30,6 +30,7 @@ function preset(overrides: Partial<FilterPreset> = {}): FilterPreset {
       dateWindow: 'weekend',
       dateFrom: null,
       dateTo: null,
+      weekdays: [],
       hourFrom: null,
       hourTo: null,
       freeOnly: true,

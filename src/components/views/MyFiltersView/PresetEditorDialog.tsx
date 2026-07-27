@@ -16,6 +16,7 @@ import Chip from '@mui/material/Chip';
 import { useTranslation } from '@/i18n';
 import { useCategories } from '@/components/service/useCategories';
 import { AVAILABLE_CITIES } from '@/config/cities';
+import WeekdayPicker from '@/components/ui/WeekdayPicker/WeekdayPicker';
 import { MAX_NAME_LENGTH, emptyPresetFilters } from '@/lib/presets';
 import type { FilterPreset, PresetDateWindow } from '@/types/preset.types';
 
@@ -169,6 +170,16 @@ export default function PresetEditorDialog({
             />
           </Box>
         )}
+
+        <Box>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            {t.FILTER_WEEKDAYS}
+          </Typography>
+          <WeekdayPicker
+            value={filters.weekdays}
+            onChange={(weekdays) => setFilters({ weekdays })}
+          />
+        </Box>
 
         {/* The events list only applies an hour window alongside a date one, so
             offering it without a date would be a control that does nothing. */}

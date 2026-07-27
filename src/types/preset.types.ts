@@ -1,4 +1,4 @@
-import { PageSize, ViewMode } from './filter.types';
+import { PageSize, ViewMode, Weekday } from './filter.types';
 
 /**
  * When a preset's date filter should point, resolved at the moment the user
@@ -20,6 +20,9 @@ export interface PresetFilters {
   // Only meaningful when dateWindow is 'fixed'.
   dateFrom: string | null;
   dateTo: string | null;
+  // Survives independently of dateWindow — "Mondays and Thursdays" is a lasting
+  // habit, not a window that has to be re-resolved against today.
+  weekdays: Weekday[];
   hourFrom: string | null;
   hourTo: string | null;
   freeOnly: boolean;
