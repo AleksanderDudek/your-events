@@ -180,6 +180,7 @@ const pl = {
     'A jeśli Discord to nie Twoja bajka — wystarczy kilka pytań. Bez konta, bez zapisywania się na cokolwiek. Zajmie mniej niż te dwadzieścia minut przewijania telefonu.',
   GROW_FORM_CTA: 'Wypełnij ankietę',
   GROW_EXTERNAL_HINT: 'Otwiera się w nowej karcie',
+  RELATED_TITLE: 'Podobne wydarzenia',
   NAV_PRESETS: 'Moje filtry',
   PRESETS_TITLE: 'Moje filtry',
   PRESETS_SUBTITLE:
@@ -388,6 +389,7 @@ const en: Messages = {
     'And if Discord is not your thing — a handful of questions is enough. No account, no signing up for anything. It takes less than those twenty minutes of scrolling.',
   GROW_FORM_CTA: 'Fill in the survey',
   GROW_EXTERNAL_HINT: 'Opens in a new tab',
+  RELATED_TITLE: 'Similar events',
   NAV_PRESETS: 'My filters',
   PRESETS_TITLE: 'My filters',
   PRESETS_SUBTITLE:
