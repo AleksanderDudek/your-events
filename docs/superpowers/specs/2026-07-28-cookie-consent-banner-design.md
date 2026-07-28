@@ -138,9 +138,29 @@ see the e2e task in the plan.
 
 ## Hydration
 
-`getServerSnapshot` returns `null` and the banner renders only after mount.
-The static export prerenders no banner markup; otherwise all 1087 prerendered
-pages would ship it and flash it at visitors who have already answered.
+The static export must prerender no banner markup. Otherwise all 1087
+prerendered pages ship it, and every visitor who already answered sees it flash
+before hydration reads their choice from localStorage.
+
+Two separate mechanisms are needed, and conflating them was a bug caught in
+review:
+
+- `getServerSnapshot` returning a constant buys **hydration safety** — the
+  server render and the hydration render agree, so React does not warn. It does
+  *not* hide the banner. Consent is unknowable at build time, so the constant
+  parses to "no choice", and "no choice" is exactly the state that opens the
+  banner.
+- An explicit **hydration gate** is what keeps it out of the HTML:
+
+  ```ts
+  const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
+  // isOpen: isHydrated && (choice === null || reopened)
+  ```
+
+  React uses `getServerSnapshot` for both the prerender and the hydration
+  render, then switches to `getSnapshot`. So `isHydrated` reads false until
+  hydration finishes — the "have we mounted yet" signal, expressed through the
+  same store rather than a separate `useEffect`.
 
 ## Testing
 
