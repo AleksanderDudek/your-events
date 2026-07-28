@@ -464,7 +464,7 @@ const en: Messages = {
     'Join our Discord or fill in a short survey and help decide where Go to city goes next.',
   COOKIE_TITLE: 'Cookies and analytics',
   COOKIE_BODY:
-    'We use Microsoft Clarity to see how the site is used. Consent lets us join your page views into a single session.',
+    'We use Microsoft Clarity to see how you use the site. Consent lets us join your page views into a single session.',
   COOKIE_ACCEPT: 'Accept',
   COOKIE_REJECT: 'Reject',
   COOKIE_MORE: 'Privacy policy',

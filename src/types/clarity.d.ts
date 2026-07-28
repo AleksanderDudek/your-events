@@ -7,6 +7,10 @@ interface ClarityConsentV2 {
 
 declare global {
   interface Window {
+    // Deliberately narrowed to the one command this codebase calls. Clarity's
+    // real API is variadic (e.g. 'set', 'event', 'identify' take different
+    // argument shapes) — add those as further overloads on this signature if
+    // a future call site needs them, rather than widening this one.
     clarity?: (command: 'consentv2', consent: ClarityConsentV2) => void;
   }
 }

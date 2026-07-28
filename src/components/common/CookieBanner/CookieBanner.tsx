@@ -46,11 +46,15 @@ export default function CookieBanner() {
           <Link href={PRIVACY_PATH as Route}>{t.COOKIE_MORE}</Link>
         </Typography>
       </Box>
+      {/* Both buttons are deliberately the same variant/weight: reject must be
+          no harder and no less prominent than accept (EU-facing site, no dark
+          patterns). Do not make accept `contained` — that reads as the
+          recommended action and defeats the point. */}
       <Box className={styles.actions}>
         <Button variant="outlined" onClick={reject}>
           {t.COOKIE_REJECT}
         </Button>
-        <Button variant="contained" onClick={accept}>
+        <Button variant="outlined" onClick={accept}>
           {t.COOKIE_ACCEPT}
         </Button>
       </Box>

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { axe } from 'jest-axe';
 import userEvent from '@testing-library/user-event';
 import CookieBanner from './CookieBanner';
 import { CONSENT_STORAGE_KEY } from '@/lib/consent';
@@ -28,6 +29,12 @@ describe('CookieBanner', () => {
   it('asks when no choice is stored', () => {
     renderBanner();
     expect(screen.getByRole('region', { name: 'Zgoda na cookies' })).toBeInTheDocument();
+  });
+
+  it('passes accessibility check', async () => {
+    const { container } = renderBanner();
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
   });
 
   it('grants analytics storage on accept and remembers it', async () => {
@@ -66,6 +73,10 @@ describe('CookieBanner', () => {
       ad_Storage: 'denied',
       analytics_Storage: 'granted',
     });
+    // Pins the "fires once per choice change, not once per render" claim in
+    // the component comment. This repo does not render tests under
+    // React.StrictMode, so effects run once per commit rather than twice.
+    expect(window.clarity).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('region', { name: 'Zgoda na cookies' })).not.toBeInTheDocument();
   });
 
