@@ -254,12 +254,12 @@ const pl = {
     'Nagrania sesji (ruch kursora, kliknięcia, przewijanie), adresy odwiedzanych podstron oraz informacje o urządzeniu i przeglądarce.',
   PRIVACY_COOKIES_HEADING: 'Cookies',
   PRIVACY_COOKIES_BODY:
-    '_clck — identyfikator użytkownika, ważny rok. _clsk — identyfikator sesji, ważny dobę. Oba ustawiane są dopiero po Twojej zgodzie.',
+    '_clck — identyfikator użytkownika, ważny przez rok. _clsk — identyfikator sesji, ważny przez dobę. Oba ustawiane są dopiero po Twojej zgodzie.',
   PRIVACY_PROCESSOR_HEADING: 'Kto przetwarza dane',
   PRIVACY_PROCESSOR_BODY: 'Microsoft, jako dostawca usługi Clarity.',
   PRIVACY_WITHDRAW_HEADING: 'Wycofanie zgody',
   PRIVACY_WITHDRAW_BODY:
-    'Zgodę możesz zmienić w każdej chwili linkiem „Cookies” w stopce. Po odrzuceniu Clarity usuwa swoje cookies i przestaje je zapisywać.',
+    'Zgodę możesz zmienić w każdej chwili za pomocą linku „Cookies” w stopce. Po odrzuceniu Clarity usuwa swoje cookies i przestaje je zapisywać.',
 };
 
 export type Messages = typeof pl;

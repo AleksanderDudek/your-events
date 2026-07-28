@@ -19,6 +19,20 @@ describe('PrivacyView', () => {
     ).toBeInTheDocument();
   });
 
+  it('states the cookie names, their lifetimes, and that they are set only after consent', () => {
+    render(<PrivacyView />);
+    expect(screen.getByText(/_clck.*ważny przez rok/)).toBeInTheDocument();
+    expect(screen.getByText(/_clsk.*ważny przez dobę/)).toBeInTheDocument();
+    expect(screen.getByText(/ustawiane są dopiero po Twojej zgodzie/)).toBeInTheDocument();
+  });
+
+  it('states that rejecting consent makes Clarity delete its cookies', () => {
+    render(<PrivacyView />);
+    expect(
+      screen.getByText(/Po odrzuceniu Clarity usuwa swoje cookies i przestaje je zapisywać/)
+    ).toBeInTheDocument();
+  });
+
   it('passes accessibility check', async () => {
     const { container } = render(<PrivacyView />);
     const results = await axe(container);
