@@ -30,11 +30,11 @@ function subscribe(listener: Listener): () => void {
 
 // The snapshot is the raw string plus the reopen flag, joined into one scalar:
 // useSyncExternalStore compares snapshots by identity, so returning a fresh
-// object each read would loop forever. The flag prefix ("open:" / "closed:")
-// is guaranteed colon-free (not fixed-width — the two prefixes differ in
-// length), which is what lets the split below land on the real separator: a
-// hand-edited localStorage value containing its own colon still round-trips
-// intact into `raw` instead of being truncated at it.
+// object each read would loop forever. The flag itself ("open" / "closed",
+// before the separator) is guaranteed colon-free, which is what lets the
+// split below land on the real separator: a hand-edited localStorage value
+// containing its own colon still round-trips intact into `raw` instead of
+// being truncated at it.
 function getSnapshot(): string {
   let raw: string | null = null;
   try {
