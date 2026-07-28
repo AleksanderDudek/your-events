@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -13,6 +13,8 @@ import Switch from '@mui/material/Switch';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import Alert from '@mui/material/Alert';
+import Link from '@mui/material/Link';
 import { useTranslation } from '@/i18n';
 import { useCategories } from '@/components/service/useCategories';
 import { AVAILABLE_CITIES } from '@/config/cities';
@@ -38,11 +40,32 @@ export default function PresetEditorDialog({
   const { topLevel } = useCategories();
   const [preset, setPreset] = useState<FilterPreset>(draft);
   const [nameTouched, setNameTouched] = useState(false);
+  // Which required fields the last Save attempt found empty. Ids, not labels,
+  // so the summary below re-reads the live label and drops an entry the moment
+  // the field is filled in.
+  const [missingIds, setMissingIds] = useState<string[]>([]);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Remount on a new draft rather than syncing through an effect: the dialog is
   // keyed by preset id at the call site, so this component starts fresh.
   const filters = preset.filters ?? emptyPresetFilters();
   const nameError = nameTouched && preset.name.trim().length === 0;
+
+  // The dialog is taller than the viewport, so Save sits far below the only
+  // required field. A rejected save used to change nothing the user could see.
+  // Driving that from one list keeps the summary, the focus jump and the check
+  // itself in step — adding a second required field is one more entry here.
+  const requiredFields = [
+    { id: 'name', label: t.PRESETS_NAME, isEmpty: preset.name.trim().length === 0 },
+  ];
+
+  // Kept out of the array above so no ref is touched while rendering, which the
+  // react-hooks lint rule rejects.
+  const focusField = useCallback((id: string) => {
+    if (id === 'name') nameInputRef.current?.focus();
+  }, []);
+
+  const missingFields = requiredFields.filter((f) => missingIds.includes(f.id) && f.isEmpty);
 
   const setFilters = (patch: Partial<typeof filters>) =>
     setPreset((p) => ({ ...p, filters: { ...p.filters, ...patch } }));
@@ -63,12 +86,17 @@ export default function PresetEditorDialog({
   ];
 
   const submit = () => {
-    const name = preset.name.trim();
-    if (!name) {
+    const unmet = requiredFields.filter((f) => f.isEmpty);
+    if (unmet.length > 0) {
       setNameTouched(true);
+      setMissingIds(unmet.map((f) => f.id));
+      // Focus scrolls the field back into view, which is the point: the user
+      // pressed Save at the bottom and the problem is off-screen above.
+      focusField(unmet[0].id);
       return;
     }
-    onSave({ ...preset, name: name.slice(0, MAX_NAME_LENGTH) });
+    setMissingIds([]);
+    onSave({ ...preset, name: preset.name.trim().slice(0, MAX_NAME_LENGTH) });
   };
 
   return (
@@ -87,6 +115,7 @@ export default function PresetEditorDialog({
           error={nameError}
           helperText={nameError ? t.PRESETS_NAME_REQUIRED : ' '}
           slotProps={{ htmlInput: { maxLength: MAX_NAME_LENGTH } }}
+          inputRef={nameInputRef}
           autoFocus
           fullWidth
         />
@@ -214,6 +243,25 @@ export default function PresetEditorDialog({
           label={t.FILTER_FREE_ONLY}
         />
       </DialogContent>
+
+      {/* Sits directly above the buttons on purpose: this is where the user is
+          looking when Save does not work. role="alert" so it is announced too,
+          since a sighted-only cue would leave screen-reader users with the same
+          silent failure. */}
+      {missingFields.length > 0 && (
+        <Alert severity="error" role="alert" sx={{ mx: 3, mb: 1 }}>
+          {t.PRESETS_MISSING_TITLE}
+          <Box component="ul" sx={{ m: 0, mt: 0.5, pl: 2.5 }}>
+            {missingFields.map((f) => (
+              <li key={f.id}>
+                <Link component="button" type="button" onClick={() => focusField(f.id)} underline="always">
+                  {f.label}
+                </Link>
+              </li>
+            ))}
+          </Box>
+        </Alert>
+      )}
 
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onCancel}>{t.PRESETS_CANCEL}</Button>

@@ -41,13 +41,13 @@ export default function AppFooter() {
           </Typography>
         </Box>
 
-        <Box className={styles.col} component="nav" aria-label={t.NAV_GROW}>
+        <Box className={styles.col} component="nav" aria-label={t.FOOTER_COMMUNITY}>
           <Typography
             variant="subtitle2"
             component="h2"
             sx={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)', mb: 1 }}
           >
-            {t.NAV_GROW}
+            {t.FOOTER_COMMUNITY}
           </Typography>
           <Box className={styles.links}>
             <Link href={GROW_WITH_US_PATH as Route} className={styles.link}>

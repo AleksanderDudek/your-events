@@ -167,6 +167,9 @@ const pl = {
   NOTFOUND_REDIRECT: (s: number) => `Przekierujemy Cię do wyszukiwania za ${s} s…`,
   NOTFOUND_CTA: 'Szukaj wydarzeń',
   NAV_GROW: 'Rozwijaj z nami',
+  // Nagłówek kolumny w stopce. Celowo INNY niż NAV_GROW/GROW_HEADLINE: kolumna
+  // zawiera link o tej samej nazwie, a powtórzony napis mylił użytkowników.
+  FOOTER_COMMUNITY: 'Społeczność',
   GROW_PROMPT: 'Buduj to z nami',
   GROW_HEADLINE: 'Rozwijaj z nami',
   GROW_LEAD: 'Ta apka nie jest skończona i nie ma być. Powiedz nam, czego jej brakuje.',
@@ -212,6 +215,7 @@ const pl = {
   PRESETS_NAME: 'Nazwa',
   PRESETS_NAME_PLACEHOLDER: 'np. Taniec w weekend',
   PRESETS_NAME_REQUIRED: 'Podaj nazwę',
+  PRESETS_MISSING_TITLE: 'Uzupełnij, żeby zapisać:',
   PRESETS_CITY: 'Miasto',
   PRESETS_FULL: (max: number) => `Limit ${max} filtrów osiągnięty. Usuń któryś, żeby dodać nowy.`,
   PRESETS_COPY_SUFFIX: 'kopia',
@@ -414,6 +418,7 @@ const en: Messages = {
   NOTFOUND_REDIRECT: (s: number) => `Redirecting you to search in ${s}s…`,
   NOTFOUND_CTA: 'Search events',
   NAV_GROW: 'Grow with us',
+  FOOTER_COMMUNITY: 'Community',
   GROW_PROMPT: 'Build it with us',
   GROW_HEADLINE: 'Grow with us',
   GROW_LEAD: 'This app is not finished, and it is not meant to be. Tell us what it is missing.',
@@ -457,6 +462,7 @@ const en: Messages = {
   PRESETS_NAME: 'Name',
   PRESETS_NAME_PLACEHOLDER: 'e.g. Dancing at the weekend',
   PRESETS_NAME_REQUIRED: 'Give it a name',
+  PRESETS_MISSING_TITLE: 'Fill these in to save:',
   PRESETS_CITY: 'City',
   PRESETS_FULL: (max: number) => `You have hit the limit of ${max} filters. Delete one to add another.`,
   PRESETS_COPY_SUFFIX: 'copy',
