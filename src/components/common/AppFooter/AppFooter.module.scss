@@ -50,13 +50,14 @@
   }
 }
 
-// Resets the browser's default button chrome so a <button> sitting next to
-// the <a> footer links (which use .link for color/hover/focus) is visually
-// indistinguishable from them. Deliberately does not touch font-family or
-// font-size: .link already sets those, and a `font: inherit` shorthand here
-// would silently override them regardless of class order in the markup,
-// since equal-specificity rules resolve by source order in the compiled CSS.
+// Composes .link (color/hover/focus) so a component only ever passes one
+// class name - no invariant to remember at the call site. Resets the
+// browser's default button chrome so a <button> sitting next to the <a>
+// footer links reads as one of them. Deliberately does not touch
+// font-family or font-size via a `font:` shorthand: .link already sets
+// those, and resetting them here would fight over the same properties.
 .linkButtonReset {
+  composes: link;
   appearance: none;
   background: none;
   border: 0;

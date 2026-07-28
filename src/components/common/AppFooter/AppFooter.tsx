@@ -72,11 +72,7 @@ export default function AppFooter() {
             {/* A <button>, not an anchor: this changes app state (reopens the
                 cookie banner) rather than navigating, and an anchor with no
                 href isn't keyboard-operable. */}
-            <button
-              type="button"
-              className={`${styles.link} ${styles.linkButtonReset}`}
-              onClick={reopen}
-            >
+            <button type="button" className={styles.linkButtonReset} onClick={reopen}>
               {t.COOKIE_FOOTER_LINK}
             </button>
           </Box>
