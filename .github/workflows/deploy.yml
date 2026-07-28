@@ -50,6 +50,11 @@ jobs:
           # available:false i jest ukryte w pickerze.
           NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+          # Microsoft Clarity, set HERE and nowhere else. `next dev` and both
+          # Playwright jobs run the same app; when the tag was unconditional
+          # every headless test page-load logged its own ~1s localhost session.
+          # Not a secret — it ships in the page source of every deployed page.
+          NEXT_PUBLIC_CLARITY_PROJECT_ID: xtfje919ui
       - uses: actions/upload-pages-artifact@v5
         with:
           path: ./out
