@@ -77,6 +77,12 @@ export const TEXT = {
   presetsWhen: 'Kiedy',
   presetsWeekend: 'Najbliższy weekend',
   presetsEmpty: 'Nie masz jeszcze własnych filtrów',
+  // Cookie consent banner (region + its two actions) and the footer button
+  // that reopens it.
+  cookieRegion: 'Zgoda na cookies',
+  cookieAccept: 'Akceptuję',
+  cookieReject: 'Odrzucam',
+  cookieFooterLink: 'Cookies',
 } as const;
 
 // The mobile filter Fab is labelled "Filtry (N)"; the leading word is stable.
