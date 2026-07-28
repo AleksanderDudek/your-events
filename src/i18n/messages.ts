@@ -235,6 +235,14 @@ const pl = {
   GROW_META_TITLE: 'Rozwijaj z nami',
   GROW_META_DESCRIPTION:
     'Dołącz do naszego Discorda albo wypełnij krótką ankietę i współdecyduj, w którą stronę rozwija się Idź na miasto.',
+  COOKIE_TITLE: 'Cookies i analityka',
+  COOKIE_BODY:
+    'Używamy Microsoft Clarity, żeby zobaczyć, jak korzystasz z serwisu. Zgoda pozwala połączyć Twoje odsłony w jedną sesję.',
+  COOKIE_ACCEPT: 'Akceptuję',
+  COOKIE_REJECT: 'Odrzucam',
+  COOKIE_MORE: 'Polityka prywatności',
+  COOKIE_REGION_LABEL: 'Zgoda na cookies',
+  COOKIE_FOOTER_LINK: 'Cookies',
 };
 
 export type Messages = typeof pl;
@@ -454,6 +462,14 @@ const en: Messages = {
   GROW_META_TITLE: 'Grow with us',
   GROW_META_DESCRIPTION:
     'Join our Discord or fill in a short survey and help decide where Go to city goes next.',
+  COOKIE_TITLE: 'Cookies and analytics',
+  COOKIE_BODY:
+    'We use Microsoft Clarity to see how the site is used. Consent lets us join your page views into a single session.',
+  COOKIE_ACCEPT: 'Accept',
+  COOKIE_REJECT: 'Reject',
+  COOKIE_MORE: 'Privacy policy',
+  COOKIE_REGION_LABEL: 'Cookie consent',
+  COOKIE_FOOTER_LINK: 'Cookies',
 };
 
 export const messages: Record<Locale, Messages> = { pl, en };
