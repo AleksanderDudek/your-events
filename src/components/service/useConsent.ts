@@ -30,10 +30,11 @@ function subscribe(listener: Listener): () => void {
 
 // The snapshot is the raw string plus the reopen flag, joined into one scalar:
 // useSyncExternalStore compares snapshots by identity, so returning a fresh
-// object each read would loop forever. The flag is a fixed-width prefix
-// ("open:" / "closed:") so the split below only ever consumes the FIRST
-// colon — a hand-edited localStorage value containing its own colon still
-// round-trips intact into `raw` instead of being truncated at it.
+// object each read would loop forever. The flag prefix ("open:" / "closed:")
+// is guaranteed colon-free (not fixed-width — the two prefixes differ in
+// length), which is what lets the split below land on the real separator: a
+// hand-edited localStorage value containing its own colon still round-trips
+// intact into `raw` instead of being truncated at it.
 function getSnapshot(): string {
   let raw: string | null = null;
   try {
@@ -44,9 +45,14 @@ function getSnapshot(): string {
   return `${reopened ? 'open' : 'closed'}:${raw ?? ''}`;
 }
 
-// Nothing is known during the prerender, so the server snapshot is a constant.
-// The banner therefore renders only after mount and never ships in the static
-// HTML of all 1000+ prerendered pages.
+// Nothing is known during the prerender, so this is a constant rather than a
+// read of localStorage. Its job is only to keep the server render and the
+// hydration render byte-for-byte identical (no hydration mismatch) — it does
+// NOT by itself keep the banner out of the prerendered HTML. That job
+// belongs to the `isHydrated` gate below: React uses getServerSnapshot for
+// both the prerender and the hydration render, then switches to getSnapshot,
+// so `isHydrated` reads false until hydration finishes and only then can the
+// banner open.
 function getServerSnapshot(): string {
   return 'closed:';
 }
@@ -78,7 +84,14 @@ export function useConsent(): UseConsentResult {
   const separatorIndex = snapshot.indexOf(':');
   const openFlag = snapshot.slice(0, separatorIndex);
   const raw = snapshot.slice(separatorIndex + 1);
-  const choice = parseConsent(raw === '' ? null : raw);
+  const choice = parseConsent(raw);
+
+  // React uses getServerSnapshot for the prerender AND for the hydration
+  // render, then switches to getSnapshot. So this reads false until
+  // hydration finishes, which is exactly the "have we mounted yet" signal
+  // the banner needs to stay out of the static HTML of all 1000+
+  // prerendered pages.
+  const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
 
   const accept = useCallback(() => write('accepted'), []);
   const reject = useCallback(() => write('rejected'), []);
@@ -89,7 +102,7 @@ export function useConsent(): UseConsentResult {
 
   return {
     choice,
-    isOpen: choice === null || openFlag === 'open',
+    isOpen: isHydrated && (choice === null || openFlag === 'open'),
     accept,
     reject,
     reopen,
