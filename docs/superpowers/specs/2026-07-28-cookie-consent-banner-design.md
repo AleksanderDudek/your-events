@@ -22,6 +22,12 @@ site, with `#ms-clarity` staying at 1 and the snippet running once.
 The site is Polish and EU-facing, and has no consent UI, so the fix is a consent
 banner rather than disabling consent mode in the Clarity dashboard.
 
+Disabling it in the dashboard was never actually an option. Per Microsoft's
+docs, Consent Mode is **enabled by default for visitors from the EEA, UK and
+Switzerland**, and since 31 October 2025 Clarity enforces a consent signal for
+those page visits regardless of the project setting. For a Polish site the
+banner is the only route to session stitching.
+
 ## Decisions
 
 Settled with the user before design:
@@ -61,11 +67,22 @@ reload after reopening does not keep reopening the banner.
 ### The Clarity bridge
 
 `CookieBanner` mounts unconditionally in `AppLayout` and returns `null` when
-there is nothing to ask. It owns a single effect:
+there is nothing to ask. It owns a single effect that signals the stored choice
+through Clarity's **Consent API v2**:
 
+```js
+// accepted
+window.clarity?.('consentv2', { ad_Storage: 'denied', analytics_Storage: 'granted' });
+// rejected
+window.clarity?.('consentv2', { ad_Storage: 'denied', analytics_Storage: 'denied' });
 ```
-choice === 'accepted'  →  window.clarity?.('consent')
-```
+
+`consentv2` is the current API; the older `clarity('consent', true)` is
+documented as deprecated and must not be used. Both parameters are required.
+
+`ad_Storage` is always `denied`: the site runs no advertising, so granting it
+would be an inaccurate signal. Session stitching comes from the first-party
+`_clck`/`_clsk` cookies, which are what `analytics_Storage` governs.
 
 The effect must run on every page load, not only on the click, because a
 returning visitor who already accepted renders no banner but still needs the
@@ -87,10 +104,10 @@ once per consumer.
 
 - **First visit** — no stored choice, banner renders. Clarity is already
   recording cookielessly.
-- **Accept** — store `'accepted'`, effect calls `clarity('consent')`, `_clck` and
-  `_clsk` are set, sessions stitch from then on.
-- **Reject** — store `'rejected'`, no call, Clarity stays cookieless and keeps
-  recording. Banner hidden.
+- **Accept** — store `'accepted'`, effect signals `analytics_Storage: 'granted'`,
+  `_clck` and `_clsk` are set, sessions stitch from then on.
+- **Reject** — store `'rejected'`, effect signals `analytics_Storage: 'denied'`,
+  Clarity stays cookieless and keeps recording. Banner hidden.
 - **Return visit, previously accepted** — no banner, effect re-signals on load.
 - **Footer link** — `reopen()` shows the banner again.
 - **Second tab** — the `storage` listener syncs both tabs.
@@ -99,21 +116,25 @@ once per consumer.
 
 Switching from accepted to rejected has to undo the storage, not just stop
 future writes — otherwise "withdraw consent" leaves a year-long `_clck` on the
-device. On a reject that follows an accept:
+device.
 
-1. Delete `_clck` and `_clsk` by setting each to an expired date on the current
-   host, matching how Clarity scoped them. Measured on the live site, Clarity
-   writes `_clck` twice — first `domain=.github.io`, which the browser rejects
-   because `github.io` is a public suffix, then `domain=.aleksanderdudek.github.io`,
-   which succeeds. Deletion must therefore target the host-scoped variant, and a
-   host-only fallback should be attempted too.
-2. Reload the page, so the already-initialised Clarity instance in the current
-   document starts over without consent.
+**Clarity handles this itself.** Per the v2 API docs: when a user rejects the
+cookie, Clarity deletes any existing cookie for the site, ends the current
+session, and restarts in no-consent mode, which persists on future visits until
+consent is given again.
 
-Implementation note: check Clarity's current consent API first. If a documented
-revoke call exists it is preferable to manual cookie deletion. Do not assume one
-exists — none was found while investigating, and inventing a call that silently
-no-ops would leave the cookies in place while looking correct.
+So withdrawal is just the denied call — no manual cookie deletion, no forced
+reload. Deleting the cookies by hand would duplicate work Clarity already does
+and would have to guess at its cookie scoping.
+
+That scoping is worth recording anyway, since it looked like a bug during
+investigation and is not one: Clarity writes `_clck` twice, first with
+`domain=.github.io`, which the browser rejects because `github.io` is a public
+suffix, then with `domain=.aleksanderdudek.github.io`, which succeeds. Clarity
+recovers on its own.
+
+The implementation must still **verify** deletion rather than trust the doc —
+see the e2e task in the plan.
 
 ## Hydration
 
@@ -126,12 +147,24 @@ pages would ship it and flash it at visitors who have already answered.
 - `src/lib/consent.spec.ts` — parse valid values, unknown values, corrupt JSON,
   absent storage.
 - `CookieBanner.spec.tsx` — renders with no stored choice; hides after accept and
-  after reject; accept calls `window.clarity` with `'consent'`; reject does not
-  call it; `reopen` re-shows; a `storage` event syncs the choice.
+  after reject; accept calls `window.clarity` with `'consentv2'` and
+  `analytics_Storage: 'granted'`; reject calls it with `'denied'`; `reopen`
+  re-shows; a `storage` event syncs the choice; a missing `window.clarity` does
+  not throw.
 - e2e (main suite) — banner on first load, choice survives a reload, reject
-  persists.
+  persists, and the cookie assertions only a real browser can make: accept sets
+  `_clck`/`_clsk`, and a later reject removes them. That second one is taken
+  from Microsoft's docs rather than observed, so it is the claim most in need of
+  a test.
 - `e2e-export/analytics.spec.ts` already guards the build-time tag gate and is
   unchanged by this work.
+
+Clarity exposes a consent read-back that is useful when verifying by hand:
+
+```js
+clarity('metadata', (d, upgrade, consent) => console.log(consent), false, true, true);
+// → { analytics_storage: "GRANTED" | "DENIED", ad_storage: "GRANTED" | "DENIED" }
+```
 
 ## Accessibility
 
