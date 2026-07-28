@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import Providers from './providers';
 import AppLayout from '@/components/common/AppLayout/AppLayout';
@@ -9,6 +10,10 @@ import './globals.scss';
 // Server-side metadata is rendered at build time. Locale switching and city
 // switching happen in the browser, so the static HTML / SEO tags ship in
 // DEFAULT_LOCALE (pl) and DEFAULT_CITY (Szczecin).
+// Microsoft Clarity project id (clarity.microsoft.com). Baked into the static
+// export at build time, and public by design — it only identifies the site.
+const CLARITY_PROJECT_ID = 'xtfje919ui';
+
 const m = messages[DEFAULT_LOCALE];
 const defaultCity = getCity(DEFAULT_CITY_ID);
 const defaultCityLocative = defaultCity.locativeForm[DEFAULT_LOCALE];
@@ -60,6 +65,16 @@ export default function RootLayout({
         <Providers>
           <AppLayout>{children}</AppLayout>
         </Providers>
+        {/* Microsoft Clarity. `beforeInteractive` puts the tag in <head> of the
+            prerendered HTML no matter where the component sits, which is what
+            Clarity's install instructions ask for. */}
+        <Script id="ms-clarity" strategy="beforeInteractive">
+          {`(function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "${CLARITY_PROJECT_ID}");`}
+        </Script>
       </body>
     </html>
   );
