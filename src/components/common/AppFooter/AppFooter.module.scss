@@ -50,6 +50,22 @@
   }
 }
 
+// Resets the browser's default button chrome so a <button> sitting next to
+// the <a> footer links (which use .link for color/hover/focus) is visually
+// indistinguishable from them. Deliberately does not touch font-family or
+// font-size: .link already sets those, and a `font: inherit` shorthand here
+// would silently override them regardless of class order in the markup,
+// since equal-specificity rules resolve by source order in the compiled CSS.
+.linkButtonReset {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
 .bottom {
   max-width: 1400px;
   margin: 32px auto 0;

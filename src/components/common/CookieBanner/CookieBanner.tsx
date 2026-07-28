@@ -40,7 +40,14 @@ export default function CookieBanner() {
   return (
     <Box className={styles.banner} role="region" aria-label={t.COOKIE_REGION_LABEL}>
       <Box className={styles.text}>
-        <Typography variant="subtitle2">{t.COOKIE_TITLE}</Typography>
+        {/* Not a heading: `region` already carries an aria-label naming the
+            banner's purpose, and (once mounted inside AppLayout alongside
+            the header/footer's own headings) a subtitle2-as-h6 here would
+            jump several levels past whatever heading last appeared on the
+            page, which axe's heading-order rule flags. */}
+        <Typography variant="subtitle2" component="p">
+          {t.COOKIE_TITLE}
+        </Typography>
         <Typography variant="body2">
           {t.COOKIE_BODY}{' '}
           <Link href={PRIVACY_PATH as Route}>{t.COOKIE_MORE}</Link>
