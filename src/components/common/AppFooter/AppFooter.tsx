@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
+import { useConsent } from '@/components/service/useConsent';
 import {
   DISCORD_INVITE_URL,
   FEEDBACK_FORM_URL,
@@ -17,6 +18,7 @@ import styles from './AppFooter.module.scss';
 export default function AppFooter() {
   const { t, locale } = useTranslation();
   const { city } = useCity();
+  const { reopen } = useConsent();
   const year = new Date().getFullYear();
 
   return (
@@ -67,6 +69,12 @@ export default function AppFooter() {
             >
               {t.GROW_FORM_TITLE}
             </a>
+            {/* A <button>, not an anchor: this changes app state (reopens the
+                cookie banner) rather than navigating, and an anchor with no
+                href isn't keyboard-operable. */}
+            <button type="button" className={styles.linkButtonReset} onClick={reopen}>
+              {t.COOKIE_FOOTER_LINK}
+            </button>
           </Box>
         </Box>
       </Box>

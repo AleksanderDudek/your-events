@@ -235,6 +235,31 @@ const pl = {
   GROW_META_TITLE: 'Rozwijaj z nami',
   GROW_META_DESCRIPTION:
     'Dołącz do naszego Discorda albo wypełnij krótką ankietę i współdecyduj, w którą stronę rozwija się Idź na miasto.',
+  COOKIE_TITLE: 'Cookies i analityka',
+  COOKIE_BODY:
+    'Używamy Microsoft Clarity, żeby zobaczyć, jak korzystasz z serwisu. Zgoda pozwala połączyć Twoje odsłony w jedną sesję.',
+  COOKIE_ACCEPT: 'Akceptuję',
+  COOKIE_REJECT: 'Odrzucam',
+  COOKIE_MORE: 'Polityka prywatności',
+  COOKIE_REGION_LABEL: 'Zgoda na cookies',
+  COOKIE_FOOTER_LINK: 'Cookies',
+  PRIVACY_META_TITLE: 'Polityka prywatności',
+  PRIVACY_META_DESCRIPTION:
+    'Jakie dane zbiera Microsoft Clarity na tej stronie, jakie cookies są ustawiane i jak wycofać zgodę.',
+  PRIVACY_TITLE: 'Polityka prywatności',
+  PRIVACY_INTRO:
+    'Ta strona używa Microsoft Clarity do analizy tego, jak korzystasz z serwisu. Poniżej opisujemy, co dokładnie jest zbierane.',
+  PRIVACY_WHAT_HEADING: 'Co zbieramy',
+  PRIVACY_WHAT_BODY:
+    'Nagrania sesji (ruch kursora, kliknięcia, przewijanie), adresy odwiedzanych podstron oraz informacje o urządzeniu i przeglądarce.',
+  PRIVACY_COOKIES_HEADING: 'Cookies',
+  PRIVACY_COOKIES_BODY:
+    '_clck — identyfikator użytkownika, ważny przez rok. _clsk — identyfikator sesji, ważny przez dobę. Oba ustawiane są dopiero po Twojej zgodzie.',
+  PRIVACY_PROCESSOR_HEADING: 'Kto przetwarza dane',
+  PRIVACY_PROCESSOR_BODY: 'Microsoft, jako dostawca usługi Clarity.',
+  PRIVACY_WITHDRAW_HEADING: 'Wycofanie zgody',
+  PRIVACY_WITHDRAW_BODY:
+    'Zgodę możesz zmienić w każdej chwili za pomocą linku „Cookies” w stopce. Po odrzuceniu Clarity usuwa swoje cookies i przestaje je zapisywać.',
 };
 
 export type Messages = typeof pl;
@@ -454,6 +479,31 @@ const en: Messages = {
   GROW_META_TITLE: 'Grow with us',
   GROW_META_DESCRIPTION:
     'Join our Discord or fill in a short survey and help decide where Go to city goes next.',
+  COOKIE_TITLE: 'Cookies and analytics',
+  COOKIE_BODY:
+    'We use Microsoft Clarity to see how you use the site. Consent lets us join your page views into a single session.',
+  COOKIE_ACCEPT: 'Accept',
+  COOKIE_REJECT: 'Reject',
+  COOKIE_MORE: 'Privacy policy',
+  COOKIE_REGION_LABEL: 'Cookie consent',
+  COOKIE_FOOTER_LINK: 'Cookies',
+  PRIVACY_META_TITLE: 'Privacy policy',
+  PRIVACY_META_DESCRIPTION:
+    'What Microsoft Clarity collects on this site, which cookies are set, and how to withdraw consent.',
+  PRIVACY_TITLE: 'Privacy policy',
+  PRIVACY_INTRO:
+    'This site uses Microsoft Clarity to analyse how you use it. Below is exactly what gets collected.',
+  PRIVACY_WHAT_HEADING: 'What we collect',
+  PRIVACY_WHAT_BODY:
+    'Session recordings (cursor movement, clicks, scrolling), the addresses of the pages you visit, and information about your device and browser.',
+  PRIVACY_COOKIES_HEADING: 'Cookies',
+  PRIVACY_COOKIES_BODY:
+    '_clck — user identifier, valid one year. _clsk — session identifier, valid one day. Both are set only after you consent.',
+  PRIVACY_PROCESSOR_HEADING: 'Who processes the data',
+  PRIVACY_PROCESSOR_BODY: 'Microsoft, as the provider of Clarity.',
+  PRIVACY_WITHDRAW_HEADING: 'Withdrawing consent',
+  PRIVACY_WITHDRAW_BODY:
+    'You can change your choice at any time with the "Cookies" link in the footer. After a rejection Clarity deletes its cookies and stops writing them.',
 };
 
 export const messages: Record<Locale, Messages> = { pl, en };

@@ -1,0 +1,34 @@
+.banner {
+  // `sticky`, not `fixed`: it must participate in normal flow so it reserves
+  // its own real height (whatever the wrapped copy/locale/font actually
+  // needs) instead of floating over whatever is beneath it. It still floats
+  // above content while scrolling past it, but once the visitor reaches the
+  // true bottom of the page (this is the layout's last child) it settles in
+  // place after the footer rather than covering it. Requires no ancestor
+  // between here and the scrolling viewport to set `overflow` other than
+  // visible - AppLayout's flex column and the document don't, so this holds.
+  position: sticky;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 1300;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background-color: var(--color-surface-glass);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+}
+
+.text {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

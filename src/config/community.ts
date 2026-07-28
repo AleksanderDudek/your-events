@@ -8,6 +8,9 @@
 // ahead of the dynamic /[city] segment — no city id can shadow it.
 export const GROW_WITH_US_PATH = '/rozwijaj-z-nami';
 
+// Route of the privacy policy page the cookie banner links to.
+export const PRIVACY_PATH = '/prywatnosc';
+
 // "Moje filtry" — the visitor's own saved filter presets. Also city-agnostic:
 // each preset carries the city it belongs to.
 export const MY_FILTERS_PATH = '/moje-filtry';

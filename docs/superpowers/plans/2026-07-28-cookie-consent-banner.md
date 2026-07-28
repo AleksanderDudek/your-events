@@ -197,8 +197,10 @@ function getSnapshot(): string {
 }
 
 // Nothing is known during the prerender, so the server snapshot is a constant.
-// The banner therefore renders only after mount and never ships in the static
-// HTML of all 1000+ prerendered pages.
+// This buys hydration safety — the server render and the hydration render agree
+// — but it does NOT hide the banner: the constant parses to "no choice", and
+// "no choice" is the state that opens it. Keeping the banner out of the
+// prerendered HTML is the isHydrated gate's job, below.
 function getServerSnapshot(): string {
   return 'closed:';
 }
@@ -224,8 +226,22 @@ export interface UseConsentResult {
 
 export function useConsent(): UseConsentResult {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [openFlag, raw] = snapshot.split(':');
-  const choice = parseConsent(raw === '' ? null : raw);
+
+  // React uses getServerSnapshot for the prerender AND the hydration render,
+  // then switches to getSnapshot — so this reads false until hydration
+  // finishes. It is the "have we mounted yet" signal, expressed through the
+  // same store instead of a separate useEffect, and it is what keeps the
+  // banner out of the static HTML of all 1000+ prerendered pages.
+  const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
+
+  // Split at the FIRST colon only. String#split would cut a raw value that
+  // itself contains a colon into pieces and silently drop the rest, which read
+  // hand-edited junk as valid consent. The prefixes are colon-free, so the
+  // first colon is always the real separator.
+  const separatorIndex = snapshot.indexOf(':');
+  const openFlag = snapshot.slice(0, separatorIndex);
+  const raw = snapshot.slice(separatorIndex + 1);
+  const choice = parseConsent(raw);
 
   const accept = useCallback(() => write('accepted'), []);
   const reject = useCallback(() => write('rejected'), []);
@@ -236,7 +252,7 @@ export function useConsent(): UseConsentResult {
 
   return {
     choice,
-    isOpen: choice === null || openFlag === 'open',
+    isOpen: isHydrated && (choice === null || openFlag === 'open'),
     accept,
     reject,
     reopen,
@@ -813,10 +829,38 @@ test.describe('Cookie consent', () => {
 Run: `pnpm exec playwright test e2e/cookie-consent.spec.ts --project=chromium`
 Expected: FAIL before Tasks 3–4 are merged; PASS after. If you are running tasks in order it should pass here — in that case confirm it fails by temporarily renaming the `aria-label`, then put it back.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Prove the banner is absent from the prerendered HTML**
+
+This is the assertion that catches the hydration-gate regression. Without the
+`isHydrated` gate the banner renders during the prerender and ships in every
+static page — which is invisible in the dev-server tests above, because the dev
+server hydrates immediately.
+
+Append to `e2e-export/analytics.spec.ts` (this suite serves the real `out/`
+directory, the same shape GitHub Pages does):
+
+```ts
+test.describe('Static export: consent banner', () => {
+  test.use({ javaScriptEnabled: false });
+
+  test('the banner is not in the prerendered HTML', async ({ page }) => {
+    // With JavaScript off nothing hydrates, so what is asserted here is
+    // literally the bytes on disk. A banner visible in this state would have
+    // shipped in all 1000+ prerendered pages and flashed at every visitor who
+    // already answered.
+    await page.goto('/');
+    await expect(page.getByRole('region', { name: 'Zgoda na cookies' })).toHaveCount(0);
+  });
+});
+```
+
+Run: `pnpm test:e2e:export`
+Expected: PASS, including the pre-existing analytics gating tests.
+
+- [ ] **Step 4: Commit**
 
 ```bash
-git add e2e/cookie-consent.spec.ts
+git add e2e/cookie-consent.spec.ts e2e-export/analytics.spec.ts
 git commit -m "test(e2e): pin the consent banner's ask-once behaviour"
 ```
 

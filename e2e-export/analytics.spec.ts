@@ -28,3 +28,15 @@ test.describe('Static export: analytics gating', () => {
     });
   }
 });
+
+test.describe('Static export: consent banner', () => {
+  test.use({ javaScriptEnabled: false });
+
+  test('the banner is not in the prerendered HTML', async ({ page }) => {
+    // With JavaScript off nothing hydrates, so this asserts the bytes on disk.
+    // A banner visible here would have shipped in all 1000+ prerendered pages
+    // and flashed at every visitor who had already answered.
+    await page.goto('/');
+    await expect(page.getByRole('region', { name: 'Zgoda na cookies' })).toHaveCount(0);
+  });
+});

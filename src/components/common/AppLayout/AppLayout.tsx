@@ -3,6 +3,7 @@
 import Box from '@mui/material/Box';
 import AppHeader from '@/components/common/AppHeader/AppHeader';
 import AppFooter from '@/components/common/AppFooter/AppFooter';
+import CookieBanner from '@/components/common/CookieBanner/CookieBanner';
 import { useTranslation } from '@/i18n';
 import styles from './AppLayout.module.scss';
 
@@ -22,6 +23,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {children}
       </Box>
       <AppFooter />
+      <CookieBanner />
     </Box>
   );
 }

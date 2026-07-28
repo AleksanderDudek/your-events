@@ -133,14 +133,58 @@ investigation and is not one: Clarity writes `_clck` twice, first with
 suffix, then with `domain=.aleksanderdudek.github.io`, which succeeds. Clarity
 recovers on its own.
 
-The implementation must still **verify** deletion rather than trust the doc —
-see the e2e task in the plan.
+### Measured, not assumed
+
+Verified 2026-07-28 against a real build (`NEXT_PUBLIC_CLARITY_PROJECT_ID` set,
+`out/` served locally, driven in Chrome). Every claim above that came from
+Microsoft's documentation was checked rather than trusted:
+
+| State | Cookies | Clarity's consent read-back |
+|---|---|---|
+| Before any choice | none | — |
+| After accept | `_clck`, `_clsk` | `analytics_Storage: GRANTED`, `ad_Storage: DENIED` |
+| After reopening and rejecting | **none — both deleted** | `analytics_Storage: DENIED`, `ad_Storage: DENIED` |
+| After reload, rejection stored | none | `analytics_Storage: DENIED` |
+
+Three things this settles:
+
+- **Withdrawal genuinely deletes.** Clarity removed `_clck` and `_clsk` itself
+  on rejection, exactly as documented. No manual cookie clearing is needed, and
+  the earlier draft of this spec that called for it was wrong.
+- **`ad_Storage: 'denied'` is honoured.** The read-back reflects what the banner
+  sends, so the signal is reaching Clarity intact.
+- **The privacy page's list of two cookies is accurate** for first-party
+  cookies. Microsoft documents further Clarity cookies (`CLID`, `ANONCHK`, `MR`,
+  `MUID`, `SM`), and none of them appeared. Caveat on scope: those are set on
+  Clarity's own domains, so they are invisible to `document.cookie` and this
+  check cannot rule them out as third-party cookies — it establishes only that
+  the site sets no first-party cookie beyond the two named.
 
 ## Hydration
 
-`getServerSnapshot` returns `null` and the banner renders only after mount.
-The static export prerenders no banner markup; otherwise all 1087 prerendered
-pages would ship it and flash it at visitors who have already answered.
+The static export must prerender no banner markup. Otherwise all 1087
+prerendered pages ship it, and every visitor who already answered sees it flash
+before hydration reads their choice from localStorage.
+
+Two separate mechanisms are needed, and conflating them was a bug caught in
+review:
+
+- `getServerSnapshot` returning a constant buys **hydration safety** — the
+  server render and the hydration render agree, so React does not warn. It does
+  *not* hide the banner. Consent is unknowable at build time, so the constant
+  parses to "no choice", and "no choice" is exactly the state that opens the
+  banner.
+- An explicit **hydration gate** is what keeps it out of the HTML:
+
+  ```ts
+  const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
+  // isOpen: isHydrated && (choice === null || reopened)
+  ```
+
+  React uses `getServerSnapshot` for both the prerender and the hydration
+  render, then switches to `getSnapshot`. So `isHydrated` reads false until
+  hydration finishes — the "have we mounted yet" signal, expressed through the
+  same store rather than a separate `useEffect`.
 
 ## Testing
 
