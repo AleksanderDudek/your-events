@@ -133,8 +133,32 @@ investigation and is not one: Clarity writes `_clck` twice, first with
 suffix, then with `domain=.aleksanderdudek.github.io`, which succeeds. Clarity
 recovers on its own.
 
-The implementation must still **verify** deletion rather than trust the doc —
-see the e2e task in the plan.
+### Measured, not assumed
+
+Verified 2026-07-28 against a real build (`NEXT_PUBLIC_CLARITY_PROJECT_ID` set,
+`out/` served locally, driven in Chrome). Every claim above that came from
+Microsoft's documentation was checked rather than trusted:
+
+| State | Cookies | Clarity's consent read-back |
+|---|---|---|
+| Before any choice | none | — |
+| After accept | `_clck`, `_clsk` | `analytics_Storage: GRANTED`, `ad_Storage: DENIED` |
+| After reopening and rejecting | **none — both deleted** | `analytics_Storage: DENIED`, `ad_Storage: DENIED` |
+| After reload, rejection stored | none | `analytics_Storage: DENIED` |
+
+Three things this settles:
+
+- **Withdrawal genuinely deletes.** Clarity removed `_clck` and `_clsk` itself
+  on rejection, exactly as documented. No manual cookie clearing is needed, and
+  the earlier draft of this spec that called for it was wrong.
+- **`ad_Storage: 'denied'` is honoured.** The read-back reflects what the banner
+  sends, so the signal is reaching Clarity intact.
+- **The privacy page's list of two cookies is accurate** for first-party
+  cookies. Microsoft documents further Clarity cookies (`CLID`, `ANONCHK`, `MR`,
+  `MUID`, `SM`), and none of them appeared. Caveat on scope: those are set on
+  Clarity's own domains, so they are invisible to `document.cookie` and this
+  check cannot rule them out as third-party cookies — it establishes only that
+  the site sets no first-party cookie beyond the two named.
 
 ## Hydration
 
