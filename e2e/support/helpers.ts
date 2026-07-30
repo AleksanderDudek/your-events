@@ -49,6 +49,11 @@ export const TEXT = {
   // The weekday section of the FilterPanel, collapsed until clicked, plus two
   // of the day buttons inside it (their accessible names are the long forms).
   filterWeekdays: 'Dni tygodnia',
+  // The chevron next to a top-level category that reveals its subcategories. Its
+  // accessible name flips with the row's state, so match either way when the
+  // point is "this row's chevron" rather than "a collapsed row".
+  filterExpand: 'Rozwiń',
+  filterChevron: /^(Rozwiń|Zwiń)$/,
   weekdayMonday: 'Poniedziałek',
   weekdayWednesday: 'Środa',
   // The freeOnly active-filter chip. freeOnly is a URL-only filter (no toggle

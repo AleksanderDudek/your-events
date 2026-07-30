@@ -19,6 +19,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { countActiveFilters } from '@/lib/filterUtils';
+import { toggleCategorySelection } from '@/lib/categorySelection';
 import { useTranslation } from '@/i18n';
 import { useCategories } from '@/components/service/useCategories';
 import { useFilterNavigation } from '@/components/service/useFilterNavigation';
@@ -44,7 +45,7 @@ export default function FilterPanel() {
   // empties the field and kills any in-flight debounce.
   const [resetToken, setResetToken] = useState(0);
 
-  const { topLevel, byParent } = useCategories();
+  const { topLevel, byParent, bySlug } = useCategories();
 
   const toggleExpanded = useCallback((slug: string) => {
     setExpanded(prev => {
@@ -67,12 +68,11 @@ export default function FilterPanel() {
   const handleCategoryToggle = useCallback(
     (slug: string) => {
       const current = readCurrentFilters();
-      const cats = current.categories.includes(slug)
-        ? current.categories.filter((c) => c !== slug)
-        : [...current.categories, slug];
-      updateFilters({ categories: cats });
+      updateFilters({
+        categories: toggleCategorySelection(current.categories, slug, bySlug),
+      });
     },
-    [readCurrentFilters, updateFilters]
+    [bySlug, readCurrentFilters, updateFilters]
   );
 
   // Dropping the date mode must drop the hour range too: it only applies within
