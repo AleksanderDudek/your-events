@@ -42,6 +42,41 @@ test.describe('Filtering the events list', () => {
     await expect(page).toHaveURL(/categories=/);
   });
 
+  // A parent and one of its own subcategories are ORed in the query, and the
+  // pair is always a subset of the parent — so keeping both selected means the
+  // subcategory narrows nothing, which read as "subcategories don't work".
+  // Picking one side has to release the other.
+  test('picking a subcategory releases its parent category', async ({ page }) => {
+    await gotoEvents(page);
+    await openFilters(page);
+
+    // Categories come from Supabase; the first chevron only exists once they are
+    // in. Matched on either state of its label, so the locator keeps pointing at
+    // the same row after it is expanded.
+    const expander = page.getByRole('button', { name: TEXT.filterChevron }).first();
+    await expect(expander).toBeVisible({ timeout: 15000 });
+
+    // The parent owning that chevron, and the subcategories it hides.
+    const parentGroup = expander.locator('..').locator('..');
+    const parentBox = parentGroup.getByRole('checkbox').first();
+    await parentBox.click();
+    await expect(page).toHaveURL(/categories=[^,&]+(&|$)/);
+
+    await expander.click();
+    const subBox = parentGroup.getByRole('checkbox').nth(1);
+    await expect(subBox).toBeVisible();
+    await subBox.click();
+
+    // Only the subcategory survives — its slug is "<parent>/<child>", so the
+    // parent's bare slug must no longer be in the list.
+    await expect(page).toHaveURL(/categories=[^,&]+%2F[^,&]+(&|$)/);
+    await expect(parentBox).not.toBeChecked();
+
+    // And back the other way: re-picking the parent drops the subcategory.
+    await parentBox.click();
+    await expect(page).toHaveURL(/categories=[^,&%]+(&|$)/);
+  });
+
   // The weekday filter has no column behind it — the selected days are expanded
   // into concrete dates before the query is sent — so the URL contract and the
   // "click again to un-pick" behaviour are what there is to guard.
