@@ -178,6 +178,33 @@ Supabase. If machine translation proves good enough to keep, caching the
 category table's ~90 strings at build time would be the next step — it is the
 only closed set here.
 
+## Observed in a live browser
+
+Verified against Chrome with the model downloaded on demand
+(`availability` went `downloadable` → `available` on the language click, which
+confirms the user-activation path works):
+
+- Titles, descriptions and category labels translate. "Letnie półkolonie w Enea
+  Arenie" → "Summer camps in Enea Arena", "Trening obwodowy" → "Circuit
+  training", "Imprezy i Rozrywka" → "Parties and entertainment".
+- URLs stay Polish while titles are English —
+  `/szczecin/dla-dzieci/letnie-polkolonie-w-enea-arenie-d0eb4f15/` under the
+  heading "Summer camps in Enea Arena". That is the invariant this design turns
+  on, and it holds.
+- Venue names survive: "Enea Arena", "Morskie Centrum Nauki", "Zamek".
+
+Two limitations the live run exposed:
+
+1. **Proper nouns inside titles are not safe.** "Mammobus" came back as
+   "mammobe". The model has no way to know a word is a name, and unlike venue
+   names — which live in their own field and can be excluded wholesale — a name
+   embedded in a title cannot be fenced off. This is the cost of machine
+   translation and is not fixable at this layer.
+2. **Dates are still formatted in Polish under EN.** "poniedziałek, 3 sierpnia
+   2026", "Updated: 3 sie 2026". That is a pre-existing gap in the date
+   formatters, which are not locale-aware — unrelated to this feature, and worth
+   its own change.
+
 ## Assumptions made without the owner
 
 These were decided to keep moving and are the first things to revisit:
