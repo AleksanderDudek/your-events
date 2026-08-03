@@ -6,6 +6,8 @@ import AppLayout from '@/components/common/AppLayout/AppLayout';
 import { messages, DEFAULT_LOCALE } from '@/i18n';
 import { DEFAULT_CITY_ID, getCity } from '@/config/cities';
 import { env } from '@/config/env';
+import { withBasePath } from '@/lib/constants';
+import { IS_NOINDEX } from '@/config/site';
 import './globals.scss';
 
 // Server-side metadata is rendered at build time. Locale switching and city
@@ -22,6 +24,10 @@ export const metadata: Metadata = {
     template: `%s | ${m.APP_NAME}`,
   },
   description: defaultDescription,
+  // robots.txt stops the crawl; this stops the indexing. A disallowed page can
+  // still be indexed from inbound links — URL only, no content — so a dev site
+  // needs both.
+  robots: IS_NOINDEX ? { index: false, follow: false } : undefined,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -50,12 +56,12 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap&subset=latin-ext"
           rel="stylesheet"
         />
-        <link rel="icon" type="image/png" href="/your-events/favicons/favicon-96x96.png" sizes="96x96" />
-        <link rel="icon" type="image/svg+xml" href="/your-events/favicons/favicon.svg" />
-        <link rel="shortcut icon" href="/your-events/favicons/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/your-events/favicons/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" href={withBasePath('/favicons/favicon-96x96.png')} sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href={withBasePath('/favicons/favicon.svg')} />
+        <link rel="shortcut icon" href={withBasePath('/favicons/favicon.ico')} />
+        <link rel="apple-touch-icon" sizes="180x180" href={withBasePath('/favicons/apple-touch-icon.png')} />
         <meta name="apple-mobile-web-app-title" content={m.APP_NAME} />
-        <link rel="manifest" href="/your-events/favicons/site.webmanifest" />
+        <link rel="manifest" href={withBasePath('/favicons/site.webmanifest')} />
       </head>
       <body>
         <InitColorSchemeScript attribute="data-theme" defaultMode="system" />
