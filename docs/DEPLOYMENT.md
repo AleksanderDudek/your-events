@@ -8,7 +8,7 @@ repository, which is the whole reason a second repository exists.
 | Follows | `main`, every push | `production`, moved by hand |
 | Built by | `deploy-dev.yml` | `deploy-prod.yml` |
 | Repository serving it | `your-events` (this one) | `your-events-prod` |
-| URL | https://aleksanderdudek.github.io/your-events | https://aleksanderdudek.github.io/your-events-prod |
+| URL | [/your-events](https://aleksanderdudek.github.io/your-events) | [/your-events-prod](https://aleksanderdudek.github.io/your-events-prod) |
 | Indexable | No — `noindex` + `robots.txt` disallow | Yes |
 | Clarity | Off | On |
 
@@ -94,6 +94,13 @@ Set per environment, in this repository, under Settings → Environments.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW` | its anon key | its anon key |
 | `PROD_DEPLOY_KEY` | — | private half of the deploy key |
 
+**Only `PROD_DEPLOY_KEY` has to be set before the first release.** The four
+Supabase secrets already exist at repository level, and an environment secret
+merely *overrides* a repository one of the same name — so until you add
+environment-level values, dev and production both read today's database and
+nothing breaks. Add the dev-level overrides when the dev database exists; that
+is a two-value change, with no edit to any workflow.
+
 `DISCORD_WEBHOOK_URL` stays a repository-level secret; both environments use the
 same channel.
 
@@ -118,10 +125,14 @@ Environments → *(environment)* → Variables.
 | `NEXT_PUBLIC_BASE_PATH` | `/your-events` | `/your-events-prod` |
 | `NEXT_PUBLIC_ENABLED_CITIES` | `wroclaw,szczecin` | `wroclaw,szczecin` |
 | `NEXT_PUBLIC_SUPABASE_SCHEMA` | `public` | `public` |
-| `NEXT_PUBLIC_CLARITY_PROJECT_ID` | *(empty)* | `xtfje919ui` |
-| `NEXT_PUBLIC_ROBOTS_NOINDEX` | `true` | *(empty)* |
+| `NEXT_PUBLIC_CLARITY_PROJECT_ID` | *(not set)* | `xtfje919ui` |
+| `NEXT_PUBLIC_ROBOTS_NOINDEX` | `true` | *(not set)* |
 
-Clarity is empty on dev deliberately: test traffic pointed at the production
+*(not set)* means the variable does not exist in that environment. GitHub
+rejects an empty variable value outright, and it does not need one: an absent
+variable interpolates to an empty string, which is exactly what the build wants.
+
+Clarity is absent on dev deliberately: test traffic pointed at the production
 project corrupts the statistics the tag exists to collect.
 
 `NEXT_PUBLIC_ROBOTS_NOINDEX` is compared against the exact string `true`. A typo
