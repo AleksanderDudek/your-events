@@ -122,6 +122,8 @@ function makeFilters(overrides: Partial<EventFilters> = {}): EventFilters {
     page: 1,
     pageSize: 15,
     viewMode: 'grid',
+    sort: 'mix',
+    dir: 'asc',
     ...overrides,
   };
 }
