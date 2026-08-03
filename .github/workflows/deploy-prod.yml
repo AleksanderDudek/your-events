@@ -1,0 +1,148 @@
+name: Deploy prod to your-events-prod
+
+# Production: built HERE from the `production` branch, published to the Pages of
+# the your-events-prod repository. That repo holds static files only — no
+# sources, no workflows, no secrets.
+#
+# There is deliberately no `push: production` trigger. A push made with
+# GITHUB_TOKEN does not start a workflow, so a release-driven push would
+# silently deploy nothing. release.yml dispatches this workflow explicitly
+# instead; workflow_dispatch is one of the two events exempt from that rule.
+#
+# Every value reaching a `run:` step goes through `env:` and is read as a shell
+# variable, never interpolated into the script text.
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [events-updated]
+  # Event pages are baked at build time, so production must rebuild on data as
+  # well as on releases. Cron is UTC.
+  schedule:
+    - cron: '0 */3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-prod
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      # Always the released commit, never the ref that happened to trigger the
+      # run — a cron fires on the default branch.
+      - uses: actions/checkout@v5
+        with:
+          ref: production
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+          NEXT_PUBLIC_SITE_ORIGIN: ${{ vars.NEXT_PUBLIC_SITE_ORIGIN }}
+          NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
+          NEXT_PUBLIC_ENABLED_CITIES: ${{ vars.NEXT_PUBLIC_ENABLED_CITIES }}
+          NEXT_PUBLIC_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
+          NEXT_PUBLIC_CLARITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_CLARITY_PROJECT_ID }}
+          NEXT_PUBLIC_ROBOTS_NOINDEX: ${{ vars.NEXT_PUBLIC_ROBOTS_NOINDEX }}
+
+      # A blank production page is the failure mode this guards against: Pages
+      # served from a branch runs the tree through Jekyll, which drops every
+      # directory whose name starts with an underscore — including _next/.
+      - name: Mark the output as not-Jekyll
+        run: touch out/.nojekyll
+
+      - name: Publish to your-events-prod
+        env:
+          DEPLOY_KEY: ${{ secrets.PROD_DEPLOY_KEY }}
+          TARGET_REPO: git@github.com:AleksanderDudek/your-events-prod.git
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_KEY:-}" ]; then
+            echo "PROD_DEPLOY_KEY is not set in the prod environment — see docs/DEPLOYMENT.md"
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+          # A single orphan commit, force-pushed. Rollback is moving the
+          # `production` branch here and rebuilding, so the host repository's
+          # history is not a recovery mechanism and is not worth keeping.
+          cd out
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA} (${GITHUB_RUN_ID})"
+          git push -q --force "$TARGET_REPO" gh-pages
+          echo "Published $(git rev-parse --short HEAD) to your-events-prod:gh-pages"
+
+  notify:
+    needs: [build-and-publish]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RESULT: ${{ needs.build-and-publish.result }}
+          EVENT: ${{ github.event_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "No DISCORD_WEBHOOK_URL — skipping the notification."
+            exit 0
+          fi
+          if [ "$RESULT" = "success" ]; then
+            TITLE="🚀 prod deploy — ✅ success"
+            COLOR=4906588
+          else
+            TITLE="🚀 prod deploy — ❌ $RESULT"
+            COLOR=15680580
+          fi
+          payload=$(jq -n \
+            --arg title "$TITLE" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            --arg event "$EVENT" \
+            --arg page "https://aleksanderdudek.github.io/your-events-prod" \
+            '{
+              username: "your-events Deploy",
+              embeds: [{
+                title: $title,
+                url: $url,
+                color: $color,
+                fields: [
+                  { name: "Trigger", value: $event, inline: true },
+                  { name: "Site", value: $page, inline: false }
+                ]
+              }]
+            }')
+          code=$(curl -sS -o /tmp/discord_resp -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: your-events-deploy/1.0 (+https://github.com/AleksanderDudek/your-events)" \
+            -d "$payload" "$DISCORD_WEBHOOK_URL")
+          echo "Discord webhook → HTTP $code"
+          if [ "$code" != "204" ]; then
+            echo "Response:"; cat /tmp/discord_resp || true
+          fi
