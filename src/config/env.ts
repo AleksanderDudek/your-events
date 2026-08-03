@@ -3,6 +3,12 @@ import { z } from 'zod';
 const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().min(1, 'NEXT_PUBLIC_SUPABASE_URL is required'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'NEXT_PUBLIC_SUPABASE_ANON_KEY is required'),
+  // Postgres schema PostgREST reads from. 'public' everywhere today; a second
+  // schema is how a dev environment can live in copied tables inside ONE
+  // Supabase project instead of a second project. The schema must also be added
+  // to the project's exposed schemas in Supabase's API settings, or PostgREST
+  // refuses to serve it.
+  NEXT_PUBLIC_SUPABASE_SCHEMA: z.string().min(1).default('public'),
   // Public origin + base path of the deployed site, used to build absolute SEO
   // URLs (sitemap, robots, metadata). Defaults target the GitHub Pages demo;
   // override both when wiring up the production domain. See @/config/site.
@@ -27,6 +33,7 @@ function validateEnv() {
   const parsed = envSchema.safeParse({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_SUPABASE_SCHEMA: process.env.NEXT_PUBLIC_SUPABASE_SCHEMA,
     NEXT_PUBLIC_SITE_ORIGIN: process.env.NEXT_PUBLIC_SITE_ORIGIN,
     NEXT_PUBLIC_BASE_PATH: process.env.NEXT_PUBLIC_BASE_PATH,
     NEXT_PUBLIC_ENABLED_CITIES: process.env.NEXT_PUBLIC_ENABLED_CITIES,
