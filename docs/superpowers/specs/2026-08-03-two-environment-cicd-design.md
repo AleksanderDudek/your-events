@@ -94,8 +94,11 @@ Replaces today's `deploy.yml`.
 
 ### `deploy-prod.yml`
 
-- Triggers: push to `production`, 3-hourly cron, `repository_dispatch:
-  events-updated`, manual.
+- Triggers: 3-hourly cron, `repository_dispatch: events-updated`, manual.
+  Deliberately **not** `push: production`: a push made with `GITHUB_TOKEN` does
+  not start a workflow, so a release-driven push would silently deploy nothing.
+  `release.yml` therefore dispatches this workflow explicitly —
+  `workflow_dispatch` is one of the two events exempt from that rule.
 - Environment: `prod` — so every run, including cron, is subject to the
   environment's protection rule.
 - Checks out `production` explicitly (`ref: production`), not the triggering
@@ -107,7 +110,7 @@ Replaces today's `deploy.yml`.
 ### `release.yml`
 
 - Trigger: manual only, with a `ref` input defaulting to `main`.
-- Fast-forwards `production` to that ref and pushes it, which triggers
+- Fast-forwards `production` to that ref and pushes it, then dispatches
   `deploy-prod.yml`. Creates the branch if it does not exist yet, which is what
   the first release does.
 - Refuses a non-fast-forward move unless a `force` input is set, so a release
@@ -159,7 +162,7 @@ is Supabase RLS, not this value.
 
 ## Code changes
 
-Three, all small.
+Four, all small.
 
 ### 1. `.nojekyll`
 
@@ -191,6 +194,19 @@ Two mechanisms, because they do different jobs:
 
 `env.ts` gains the two new variables with defaults that preserve today's
 behaviour (`public`, and indexable).
+
+### 4. The base path is hardcoded in two files
+
+`layout.tsx` writes `/your-events/favicons/...` into five `<link>` tags and
+`manifest.ts` repeats it in `start_url` and three icon entries. Next.js
+auto-prefixes `<Link>` and imported assets, but not raw hrefs written by hand.
+Under production's `/your-events-prod` base path every one of them would 404 —
+no favicon, a broken web manifest, no installable PWA.
+
+Both files switch to the existing `withBasePath()` helper from
+`@/lib/constants`, which already resolves the same env var. This is a
+pre-existing latent bug: it is invisible today only because exactly one base
+path has ever been deployed.
 
 ## Deploy key
 
