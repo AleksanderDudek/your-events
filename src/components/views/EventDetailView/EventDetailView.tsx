@@ -22,6 +22,7 @@ import EventsMap from '@/components/common/EventsMap/EventsMap';
 import RelatedEvents, { type RelatedEventLink } from '@/components/common/RelatedEvents/RelatedEvents';
 import { formatDate, formatEventTime } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
+import { Translated } from '@/i18n/translation';
 import styles from './EventDetailView.module.scss';
 
 interface EventDetailViewProps {
@@ -125,7 +126,7 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
             className={styles.heroTitle}
             sx={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#ffffff' }}
           >
-            {event.name}
+            <Translated text={event.name} />
           </Typography>
         </Box>
       </Box>
@@ -164,7 +165,9 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
               <Typography variant="caption" className={styles.detailLabel}>
                 {t.DETAIL_LOCATION}
               </Typography>
-              <Typography className={styles.detailValue}>{event.location.name}</Typography>
+              {/* Venue name is a proper noun, not translated; translate="no" also
+                  keeps the page-level Google fallback widget from rewriting it. */}
+              <Typography className={styles.detailValue} translate="no">{event.location.name}</Typography>
               {event.location.city && (
                 <Typography variant="body2" className={styles.detailSub}>
                   {event.location.city}
@@ -229,7 +232,7 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
                   className={styles.description}
                   sx={{ color: 'var(--color-text-primary)', whiteSpace: 'pre-wrap' }}
                 >
-                  {description}
+                  <Translated text={description} />
                 </Typography>
               </Box>
             </>
@@ -249,7 +252,7 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
                   <PriceLabel amount={event.price.amount} currency={event.price.currency} label={event.price.label} showLabel={event.price.showLabel} />
                   {priceLabel && !event.price.showLabel && event.price.amount === null && (
                     <Typography variant="caption" display="block" sx={{ color: 'var(--color-text-muted)', mt: 0.25 }}>
-                      {priceLabel}
+                      <Translated text={priceLabel} />
                     </Typography>
                   )}
                 </Box>

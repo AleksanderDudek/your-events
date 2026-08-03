@@ -62,7 +62,9 @@ export function EventVenue({ name }: EventVenueProps) {
           end of <head> and outrank equal-specificity module classes, so
           font-size here would be clobbered. */}
       <PlaceIcon sx={{ fontSize: 13, color: 'var(--color-text-muted)', flexShrink: 0 }} />
-      <span className={styles.venueText}>{name}</span>
+      {/* Venue names are proper nouns, not translated — translate="no" also
+          keeps the page-level Google fallback widget from rewriting them. */}
+      <span className={styles.venueText} translate="no">{name}</span>
     </span>
   );
 }

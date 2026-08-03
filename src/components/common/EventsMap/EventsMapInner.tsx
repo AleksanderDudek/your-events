@@ -3,12 +3,13 @@
 // All imports that touch `window` (Leaflet, its CSS) happen here. This module
 // is only loaded via the dynamic import in EventsMap.tsx (ssr: false), never
 // at SSR/build time.
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet.markercluster';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import type { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
+import { useTranslated } from '@/i18n/translation';
 import {
   FALLBACK_COLOR,
   PIN_ANCHOR,
@@ -38,7 +39,10 @@ export interface EventsMapInnerProps {
   // Disable user interaction — used for the homepage "preview" tile.
   interactive?: boolean;
   // Build the popup HTML for a marker. When omitted the popup is suppressed.
-  renderPopup?: (event: Event) => string;
+  // Takes the translated event name separately from the event itself: the
+  // popup's own href is built from `event.name` (it feeds the URL slug), so
+  // the translated string cannot simply replace it on the event object.
+  renderPopup?: (event: Event, translatedName: string) => string;
 }
 
 // Category of the events under a marker, stashed on the Leaflet marker so a
@@ -85,7 +89,11 @@ interface MarkersLayerProps {
   events: Event[];
   colorFor: (event: Event) => string;
   disableClustering: boolean;
-  renderPopup?: (event: Event) => string;
+  renderPopup?: (event: Event, translatedName: string) => string;
+  // Populated by <PopupTitleTranslator/> siblings in EventsMapInner — this
+  // component builds markers imperatively inside an effect, where a hook
+  // cannot be called per event, so the translated names arrive precomputed.
+  translatedNames: Map<string, string>;
   fitToEvents: boolean;
 }
 
@@ -94,6 +102,7 @@ function MarkersLayer({
   colorFor,
   disableClustering,
   renderPopup,
+  translatedNames,
   fitToEvents,
 }: MarkersLayerProps) {
   const map = useMap();
@@ -130,14 +139,17 @@ function MarkersLayer({
         });
 
     for (const ev of usable) {
+      // Falls back to the Polish name until its translation lands — same
+      // "render Polish immediately, swap in later" contract as useTranslated.
+      const translatedName = translatedNames.get(ev.id) ?? ev.name;
       const marker = L.marker([ev.location.lat as number, ev.location.lng as number], {
         icon: createPinIcon(ev.categoryMain, colorFor(ev)),
-        title: ev.name,
+        title: translatedName,
         categoryName: ev.categoryMain,
         categoryColor: colorFor(ev),
       } as CategorisedMarkerOptions);
       if (renderPopup) {
-        marker.bindPopup(renderPopup(ev), { maxWidth: 240, className: styles.popup });
+        marker.bindPopup(renderPopup(ev, translatedName), { maxWidth: 240, className: styles.popup });
       }
       group.addLayer(marker);
     }
@@ -159,8 +171,29 @@ function MarkersLayer({
         layerRef.current = null;
       }
     };
-  }, [map, events, colorFor, disableClustering, renderPopup, fitToEvents]);
+  }, [map, events, colorFor, disableClustering, renderPopup, translatedNames, fitToEvents]);
 
+  return null;
+}
+
+// Leaflet popups (and the marker's native title tooltip) are raw strings
+// handed to the DOM outside React, so they cannot call a hook per marker
+// inside the effect above. This renders one invisible instance per event —
+// same fix as CategoryChip — so useTranslated stays at each instance's own
+// top level, and reports the result up into EventsMapInner's state.
+function PopupTitleTranslator({
+  id,
+  name,
+  onTranslated,
+}: {
+  id: string;
+  name: string;
+  onTranslated: (id: string, value: string) => void;
+}) {
+  const translated = useTranslated(name);
+  useEffect(() => {
+    onTranslated(id, translated);
+  }, [id, translated, onTranslated]);
   return null;
 }
 
@@ -175,6 +208,11 @@ export default function EventsMapInner({
   renderPopup,
 }: EventsMapInnerProps) {
   const { byDisplayName } = useCategories();
+  const [translatedNames, setTranslatedNames] = useState<Map<string, string>>(new Map());
+
+  const handleTranslated = useCallback((id: string, value: string) => {
+    setTranslatedNames((prev) => (prev.get(id) === value ? prev : new Map(prev).set(id, value)));
+  }, []);
 
   const colorFor = useMemo(() => {
     return (event: Event) => {
@@ -185,6 +223,13 @@ export default function EventsMapInner({
 
   return (
     <div className={styles.mapWrap} style={{ height }}>
+      {/* Only needed where a popup/title is actually shown — no point paying
+          for a translator instance per pin on the homepage preview map, which
+          renders no popups. */}
+      {renderPopup &&
+        events.map((ev) => (
+          <PopupTitleTranslator key={ev.id} id={ev.id} name={ev.name} onTranslated={handleTranslated} />
+        ))}
       <MapContainer
         center={[center.lat, center.lng]}
         zoom={zoom}
@@ -206,6 +251,7 @@ export default function EventsMapInner({
           colorFor={colorFor}
           disableClustering={disableClustering}
           renderPopup={renderPopup}
+          translatedNames={translatedNames}
           fitToEvents={fitToEvents}
         />
       </MapContainer>
