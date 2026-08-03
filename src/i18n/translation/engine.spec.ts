@@ -38,10 +38,14 @@ function uninstallTranslator() {
 
 // The queue flushes on a microtask; awaiting an already-resolved promise twice
 // is enough to let it run to completion.
+// Drain the microtask queue and then a macrotask, rather than awaiting a fixed
+// number of ticks. Counting ticks couples these tests to how many `await`
+// boundaries the flush happens to cross today: adding one — an availability
+// pre-flight, say — would break every case here with a confusing "still the
+// original text" rather than the real reason.
 const flush = async () => {
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let i = 0; i < 20; i += 1) await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
 };
 
 beforeEach(() => {
