@@ -185,7 +185,45 @@ function buildFilteredQuery(
   if (filters.dateMode && filters.hourFrom) query = query.gte('time_start', filters.hourFrom);
   if (filters.dateMode && filters.hourTo) query = query.lte('time_start', filters.hourTo);
 
-  return query.order('date').order('time_start');
+  return applyOrder(query, filters);
+}
+
+// The narrowest shape `buildFilteredQuery`'s ordering tail needs — enough to
+// satisfy eslint's ban on `any` without pulling in the full PostgREST builder
+// generics.
+interface PostgrestOrderable {
+  order(column: string, options?: { ascending?: boolean; nullsFirst?: boolean }): PostgrestOrderable;
+}
+
+// Ordering runs in Postgres, not in the browser: the list and the map share
+// this builder precisely so the two can never disagree about what "matching"
+// or "first" means.
+//
+// `mix` has no clause of its own — it is assembled from one small query per
+// category (see fetchMixedEvents) and falls back to plain date order here,
+// unaffected by `dir` since the direction toggle is disabled under mix (it has
+// no meaning) — which is what the map and the sampler's own queries want, and
+// exactly what this builder did before sorting existed.
+function applyOrder<T>(query: T, filters: EventFilters): T {
+  const ascending = filters.dir !== 'desc';
+  const builder = query as PostgrestOrderable;
+  switch (filters.sort) {
+    case 'name':
+      return builder.order('name', { ascending }) as T;
+    case 'venue':
+      return builder.order('venue', { ascending }) as T;
+    case 'price':
+      // Nulls last in BOTH directions. An unknown price is neither the
+      // cheapest nor the most expensive, and it must never head the list.
+      return builder.order('price', { ascending, nullsFirst: false }) as T;
+    case 'date':
+      return builder
+        .order('date', { ascending })
+        .order('time_start', { ascending }) as T;
+    case 'mix':
+    default:
+      return builder.order('date').order('time_start') as T;
+  }
 }
 
 export async function fetchEvents(

@@ -461,6 +461,85 @@ describe('eventsApi', () => {
       expect(s.eventsBuilder.order).toHaveBeenCalledWith('time_start');
     });
 
+    // sort/dir choose the order clause. The list and the map share this
+    // builder, so both change together and can never disagree about "first".
+    describe('ordering', () => {
+      it('orders by date, then time_start, ascending', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ sort: 'date' }));
+
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('date', { ascending: true });
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('time_start', { ascending: true });
+      });
+
+      it('reverses both columns for dir: desc', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ sort: 'date', dir: 'desc' }));
+
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('date', { ascending: false });
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('time_start', { ascending: false });
+      });
+
+      it('orders by name alone', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ sort: 'name' }));
+
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('name', { ascending: true });
+        expect(s.eventsBuilder.order).toHaveBeenCalledTimes(1);
+      });
+
+      it('orders by name, descending', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ sort: 'name', dir: 'desc' }));
+
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('name', { ascending: false });
+      });
+
+      it('orders by venue alone', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ sort: 'venue' }));
+
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('venue', { ascending: true });
+        expect(s.eventsBuilder.order).toHaveBeenCalledTimes(1);
+      });
+
+      // Nulls last in BOTH directions: an unknown price is neither the
+      // cheapest nor the dearest, and must never head the list.
+      it('orders by price with nulls last, ascending', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ sort: 'price' }));
+
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('price', { ascending: true, nullsFirst: false });
+      });
+
+      it('orders by price with nulls last, descending too', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ sort: 'price', dir: 'desc' }));
+
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('price', { ascending: false, nullsFirst: false });
+      });
+
+      // The mix has no clause of its own — it is assembled elsewhere from one
+      // small query per category (see fetchMixedEvents) — but this builder is
+      // still what those per-category queries and the map use, and they want
+      // plain date order, exactly as before sorting existed.
+      it('falls back to plain date order for sort: mix', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ sort: 'mix' }));
+
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('date');
+        expect(s.eventsBuilder.order).toHaveBeenCalledWith('time_start');
+      });
+    });
+
     describe('category filtering', () => {
       it('uses .in for top-level categories only', async () => {
         const s = setup();
