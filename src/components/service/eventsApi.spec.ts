@@ -5,10 +5,12 @@ import {
   fetchEvent,
   fetchCategories,
   fetchMapEvents,
+  fetchMixedEvents,
   MAP_EVENT_LIMIT,
 } from './eventsApi';
 import { getSupabaseForCity } from '@/lib/supabase';
 import { NotFoundError, ServerError } from '@/lib/utils';
+import { MIX_PER_CATEGORY } from '@/lib/categoryMix';
 import type { EventFilters } from '@/types/filter.types';
 
 vi.mock('@/lib/supabase', () => ({ getSupabaseForCity: vi.fn() }));
@@ -160,6 +162,34 @@ function setup() {
       return categoriesBuilder;
     },
   };
+}
+
+// fetchMixedEvents issues one `from('events')` builder per category, each
+// resolving independently — unlike `setup()`'s single shared result, a
+// category's promise can reject without touching the others. Builders are
+// handed out in call order, which matches the order `categoryMains` is mapped
+// over since nothing is awaited between one category's query and the next.
+function makeAsyncBuilder(list: () => Promise<ListResult>): Builder {
+  const b = {} as Builder;
+  for (const m of QUERY_METHODS) b[m] = vi.fn(() => b);
+  b.single = vi.fn(() => Promise.resolve({ data: null, error: null }));
+  b.then = (onF, onR) => list().then(onF, onR);
+  return b;
+}
+
+function setupMix(perCategory: Array<() => Promise<ListResult>>) {
+  const eventsBuilders: Builder[] = [];
+  const client = {
+    from: vi.fn(() => {
+      const idx = eventsBuilders.length;
+      const source = perCategory[idx] ?? (() => Promise.resolve({ data: [], count: 0, error: null }));
+      const builder = makeAsyncBuilder(source);
+      eventsBuilders.push(builder);
+      return builder;
+    }),
+  };
+  getSupabaseForCityMock.mockReturnValue(client as unknown as SupabaseClient);
+  return { client, eventsBuilders };
 }
 
 beforeEach(() => {
@@ -713,6 +743,137 @@ describe('eventsApi', () => {
       s.results.events = { data: null, count: null, error: { message: 'connection refused' } };
 
       await expect(fetchEvents('szczecin', makeFilters())).rejects.toBeInstanceOf(ServerError);
+    });
+  });
+
+  describe('fetchMixedEvents', () => {
+    const categoryMains = ['Sport i Fitness', 'Film', 'Taniec'];
+
+    it('issues one query per category, each narrowed and limited to MIX_PER_CATEGORY', async () => {
+      const s = setupMix(
+        categoryMains.map((main, i) => () =>
+          Promise.resolve({ data: [makeRow({ id: 100 + i, category_main: main })], count: 50, error: null })
+        )
+      );
+
+      await fetchMixedEvents(
+        'szczecin',
+        makeFilters(),
+        { topLevelMains: [], subPairs: [] },
+        categoryMains,
+        1
+      );
+
+      expect(s.eventsBuilders).toHaveLength(categoryMains.length);
+      categoryMains.forEach((main, i) => {
+        expect(s.eventsBuilders[i].eq).toHaveBeenCalledWith('category_main', main);
+        expect(s.eventsBuilders[i].limit).toHaveBeenCalledWith(MIX_PER_CATEGORY);
+      });
+    });
+
+    // One dead category must not blank the page — the rest of the sample
+    // still has to render.
+    it('drops a category whose query rejects, and still returns the rest', async () => {
+      setupMix([
+        () => Promise.resolve({ data: [makeRow({ id: 1, category_main: 'Sport i Fitness' })], count: 20, error: null }),
+        () => Promise.reject(new Error('network down')),
+        () => Promise.resolve({ data: [makeRow({ id: 3, category_main: 'Taniec' })], count: 5, error: null }),
+      ]);
+
+      const { events } = await fetchMixedEvents(
+        'szczecin',
+        makeFilters(),
+        { topLevelMains: [], subPairs: [] },
+        categoryMains,
+        1
+      );
+
+      expect(events).toHaveLength(2);
+      expect(events.map((e) => e.id).sort()).toEqual(['1', '3']);
+    });
+
+    // A category resolving with a PostgREST error (rather than the promise
+    // rejecting) must degrade the same silent way.
+    it('drops a category whose query resolves with an error', async () => {
+      setupMix([
+        () => Promise.resolve({ data: [makeRow({ id: 1 })], count: 20, error: null }),
+        () => Promise.resolve({ data: null, count: null, error: { message: 'relation missing' } }),
+      ]);
+
+      const { events } = await fetchMixedEvents(
+        'szczecin',
+        makeFilters(),
+        { topLevelMains: [], subPairs: [] },
+        ['Sport i Fitness', 'Film'],
+        1
+      );
+
+      expect(events.map((e) => e.id)).toEqual(['1']);
+    });
+
+    it('reports total as the mixed list length and poolTotal as the unrestricted count summed across categories', async () => {
+      setupMix([
+        () =>
+          Promise.resolve({
+            data: [makeRow({ id: 1 }), makeRow({ id: 2 }), makeRow({ id: 3 })],
+            count: 300,
+            error: null,
+          }),
+        () => Promise.resolve({ data: [makeRow({ id: 4 })], count: 236, error: null }),
+        () => Promise.resolve({ data: [], count: 0, error: null }),
+      ]);
+
+      const { total, poolTotal } = await fetchMixedEvents(
+        'szczecin',
+        makeFilters(),
+        { topLevelMains: [], subPairs: [] },
+        categoryMains,
+        1
+      );
+
+      expect(total).toBe(4);
+      expect(poolTotal).toBe(536);
+    });
+
+    it('slices the mixed list by the caller\'s page and pageSize', async () => {
+      const rows = Array.from({ length: 20 }, (_, i) => makeRow({ id: i + 1 }));
+      setupMix([() => Promise.resolve({ data: rows, count: 20, error: null })]);
+
+      const { events, total } = await fetchMixedEvents(
+        'szczecin',
+        makeFilters({ page: 2, pageSize: 15 }),
+        { topLevelMains: [], subPairs: [] },
+        ['Sport i Fitness'],
+        1
+      );
+
+      expect(events.map((e) => e.id)).toEqual(['16', '17', '18', '19', '20']);
+      expect(total).toBe(20);
+    });
+
+    it('applies freeOnly client-side, as the other fetchers do', async () => {
+      setupMix([
+        () =>
+          Promise.resolve({
+            data: [
+              makeRow({ id: 1, is_free: true, price: null, price_label: '' }),
+              makeRow({ id: 2, is_free: false, price: 50, price_label: '50 zł' }),
+            ],
+            count: 2,
+            error: null,
+          }),
+      ]);
+
+      const { events, total } = await fetchMixedEvents(
+        'szczecin',
+        makeFilters({ freeOnly: true }),
+        { topLevelMains: [], subPairs: [] },
+        ['Sport i Fitness'],
+        1
+      );
+
+      expect(events.map((e) => e.id)).toEqual(['1']);
+      expect(total).toBe(1);
     });
   });
 

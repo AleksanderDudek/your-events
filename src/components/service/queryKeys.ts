@@ -38,5 +38,11 @@ export const eventsKeys = {
     ['events', cityId, 'list', queryShape(filters)] as const,
   map: (cityId: CityId | string, filters: EventFilters) =>
     ['events', cityId, 'map', mapQueryShape(filters)] as const,
+  // The mix is a different fetch shape (one query per category, sampled) from
+  // the ordinary list, so it needs its own cache entry rather than colliding
+  // with `list`'s under the same filters. The seed is part of the key: a new
+  // session-seed must not serve a shuffle taken under the previous one.
+  mix: (cityId: CityId | string, filters: EventFilters, seed: number) =>
+    ['events', cityId, 'mix', queryShape(filters), seed] as const,
   categories: () => ['categories'] as const,
 };
