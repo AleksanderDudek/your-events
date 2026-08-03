@@ -27,6 +27,11 @@ const envSchema = z.object({
   // localhost (assets Clarity's replay can never fetch). Only the deployed site
   // should report. See .github/workflows/deploy.yml.
   NEXT_PUBLIC_CLARITY_PROJECT_ID: z.string().default(''),
+  // Set to 'true' on any environment that must not reach a search index — the
+  // dev site serves the same content as production under a different URL, which
+  // is a duplicate as far as a crawler is concerned. Empty (indexable) is the
+  // default so production cannot be hidden by forgetting a variable.
+  NEXT_PUBLIC_ROBOTS_NOINDEX: z.string().default(''),
 });
 
 function validateEnv() {
@@ -38,6 +43,7 @@ function validateEnv() {
     NEXT_PUBLIC_BASE_PATH: process.env.NEXT_PUBLIC_BASE_PATH,
     NEXT_PUBLIC_ENABLED_CITIES: process.env.NEXT_PUBLIC_ENABLED_CITIES,
     NEXT_PUBLIC_CLARITY_PROJECT_ID: process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID,
+    NEXT_PUBLIC_ROBOTS_NOINDEX: process.env.NEXT_PUBLIC_ROBOTS_NOINDEX,
   });
 
   if (!parsed.success) {
