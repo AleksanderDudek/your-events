@@ -20,13 +20,14 @@ import EventsMap from '@/components/common/EventsMap/EventsMap';
 import AppPagination from '@/components/common/AppPagination/AppPagination';
 import EmptyState from '@/components/ui/EmptyState/EmptyState';
 import ErrorState from '@/components/ui/ErrorState/ErrorState';
+import SortSelect from '@/components/ui/SortSelect/SortSelect';
 import { useCity } from '@/config/CityProvider';
 import { useFilterNavigation } from '@/components/service/useFilterNavigation';
 import { countActiveFilters } from '@/lib/filterUtils';
 import { PAGE_SIZE_OPTIONS, withBasePath } from '@/lib/constants';
 import { eventPath } from '@/lib/slug';
 import { useTranslation } from '@/i18n';
-import { PageSize, ViewMode, EventFilters } from '@/types/filter.types';
+import { PageSize, ViewMode, SortKey, SortDir, EventFilters } from '@/types/filter.types';
 import { Event } from '@/types/event.types';
 import styles from './EventsListView.module.scss';
 
@@ -130,7 +131,7 @@ function renderBody({
 }
 
 export default function EventsListView() {
-  const { events, total, isLoading, isError, isFetching, refetch, filters } = useEvents();
+  const { events, total, poolTotal, isLoading, isError, isFetching, refetch, filters } = useEvents();
   // Fetched only while the map is on screen; it is the whole result set, not a
   // page of it.
   const isMapView = filters.viewMode === 'map';
@@ -188,7 +189,10 @@ export default function EventsListView() {
               aria-live="polite"
               sx={{ color: 'var(--color-text-secondary)' }}
             >
-              {t.RESULTS_COUNT(total)}
+              {/* The mix is a sample: its count is the sample's size, not the
+                  database's, so it says so rather than reading like a bug next
+                  to the true total. Every other sort keeps today's plain count. */}
+              {filters.sort === 'mix' ? t.SORT_MIX_SUMMARY(total, poolTotal) : t.RESULTS_COUNT(total)}
             </Typography>
             {/* The pin count visibly disagreeing with the result count needs a
                 stated reason — events with no coordinates cannot be placed. */}
@@ -218,6 +222,12 @@ export default function EventsListView() {
             {countActiveFilters(filters) > 0 && (
               <SavePresetButton filters={filters} cityId={city.id} />
             )}
+            <SortSelect
+              sort={filters.sort}
+              dir={filters.dir}
+              onSortChange={(sort: SortKey) => updateFilter({ sort })}
+              onDirChange={(dir: SortDir) => updateFilter({ dir })}
+            />
             <ViewToggle
               value={filters.viewMode}
               onChange={(viewMode: ViewMode) => updatePagination({ viewMode })}

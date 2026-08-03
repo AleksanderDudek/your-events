@@ -76,7 +76,14 @@ export function useEvents() {
   // don't re-read sessionStorage on every call.
   const seed = useMemo(() => getMixSeed(), []);
 
-  const { data, isLoading, isError, isFetching, error, refetch } = useQuery({
+  // The explicit generic matters: left to inference, `useQuery`'s overloads
+  // collapse the ternary's two distinct result shapes and the `'poolTotal' in
+  // data` narrowing below silently degrades to `unknown` instead of `number`.
+  type EventsResult =
+    | Awaited<ReturnType<typeof fetchEvents>>
+    | Awaited<ReturnType<typeof fetchMixedEvents>>;
+
+  const { data, isLoading, isError, isFetching, error, refetch } = useQuery<EventsResult>({
     queryKey: canMix ? eventsKeys.mix(city.id, filters, seed) : eventsKeys.list(city.id, filters),
     queryFn: () =>
       canMix
