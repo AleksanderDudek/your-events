@@ -37,6 +37,9 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Environment-scoped credentials: e2e exercises the dev database, never
+    # production's.
+    environment: dev
     steps:
       - uses: actions/checkout@v5
 
@@ -118,6 +121,7 @@ jobs:
   e2e-export:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment: dev
     steps:
       - uses: actions/checkout@v5
 

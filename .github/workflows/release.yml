@@ -1,0 +1,70 @@
+name: Release to production
+
+# A release is moving the `production` branch. Everything else follows from it:
+# `git log production..main` is what is waiting to ship, and a rollback is
+# releasing an older commit.
+#
+# The ref comes from a workflow_dispatch input, so it is operator-supplied
+# rather than attacker-supplied — but it still reaches the script through
+# `env:` and is quoted at every use, never interpolated into the script text.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit, tag or branch to release'
+        required: true
+        default: main
+      force:
+        description: 'Allow moving production backwards (rollback)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: write # to dispatch deploy-prod.yml
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Move the production branch
+        env:
+          REF: ${{ inputs.ref }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+          TARGET=$(git rev-parse --verify "origin/$REF^{commit}" 2>/dev/null \
+            || git rev-parse --verify "$REF^{commit}")
+          echo "Releasing $REF ($TARGET)"
+
+          if git rev-parse --verify -q "origin/production^{commit}" >/dev/null; then
+            CURRENT=$(git rev-parse "origin/production^{commit}")
+            echo "production currently at $CURRENT"
+            if [ "$CURRENT" = "$TARGET" ]; then
+              echo "Already released — nothing to move."
+            elif git merge-base --is-ancestor "$CURRENT" "$TARGET"; then
+              echo "Fast-forward."
+            elif [ "$FORCE" = "true" ]; then
+              echo "Not a fast-forward, but force was requested."
+            else
+              echo "Refusing: $REF is not a descendant of the released commit."
+              echo "Re-run with force=true if you mean to move production backwards."
+              exit 1
+            fi
+          else
+            echo "production does not exist yet — creating it."
+          fi
+
+          git push --force origin "$TARGET:refs/heads/production"
+
+      # An explicit dispatch, because a push authenticated with GITHUB_TOKEN
+      # does not start a workflow — the deploy would never run otherwise.
+      - name: Trigger the production deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-prod.yml --ref main
