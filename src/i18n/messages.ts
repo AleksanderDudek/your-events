@@ -264,6 +264,12 @@ const pl = {
   PRIVACY_WITHDRAW_HEADING: 'Wycofanie zgody',
   PRIVACY_WITHDRAW_BODY:
     'Zgodę możesz zmienić w każdej chwili za pomocą linku „Cookies” w stopce. Po odrzuceniu Clarity usuwa swoje cookies i przestaje je zapisywać.',
+  TRANSLATION_DOWNLOADING: 'Tłumaczenie treści…',
+  TRANSLATION_ERROR: 'Nie udało się przetłumaczyć treści — zostaje w języku polskim.',
+  TRANSLATION_ERROR_DISMISS: 'Zamknij',
+  TRANSLATION_OFFER_BODY:
+    'Ta przeglądarka nie obsługuje tłumaczenia na miejscu. Stronę można wysłać do Tłumacza Google.',
+  TRANSLATION_OFFER_CTA: 'Przetłumacz stronę',
 };
 
 export type Messages = typeof pl;
@@ -510,6 +516,12 @@ const en: Messages = {
   PRIVACY_WITHDRAW_HEADING: 'Withdrawing consent',
   PRIVACY_WITHDRAW_BODY:
     'You can change your choice at any time with the "Cookies" link in the footer. After a rejection Clarity deletes its cookies and stops writing them.',
+  TRANSLATION_DOWNLOADING: 'Translating content…',
+  TRANSLATION_ERROR: 'Translation failed — content stays in Polish.',
+  TRANSLATION_ERROR_DISMISS: 'Dismiss',
+  TRANSLATION_OFFER_BODY:
+    'This browser cannot translate on device. The page can be sent to Google Translate.',
+  TRANSLATION_OFFER_CTA: 'Translate page',
 };
 
 export const messages: Record<Locale, Messages> = { pl, en };

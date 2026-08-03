@@ -3,12 +3,24 @@
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { Locale, useTranslation } from '@/i18n';
+import { primeTranslator } from '@/i18n/translation';
 
 export default function LanguageSwitcher() {
   const { locale, setLocale, t } = useTranslation();
 
   const handleChange = (_: React.MouseEvent<HTMLElement>, next: Locale | null) => {
-    if (next && next !== locale) setLocale(next);
+    if (next && next !== locale) {
+      setLocale(next);
+      // Creating a translator may download a model, which needs user
+      // activation — this click is it. Priming from a mount effect would be
+      // refused. Not awaited: the UI must not wait on a model download, and
+      // the engine already flips its own status to 'error' on failure, so
+      // the rejection just needs to not surface as unhandled.
+      primeTranslator(next).catch(() => {
+        // Status is already reflected via useTranslationStatus(); nothing
+        // further to do here besides not letting this reject unhandled.
+      });
+    }
   };
 
   return (
