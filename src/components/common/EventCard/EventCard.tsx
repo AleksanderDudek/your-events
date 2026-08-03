@@ -20,6 +20,7 @@ import {
 import { useCity } from '@/config/CityProvider';
 import { eventPath } from '@/lib/slug';
 import { useTranslated } from '@/i18n/translation';
+import { useTranslation } from '@/i18n';
 import styles from './EventCard.module.scss';
 
 interface EventCardProps {
@@ -54,13 +55,16 @@ export default function EventCard({ event, href: hrefOverride }: EventCardProps)
   // Hook, not <Translated/>, because it also feeds the aria-label below, which
   // needs a plain string. The venue name stays Polish — a proper noun.
   const translatedName = useTranslated(event.name);
+  // The accessible name is read aloud, so its date has to be in the language
+  // the rest of the label is in.
+  const { locale } = useTranslation();
 
   return (
     <Link href={href as Route} className={styles.link}>
       <Card
         component="article"
         role="article"
-        aria-label={[translatedName, formatDateShort(event.date), time, event.location.name]
+        aria-label={[translatedName, formatDateShort(event.date, locale), time, event.location.name]
           .filter(Boolean)
           .join(', ')}
         className={styles.card}

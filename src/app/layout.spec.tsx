@@ -1,20 +1,44 @@
 import type { ReactElement, ReactNode } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-// env.ts (via @/config/site) resolves NEXT_PUBLIC_BASE_PATH / NEXT_PUBLIC_ROBOTS_NOINDEX
-// at module load, so each case needs a fresh copy of the whole module graph.
-async function loadLayout(overrides: { basePath?: string; noindex?: string } = {}) {
+// The two collaborators layout.tsx reads its configuration from are stubbed
+// rather than driven through process.env.
+//
+// This started as env mutation and was flaky: process.env is one object shared
+// by every spec file in the worker, and site.spec/robots.spec/manifest.spec all
+// write the same two variables. A concurrent file could clear NOINDEX between
+// this file setting it and the dynamic import reading it, so the suite failed
+// roughly one run in two — while the file passed in isolation every time.
+// Stubbing the modules makes each case hermetic. What is under test here is
+// that layout.tsx *consults* those modules, which is exactly what this pins;
+// that they read env correctly is site.spec's and constants' own business.
+async function loadLayout(overrides: { basePath?: string; noindex?: boolean } = {}) {
+  const basePath = overrides.basePath ?? '';
   vi.resetModules();
-  if (overrides.basePath !== undefined) {
-    process.env.NEXT_PUBLIC_BASE_PATH = overrides.basePath;
-  } else {
-    delete process.env.NEXT_PUBLIC_BASE_PATH;
-  }
-  if (overrides.noindex !== undefined) {
-    process.env.NEXT_PUBLIC_ROBOTS_NOINDEX = overrides.noindex;
-  } else {
-    delete process.env.NEXT_PUBLIC_ROBOTS_NOINDEX;
-  }
+  vi.doMock('@/config/site', () => ({
+    SITE_URL: `https://example.test${basePath}`,
+    IS_NOINDEX: overrides.noindex ?? false,
+  }));
+  vi.doMock('@/lib/constants', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/lib/constants')>();
+    return {
+      ...actual,
+      BASE_PATH: basePath,
+      withBasePath: (path: string) =>
+        path.startsWith('/') ? `${basePath}${path}` : `${basePath}/${path}`,
+    };
+  });
+  // The two heavy children are stubbed purely for speed. Re-importing the real
+  // ones four times pulls MUI, react-query and the whole component tree through
+  // the transform pipeline on every case, which took this file past the 5s
+  // timeout once the rest of the suite was competing for the same workers.
+  // Nothing here asserts on their output — only on <head> and the metadata.
+  vi.doMock('./providers', () => ({
+    default: ({ children }: { children: ReactNode }) => children,
+  }));
+  vi.doMock('@/components/common/AppLayout/AppLayout', () => ({
+    default: ({ children }: { children: ReactNode }) => children,
+  }));
   return import('./layout');
 }
 
@@ -58,13 +82,13 @@ function collectHeadHrefs(root: Element): string[] {
 }
 
 describe('RootLayout metadata.robots', () => {
-  it('is undefined when NEXT_PUBLIC_ROBOTS_NOINDEX is unset', async () => {
-    const { metadata } = await loadLayout({ noindex: '' });
+  it('is undefined when the environment is indexable', async () => {
+    const { metadata } = await loadLayout({ noindex: false });
     expect(metadata.robots).toBeUndefined();
   });
 
-  it('is { index: false, follow: false } when NEXT_PUBLIC_ROBOTS_NOINDEX is "true"', async () => {
-    const { metadata } = await loadLayout({ noindex: 'true' });
+  it('is { index: false, follow: false } when the environment is noindex', async () => {
+    const { metadata } = await loadLayout({ noindex: true });
     expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 });

@@ -2,6 +2,7 @@
 
 import PlaceIcon from '@mui/icons-material/Place';
 import { formatDay, formatMonth } from '@/lib/utils';
+import { useTranslation } from '@/i18n';
 import styles from './EventMeta.module.scss';
 
 // Shared card metadata primitives. EventCard (grid) and EventRow (list) both
@@ -21,10 +22,13 @@ interface EventDateBadgeProps {
 }
 
 export function EventDateBadge({ date, variant = 'inline' }: EventDateBadgeProps) {
+  // The month abbreviation is the one word on this badge, so it is the one that
+  // has to follow the interface language: "SIE" reads as nothing in English.
+  const { locale } = useTranslation();
   return (
     <div className={`${styles.dateBadge} ${styles[variant]}`} aria-hidden>
       <span className={styles.dateDay}>{formatDay(date)}</span>
-      <span className={styles.dateMonth}>{formatMonth(date)}</span>
+      <span className={styles.dateMonth}>{formatMonth(date, locale)}</span>
     </div>
   );
 }
