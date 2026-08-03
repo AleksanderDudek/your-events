@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-import { SITE_URL } from '@/config/site';
+import { IS_NOINDEX, SITE_URL } from '@/config/site';
 
 export const dynamic = 'force-static';
 
@@ -40,6 +40,16 @@ const BLOCKED_BOTS = [
 ];
 
 export default function robots(): MetadataRoute.Robots {
+  // A non-production environment serves production's content under a second
+  // URL. Letting it be crawled would put a duplicate of the whole site into the
+  // index, competing with the real one.
+  if (IS_NOINDEX) {
+    return {
+      rules: [{ userAgent: '*', disallow: '/' }],
+      sitemap: `${SITE_URL}/sitemap.xml`,
+    };
+  }
+
   return {
     rules: [
       // Everyone else — search engines (Googlebot, Bingbot, DuckDuckBot,
