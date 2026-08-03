@@ -53,7 +53,12 @@
 .headerRight {
   display: flex;
   align-items: center;
-  gap: 12px;
+  // SavePresetButton, SortSelect, ViewToggle and the page-size Select together
+  // are wider than a narrow viewport allows; wrapping (instead of overflowing
+  // or squeezing) keeps every control fully tappable.
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 12px;
 }
 
 .chipBar {

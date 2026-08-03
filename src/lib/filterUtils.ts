@@ -1,9 +1,12 @@
-import { DateMode, EventFilters, PageSize, ViewMode } from '@/types/filter.types';
+import { DateMode, EventFilters, PageSize, SortDir, SortKey, ViewMode } from '@/types/filter.types';
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from './constants';
 import { parseWeekdays, serializeWeekdays } from './weekdays';
 
 const VALID_PAGE_SIZES = new Set([15, 30, 60]);
 const VALID_VIEW_MODES = new Set(['grid', 'row', 'map']);
+const VALID_SORTS = new Set<SortKey>(['mix', 'date', 'name', 'venue', 'price']);
+const DEFAULT_SORT: SortKey = 'mix';
+const DEFAULT_DIR: SortDir = 'asc';
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_REGEX = /^\d{2}:\d{2}$/;
 
@@ -52,6 +55,14 @@ function parseViewMode(value: string | null): ViewMode {
   return VALID_VIEW_MODES.has(value ?? '') ? (value as ViewMode) : 'grid';
 }
 
+function parseSort(value: string | null): SortKey {
+  return VALID_SORTS.has(value as SortKey) ? (value as SortKey) : DEFAULT_SORT;
+}
+
+function parseDir(value: string | null): SortDir {
+  return value === 'desc' ? 'desc' : DEFAULT_DIR;
+}
+
 export function parseFiltersFromParams(
   params: Record<string, string | string[] | undefined> | URLSearchParams
 ): EventFilters {
@@ -90,6 +101,8 @@ export function parseFiltersFromParams(
     page: parsePage(get('page')),
     pageSize: parsePageSize(get('pageSize')),
     viewMode: parseViewMode(get('viewMode')),
+    sort: parseSort(get('sort')),
+    dir: parseDir(get('dir')),
   };
 }
 
@@ -113,6 +126,8 @@ export function filtersToSearchParams(filters: Partial<EventFilters>): URLSearch
   if (filters.page && filters.page !== DEFAULT_PAGE) params.set('page', String(filters.page));
   if (filters.pageSize && filters.pageSize !== DEFAULT_PAGE_SIZE) params.set('pageSize', String(filters.pageSize));
   if (filters.viewMode && filters.viewMode !== 'grid') params.set('viewMode', filters.viewMode);
+  if (filters.sort && filters.sort !== DEFAULT_SORT) params.set('sort', filters.sort);
+  if (filters.dir && filters.dir !== DEFAULT_DIR) params.set('dir', filters.dir);
 
   return params;
 }
@@ -143,5 +158,7 @@ export function getDefaultFilters(): EventFilters {
     page: DEFAULT_PAGE,
     pageSize: DEFAULT_PAGE_SIZE,
     viewMode: 'grid',
+    sort: DEFAULT_SORT,
+    dir: DEFAULT_DIR,
   };
 }

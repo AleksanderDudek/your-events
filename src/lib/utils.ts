@@ -22,9 +22,31 @@ export class ServerError extends AppError {
   }
 }
 
-export function formatDate(dateStr: string): string {
+// Dates follow the UI language, not the language of the data. The events are
+// Polish, but the reader may not be, and "poniedziałek, 3 sierpnia 2026" under
+// an English interface is the same broken promise as an untranslated title.
+//
+// en-GB rather than en-US: it keeps day before month, so the line stays the
+// shape the Polish one has and nothing in the layout shifts under it.
+const DATE_LOCALES: Record<string, string> = {
+  pl: 'pl-PL',
+  en: 'en-GB',
+};
+
+// An unknown locale must not reach Intl, which throws a RangeError on a malformed
+// tag — a filter panel is not the place to discover that.
+function intlLocale(locale: string): string {
+  return DATE_LOCALES[locale] ?? DATE_LOCALES.pl;
+}
+
+// Every formatter defaults to Polish rather than to the active locale: they are
+// called from server components and from plain functions with no context, and
+// defaulting to the source language keeps an un-migrated call site correct
+// instead of silently English.
+
+export function formatDate(dateStr: string, locale: string = 'pl'): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('pl-PL', {
+  return date.toLocaleDateString(intlLocale(locale), {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -32,11 +54,27 @@ export function formatDate(dateStr: string): string {
   });
 }
 
-export function formatDateShort(dateStr: string): string {
+export function formatDateShort(dateStr: string, locale: string = 'pl'): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('pl-PL', {
+  return date.toLocaleDateString(intlLocale(locale), {
     day: 'numeric',
     month: 'short',
+  });
+}
+
+/**
+ * A timestamp reduced to a plain calendar date. Deliberately not "3 hours ago":
+ * relative time needs a ticking clock and a library, and the only thing this
+ * answers is "how stale is this record".
+ */
+export function formatDateMedium(iso: string | null, locale: string = 'pl'): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(intlLocale(locale), {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 }
 
@@ -45,9 +83,9 @@ export function formatDay(dateStr: string): string {
   return date.getDate().toString();
 }
 
-export function formatMonth(dateStr: string): string {
+export function formatMonth(dateStr: string, locale: string = 'pl'): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('pl-PL', { month: 'short' }).toUpperCase();
+  return date.toLocaleDateString(intlLocale(locale), { month: 'short' }).toUpperCase();
 }
 
 // Renders an event's time. Prefers explicit end_time, falls back to a

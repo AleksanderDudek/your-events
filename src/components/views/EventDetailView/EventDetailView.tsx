@@ -20,7 +20,7 @@ import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import AddToCalendar from '@/components/ui/AddToCalendar/AddToCalendar';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
 import RelatedEvents, { type RelatedEventLink } from '@/components/common/RelatedEvents/RelatedEvents';
-import { formatDate, formatEventTime } from '@/lib/utils';
+import { formatDate, formatDateMedium, formatEventTime } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import { Translated } from '@/i18n/translation';
 import styles from './EventDetailView.module.scss';
@@ -77,17 +77,9 @@ function HeroBackground({ event }: { event: Event }) {
   );
 }
 
-function formatUpdatedAt(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  // Plain calendar date — locale-agnostic and stable, avoids "X minutes ago" libs.
-  return d.toLocaleDateString('pl-PL', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
 export default function EventDetailView({ event, related = [] }: EventDetailViewProps) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
   // Dedupe — some events have categoryMain === categorySub, which would
@@ -103,7 +95,7 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
     ? `https://www.google.com/maps/search/?api=1&query=${event.location.lat},${event.location.lng}`
     : null;
   const hasUrl = Boolean(event.url);
-  const updatedAt = formatUpdatedAt(event.updatedAt);
+  const updatedAt = formatDateMedium(event.updatedAt, locale);
 
   return (
     <Box className={styles.container}>
@@ -142,7 +134,7 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
                 {t.DETAIL_DATE}
               </Typography>
               <Typography className={styles.detailValue} sx={{ fontFamily: 'var(--font-mono)' }}>
-                {formatDate(event.date)}
+                {formatDate(event.date, locale)}
                 {time && (
                   <>
                     <Box component="span" className={styles.metaSeparator} aria-hidden="true">

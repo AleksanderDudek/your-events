@@ -28,6 +28,7 @@ vi.mock('@/components/service/useEvents', () => ({
   useEvents: () => ({
     events: [],
     total: 0,
+    poolTotal: 0,
     isLoading: false,
     isError: false,
     isFetching: false,
@@ -46,6 +47,8 @@ vi.mock('@/components/service/useEvents', () => ({
       page: 1,
       pageSize: 15,
       viewMode: 'grid',
+      sort: 'date',
+      dir: 'asc',
     },
   }),
   // The map runs a separate query — it shows every match rather than the page
