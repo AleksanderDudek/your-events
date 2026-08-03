@@ -19,6 +19,7 @@ import {
 } from '@/lib/utils';
 import { useCity } from '@/config/CityProvider';
 import { eventPath } from '@/lib/slug';
+import { useTranslated } from '@/i18n/translation';
 import styles from './EventCard.module.scss';
 
 interface EventCardProps {
@@ -50,13 +51,16 @@ export default function EventCard({ event, href: hrefOverride }: EventCardProps)
   const extraCount = chips.length - maxChips;
   const sourceLabel = event.sources.join(' · ');
   const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
+  // Hook, not <Translated/>, because it also feeds the aria-label below, which
+  // needs a plain string. The venue name stays Polish — a proper noun.
+  const translatedName = useTranslated(event.name);
 
   return (
     <Link href={href as Route} className={styles.link}>
       <Card
         component="article"
         role="article"
-        aria-label={[event.name, formatDateShort(event.date), time, event.location.name]
+        aria-label={[translatedName, formatDateShort(event.date), time, event.location.name]
           .filter(Boolean)
           .join(', ')}
         className={styles.card}
@@ -75,7 +79,7 @@ export default function EventCard({ event, href: hrefOverride }: EventCardProps)
             y-offsets, regardless of content length. */}
         <div className={styles.content}>
           <div className={styles.titleSlot}>
-            <h3 className={styles.name}>{event.name}</h3>
+            <h3 className={styles.name}>{translatedName}</h3>
           </div>
 
           <div className={styles.locationSlot}>
@@ -116,6 +120,8 @@ function ImageWrapper({ event }: { event: Event }) {
   const artSrc = categoryFallbackImage(event.categoryMain, event.id || event.eventKey);
   // stage 0 = real imageUrl, 1 = category art PNG, 2 = solid color box
   const [stage, setStage] = useState<0 | 1 | 2>(event.imageUrl ? 0 : 1);
+  // alt needs a plain string, hence the hook rather than <Translated/>.
+  const translatedName = useTranslated(event.name);
 
   if (stage < 2) {
     return (
@@ -123,7 +129,7 @@ function ImageWrapper({ event }: { event: Event }) {
         src={stage === 0 ? event.imageUrl : artSrc}
         // Real poster gets the event name; the category-art fallback is
         // decorative (the article's aria-label already names the event).
-        alt={stage === 0 ? event.name : ''}
+        alt={stage === 0 ? translatedName : ''}
         sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
         onError={() => setStage((s) => (s === 0 ? 1 : 2))}
       />

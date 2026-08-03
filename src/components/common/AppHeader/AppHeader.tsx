@@ -93,6 +93,7 @@ export default function AppHeader() {
           <Typography
             variant="h6"
             component="span"
+            translate="no"
             sx={{
               fontFamily: 'var(--font-display)',
               fontWeight: 800,
@@ -165,6 +166,7 @@ export default function AppHeader() {
                   <Typography
                     variant="h6"
                     component="span"
+                    translate="no"
                     sx={{
                       fontFamily: 'var(--font-display)',
                       fontWeight: 800,

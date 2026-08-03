@@ -13,6 +13,7 @@ import { EventDateBadge, EventTimeLabel, EventVenue } from '@/components/ui/Even
 import { formatEventTime } from '@/lib/utils';
 import { useCity } from '@/config/CityProvider';
 import { eventPath } from '@/lib/slug';
+import { useTranslated } from '@/i18n/translation';
 import styles from './EventRow.module.scss';
 
 interface EventRowProps {
@@ -33,13 +34,16 @@ export default function EventRow({ event }: EventRowProps) {
   // Same cap as the grid card, so a given event shows the same chips in both views.
   const visibleCategories = chips.slice(0, 2);
   const sourceLabel = event.sources.join(' · ');
+  // Hook, not <Translated/>, because it also feeds the aria-label below, which
+  // needs a plain string. The venue name stays Polish — a proper noun.
+  const translatedName = useTranslated(event.name);
 
   return (
     <Link href={href as Route} className={styles.link}>
       <Box
         component="article"
         role="article"
-        aria-label={`${event.name}, ${event.date}, ${event.location.name}`}
+        aria-label={`${translatedName}, ${event.date}, ${event.location.name}`}
         className={styles.row}
       >
         <Box className={styles.dateCol}>
@@ -56,7 +60,7 @@ export default function EventRow({ event }: EventRowProps) {
 
         <Box className={styles.contentCol}>
           <Typography variant="subtitle1" component="h3" className={styles.name}>
-            {event.name}
+            {translatedName}
           </Typography>
 
           <Box className={styles.metaLine}>

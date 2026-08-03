@@ -21,6 +21,7 @@ import { useTheme } from '@mui/material/styles';
 import { countActiveFilters } from '@/lib/filterUtils';
 import { toggleCategorySelection } from '@/lib/categorySelection';
 import { useTranslation } from '@/i18n';
+import { Translated } from '@/i18n/translation';
 import { useCategories } from '@/components/service/useCategories';
 import { useFilterNavigation } from '@/components/service/useFilterNavigation';
 import SearchInput from '@/components/ui/SearchInput/SearchInput';
@@ -221,6 +222,9 @@ export default function FilterPanel() {
                       }
                       label={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          {/* categoryColorVar/CategoryIcon key off the Polish
+                              display_name below — only the visible label,
+                              via <Translated/>, goes through the translator. */}
                           <Box
                             component="span"
                             sx={{ color: categoryColorVar(cat.display_name), display: 'inline-flex' }}
@@ -228,7 +232,7 @@ export default function FilterPanel() {
                             <CategoryIcon category={cat.display_name} size={18} />
                           </Box>
                           <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
-                            {cat.display_name}
+                            <Translated text={cat.display_name} />
                           </Typography>
                         </Box>
                       }
@@ -274,7 +278,7 @@ export default function FilterPanel() {
                               variant="body2"
                               sx={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}
                             >
-                              {sub.display_name}
+                              <Translated text={sub.display_name} />
                             </Typography>
                           }
                           sx={{ m: 0, display: 'flex' }}
