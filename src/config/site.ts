@@ -30,3 +30,10 @@ export const SITE_URL = `${origin}${basePath}`;
 // must be "indexable" (a dev site briefly visible) rather than "not indexable"
 // (production silently dropped from Google).
 export const IS_NOINDEX = env.NEXT_PUBLIC_ROBOTS_NOINDEX === 'true';
+
+// Whether first-run onboarding ships. Compared against the exact string 'false'
+// rather than "any non-'true' value", which is the mirror image of IS_NOINDEX
+// above and for the same reason: each flag defaults to the harmless direction,
+// and a typo cannot flip it there. Off means the sheet, the tour and the
+// footer's replay link all disappear, and nothing is read from localStorage.
+export const IS_ONBOARDING_ENABLED = env.NEXT_PUBLIC_ONBOARDING_ENABLED !== 'false';

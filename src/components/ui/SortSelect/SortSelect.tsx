@@ -39,7 +39,7 @@ export default function SortSelect({ sort, dir, onSortChange, onDirChange }: Sor
   const nextDir: SortDir = dir === 'asc' ? 'desc' : 'asc';
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }} data-tour="sort">
       <FormControl size="small" sx={{ minWidth: 96 }}>
         <Select
           value={sort}

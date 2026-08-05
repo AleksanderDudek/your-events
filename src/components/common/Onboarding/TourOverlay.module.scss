@@ -1,0 +1,71 @@
+// The scrim is a click-swallower, not a paint: the dimming is the hole's
+// enormous box-shadow, which is what leaves the highlighted control lit.
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+}
+
+.hole {
+  position: fixed;
+  z-index: 1401;
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 0 0 9999px rgba(23, 19, 28, 0.62),
+    0 0 0 2px var(--primary);
+  pointer-events: none;
+  transition: top 180ms ease-out, left 180ms ease-out, width 180ms ease-out,
+    height 180ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.tooltip {
+  z-index: 1402;
+  max-width: min(340px, calc(100vw - 32px));
+}
+
+.panel {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+  padding: 16px;
+}
+
+.count {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.title {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--ink);
+  font-size: 1.1875rem;
+  margin-bottom: 6px;
+}
+
+.body {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.spacer {
+  flex: 1;
+}

@@ -88,6 +88,19 @@ export const TEXT = {
   cookieAccept: 'Akceptuję',
   cookieReject: 'Odrzucam',
   cookieFooterLink: 'Cookies',
+  // First-run onboarding: the welcome sheet, its two actions, the tour's step
+  // controls and the footer link that replays the whole thing.
+  onboardingTitle: 'Witaj w Idź na miasto',
+  onboardingSkip: 'Pomiń',
+  onboardingStart: 'Pokaż mi',
+  onboardingNext: 'Dalej',
+  onboardingDone: 'Gotowe',
+  onboardingFirstStep: 'Zacznij od wyszukiwania',
+  // On a phone the search box is inside the closed filter drawer, so the tour
+  // opens on the filter Fab instead.
+  onboardingFirstStepMobile: 'Zawęź do tego, co lubisz',
+  onboardingStepCount: /Krok \d+ z \d+/,
+  onboardingFooterLink: 'Jak to działa?',
 } as const;
 
 // The mobile filter Fab is labelled "Filtry (N)"; the leading word is stable.

@@ -282,6 +282,44 @@ const pl = {
   TRANSLATION_OFFER_BODY:
     'Ta przeglądarka nie obsługuje tłumaczenia na miejscu. Stronę można wysłać do Tłumacza Google.',
   TRANSLATION_OFFER_CTA: 'Przetłumacz stronę',
+  ONBOARDING_SHEET_LABEL: 'Wprowadzenie',
+  ONBOARDING_TITLE: 'Witaj w Idź na miasto',
+  ONBOARDING_BODY: (cityLocative: string) =>
+    `Zbieramy wydarzenia w ${cityLocative} w jednym miejscu. Oto, co możesz tu zrobić.`,
+  ONBOARDING_BULLET_FILTER: 'Szukaj i filtruj — po dacie, kategorii, cenie',
+  ONBOARDING_BULLET_VIEW: 'Przeglądaj jako siatkę, listę albo mapę',
+  ONBOARDING_BULLET_PRESET: 'Zapisz swoje filtry i wracaj do nich jednym kliknięciem',
+  ONBOARDING_SKIP: 'Pomiń',
+  ONBOARDING_START: 'Pokaż mi',
+  ONBOARDING_FOOTER_LINK: 'Jak to działa?',
+  ONBOARDING_TOUR_LABEL: 'Przewodnik po serwisie',
+  ONBOARDING_STEP_COUNT: (current: number, total: number) => `Krok ${current} z ${total}`,
+  ONBOARDING_NEXT: 'Dalej',
+  ONBOARDING_BACK: 'Wstecz',
+  ONBOARDING_DONE: 'Gotowe',
+  ONBOARDING_CLOSE: 'Zamknij przewodnik',
+  ONBOARDING_STEPS: {
+    search: {
+      title: 'Zacznij od wyszukiwania',
+      body: 'Wpisz nazwę wydarzenia albo miejsca. Lista zawęża się w trakcie pisania.',
+    },
+    filters: {
+      title: 'Zawęź do tego, co lubisz',
+      body: 'Data, dzień tygodnia, godzina, kategoria, cena. Filtry siedzą w adresie strony, więc możesz je wysłać znajomemu.',
+    },
+    view: {
+      title: 'Trzy sposoby przeglądania',
+      body: 'Siatka do zdjęć, lista do szybkiego skanowania, mapa gdy liczy się okolica.',
+    },
+    sort: {
+      title: 'Ustaw kolejność',
+      body: 'Domyślnie pokazujemy mieszankę kategorii. Możesz przełączyć na datę, nazwę, miejsce albo cenę.',
+    },
+    presets: {
+      title: 'Zapisz swoje filtry',
+      body: 'Ustawiony zestaw filtrów możesz zapisać i wrócić do niego z tego menu. Wszystko zostaje w Twojej przeglądarce.',
+    },
+  },
 };
 
 export type Messages = typeof pl;
@@ -543,6 +581,44 @@ const en: Messages = {
   TRANSLATION_OFFER_BODY:
     'This browser cannot translate on device. The page can be sent to Google Translate.',
   TRANSLATION_OFFER_CTA: 'Translate page',
+  ONBOARDING_SHEET_LABEL: 'Getting started',
+  ONBOARDING_TITLE: 'Welcome to Go to city',
+  ONBOARDING_BODY: (cityLocative: string) =>
+    `We collect what is happening in ${cityLocative} in one place. Here is what you can do.`,
+  ONBOARDING_BULLET_FILTER: 'Search and filter — by date, category, price',
+  ONBOARDING_BULLET_VIEW: 'Browse as a grid, a list or a map',
+  ONBOARDING_BULLET_PRESET: 'Save your filters and return to them in one click',
+  ONBOARDING_SKIP: 'Skip',
+  ONBOARDING_START: 'Show me',
+  ONBOARDING_FOOTER_LINK: 'How this works',
+  ONBOARDING_TOUR_LABEL: 'Site walkthrough',
+  ONBOARDING_STEP_COUNT: (current: number, total: number) => `Step ${current} of ${total}`,
+  ONBOARDING_NEXT: 'Next',
+  ONBOARDING_BACK: 'Back',
+  ONBOARDING_DONE: 'Done',
+  ONBOARDING_CLOSE: 'Close the walkthrough',
+  ONBOARDING_STEPS: {
+    search: {
+      title: 'Start by searching',
+      body: 'Type an event or a venue. The list narrows as you type.',
+    },
+    filters: {
+      title: 'Narrow it to what you like',
+      body: 'Date, weekday, hour, category, price. Filters live in the page address, so you can send them to a friend.',
+    },
+    view: {
+      title: 'Three ways to browse',
+      body: 'Grid for the pictures, list for fast scanning, map when the neighbourhood is what matters.',
+    },
+    sort: {
+      title: 'Choose the order',
+      body: 'By default you get a mix of categories. Switch to date, name, venue or price instead.',
+    },
+    presets: {
+      title: 'Save your filters',
+      body: 'Keep the set of filters you just built and come back to it from this menu. It all stays in your browser.',
+    },
+  },
 };
 
 export const messages: Record<Locale, Messages> = { pl, en };
