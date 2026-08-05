@@ -121,7 +121,7 @@ export default function MyFiltersView() {
           </Box>
 
           <ul className={styles.grid}>
-            {presets.map((preset) => {
+            {presets.map((preset, tileIndex) => {
               const accent = accentFor(preset);
               const firstCategoryName = preset.filters.categories[0]
                 ? slugToName.get(preset.filters.categories[0])
@@ -130,6 +130,10 @@ export default function MyFiltersView() {
                 <li
                   key={preset.id}
                   className={styles.tile}
+                  // Onboarding's story points at the newest tile, which is the
+                  // one it just saved (upsertPreset puts it first). See
+                  // lib/tourSteps.
+                  data-tour={tileIndex === 0 ? 'preset-tile' : undefined}
                   style={accent ? ({ '--tile-accent': accent } as React.CSSProperties) : undefined}
                 >
                   <Link
@@ -156,7 +160,12 @@ export default function MyFiltersView() {
 
                   <div className={styles.tileActions}>
                     <Tooltip title={t.PRESETS_EDIT}>
-                      <IconButton size="small" onClick={() => setDraft(preset)} aria-label={t.PRESETS_EDIT}>
+                      <IconButton
+                        size="small"
+                        onClick={() => setDraft(preset)}
+                        aria-label={t.PRESETS_EDIT}
+                        data-tour={tileIndex === 0 ? 'preset-edit' : undefined}
+                      >
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>

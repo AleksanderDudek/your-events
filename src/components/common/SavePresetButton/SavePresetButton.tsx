@@ -63,6 +63,7 @@ export default function SavePresetButton({ filters, cityId }: SavePresetButtonPr
       <Button
         size="small"
         variant="outlined"
+        data-tour="save"
         startIcon={<BookmarkAddOutlinedIcon />}
         onClick={() => setOpen(true)}
         disabled={isFull}

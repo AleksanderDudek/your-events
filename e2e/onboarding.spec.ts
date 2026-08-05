@@ -11,6 +11,7 @@ import { CITY, TEXT } from './support/helpers';
 // below, not incidental setup.
 
 const sheet = (page: Page) => page.getByRole('heading', { name: TEXT.onboardingTitle });
+const tour = (page: Page) => page.getByRole('dialog');
 
 // Hydration signal, deliberately NOT the result count: onboarding has nothing
 // to do with whether events loaded, and gating on live data would make this
@@ -41,6 +42,23 @@ async function arriveAsNewVisitor(page: Page): Promise<void> {
   await page.getByRole('button', { name: TEXT.cookieAccept }).click();
 }
 
+async function startStory(page: Page): Promise<void> {
+  await arriveAsNewVisitor(page);
+  await page.getByRole('button', { name: TEXT.onboardingStart }).click();
+  await expect(tour(page)).toBeVisible();
+}
+
+/** Advance to the step with this title. */
+async function stepTo(page: Page, title: string | RegExp): Promise<void> {
+  await page.getByRole('button', { name: TEXT.onboardingNext }).click();
+  await expect(tour(page).getByRole('heading', { name: title })).toBeVisible();
+}
+
+async function savedPresets(page: Page) {
+  const raw = await page.evaluate(() => window.localStorage.getItem('go-to-city.presets'));
+  return raw ? (JSON.parse(raw) as { name: string; filters: { hourFrom: string } }[]) : [];
+}
+
 test.describe('First-run onboarding', () => {
   test('greets a new visitor once the cookie choice is made', async ({ page }) => {
     await page.goto(`/${CITY}/wydarzenia`);
@@ -63,38 +81,49 @@ test.describe('First-run onboarding', () => {
     await expect(sheet(page)).toBeHidden();
   });
 
-  test('"show me" spotlights the search box and steps through to the end', async ({ page }) => {
-    await arriveAsNewVisitor(page);
-    await page.getByRole('button', { name: TEXT.onboardingStart }).click();
+  // The whole point of the story: the app really does the thing it describes.
+  test('builds the filters, saves them, revisits and edits the preset', async ({ page }) => {
+    await startStory(page);
+    await expect(tour(page).getByText(TEXT.onboardingStepCount)).toBeVisible();
 
-    const tour = page.getByRole('dialog');
-    await expect(tour).toBeVisible();
-    await expect(tour.getByText(TEXT.onboardingStepCount)).toBeVisible();
+    // 1–3: the filter set is built in front of the visitor and lands in the URL.
+    await stepTo(page, TEXT.storyWeekdays);
+    await stepTo(page, TEXT.storyHours);
+    // toHaveURL, not waitForURL: the filter writes are history.pushState +
+    // popstate (see useFilterNavigation), which fires no navigation event for
+    // waitForURL to observe. toHaveURL polls the address instead.
+    await expect(page).toHaveURL(/categories=/);
+    await expect(page).toHaveURL(/weekdays=/);
+    await expect(page).toHaveURL(/hourFrom=16/);
 
-    // Which step comes first is a property of the layout, not of the tour: on a
-    // phone the search box lives inside the closed filter drawer, so that
-    // anchor does not exist and the walkthrough opens on the filter Fab.
-    const isDesktop = (page.viewportSize()?.width ?? 0) >= 900;
-    await expect(
-      tour.getByText(isDesktop ? TEXT.onboardingFirstStep : TEXT.onboardingFirstStepMobile)
-    ).toBeVisible();
+    // 4–5: results, then the set is saved as a preset the visitor keeps.
+    await stepTo(page, TEXT.storyResults);
+    await stepTo(page, TEXT.storySave);
+    await expect.poll(() => savedPresets(page).then((p) => p.length)).toBe(1);
+    expect((await savedPresets(page))[0].name).toBe(TEXT.storyPresetName);
 
-    // Whatever it points at has to be on screen — the regression that mobile
-    // caught was a tooltip positioned off the right edge of the viewport.
-    const box = await tour.boundingBox();
-    const viewport = page.viewportSize();
-    expect(box).not.toBeNull();
-    expect(box!.x).toBeGreaterThanOrEqual(0);
-    expect(box!.x + box!.width).toBeLessThanOrEqual((viewport?.width ?? 0) + 1);
+    // 6: over to Moje filtry, where the saved sets live.
+    await stepTo(page, TEXT.storyPresets);
+    await expect(page).toHaveURL(/\/moje-filtry\//);
 
-    // Walk to the last step, however many the viewport turns out to have —
-    // mobile drops the desktop-only presets step, so the count is not fixed.
-    const next = page.getByRole('button', { name: TEXT.onboardingNext });
-    while (await next.isVisible().catch(() => false)) {
-      await next.click();
-    }
+    // 7: opening the preset puts those filters back on the list.
+    await stepTo(page, TEXT.storyOpen);
+    await expect(page).toHaveURL(new RegExp(`/${CITY}/wydarzenia/\\?`));
+    await expect(page).toHaveURL(/hourFrom=16/);
+
+    // 8: the job changed — the saved preset moves to the later hour.
+    await stepTo(page, TEXT.storyEdit);
+    await expect(page).toHaveURL(/\/moje-filtry\//);
+    await expect.poll(() => savedPresets(page).then((p) => p[0].filters.hourFrom)).toBe('18:00');
+    expect(await savedPresets(page)).toHaveLength(1);
+
+    // 9: and the new hours are one click away, exactly like the old ones.
+    await stepTo(page, TEXT.storyEdited);
+    await expect(page).toHaveURL(new RegExp(`/${CITY}/wydarzenia/\\?`));
+    await expect(page).toHaveURL(/hourFrom=18/);
+
     await page.getByRole('button', { name: TEXT.onboardingDone }).click();
-    await expect(tour).toBeHidden();
+    await expect(tour(page)).toBeHidden();
 
     // Finishing counts as seen.
     await page.reload();
@@ -102,13 +131,10 @@ test.describe('First-run onboarding', () => {
     await expect(sheet(page)).toBeHidden();
   });
 
-  test('Escape ends the tour and still counts as seen', async ({ page }) => {
-    await arriveAsNewVisitor(page);
-    await page.getByRole('button', { name: TEXT.onboardingStart }).click();
-    await expect(page.getByRole('dialog')).toBeVisible();
-
+  test('Escape ends the story and still counts as seen', async ({ page }) => {
+    await startStory(page);
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(tour(page)).toBeHidden();
 
     await page.reload();
     await waitForSettled(page);
@@ -128,6 +154,16 @@ test.describe('First-run onboarding', () => {
     await page.goto('/');
     await expect(page.getByText(TEXT.cityPickerTitle)).toBeVisible();
     await page.getByRole('button', { name: TEXT.cookieAccept }).click();
+    await expect(sheet(page)).toBeHidden();
+  });
+
+  // Someone who followed a shared filter link came for those results, not for
+  // an introduction that would overwrite them.
+  test('stays quiet for a visitor who arrived on a filter link', async ({ page }) => {
+    await page.goto(`/${CITY}/wydarzenia?categories=muzyka`);
+    await waitForHydration(page);
+    await page.getByRole('button', { name: TEXT.cookieAccept }).click();
+    await waitForSettled(page);
     await expect(sheet(page)).toBeHidden();
   });
 

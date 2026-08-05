@@ -298,26 +298,43 @@ const pl = {
   ONBOARDING_BACK: 'Wstecz',
   ONBOARDING_DONE: 'Gotowe',
   ONBOARDING_CLOSE: 'Zamknij przewodnik',
+  ONBOARDING_PRESET_NAME: 'Po pracy',
   ONBOARDING_STEPS: {
-    search: {
-      title: 'Zacznij od wyszukiwania',
-      body: 'Wpisz nazwę wydarzenia albo miejsca. Lista zawęża się w trakcie pisania.',
+    categories: {
+      title: 'Zacznijmy od przykładu',
+      body: 'Szukasz zajęć tanecznych albo fitnessu. Zaznaczamy Taniec i Sport i Fitness — lista właśnie się zawęziła.',
     },
-    filters: {
-      title: 'Zawęź do tego, co lubisz',
-      body: 'Data, dzień tygodnia, godzina, kategoria, cena. Filtry siedzą w adresie strony, więc możesz je wysłać znajomemu.',
+    weekdays: {
+      title: 'Tylko Twoje dni',
+      body: 'Poniedziałek, wtorek i czwartek. Dni tygodnia zostają, nawet gdy zmienisz zakres dat.',
     },
-    view: {
-      title: 'Trzy sposoby przeglądania',
-      body: 'Siatka do zdjęć, lista do szybkiego skanowania, mapa gdy liczy się okolica.',
+    hours: {
+      title: 'Po pracy, nie w jej trakcie',
+      body: 'Od 16:00 do 21:00, w najbliższych 7 dniach. Godziny działają w wybranym zakresie dat, więc ustawiamy oba naraz.',
     },
-    sort: {
-      title: 'Ustaw kolejność',
-      body: 'Domyślnie pokazujemy mieszankę kategorii. Możesz przełączyć na datę, nazwę, miejsce albo cenę.',
+    results: {
+      title: 'To jest Twój wieczór',
+      body: 'Tyle zostało po filtrach. Wszystko siedzi w adresie strony, więc możesz wysłać ten widok znajomemu.',
+    },
+    save: {
+      title: 'Zapisz, zamiast klikać to co tydzień',
+      body: 'Zapisaliśmy ten zestaw jako „Po pracy”, z datą „najbliższe 7 dni” — dzięki temu filtr nie zestarzeje się razem z dzisiejszą datą.',
     },
     presets: {
-      title: 'Zapisz swoje filtry',
-      body: 'Ustawiony zestaw filtrów możesz zapisać i wrócić do niego z tego menu. Wszystko zostaje w Twojej przeglądarce.',
+      title: 'Twoje filtry mieszkają tutaj',
+      body: 'Moje filtry: kafelek na każdy zapisany zestaw. Wszystko zostaje w Twojej przeglądarce — bez konta.',
+    },
+    open: {
+      title: 'Jedno kliknięcie i jesteś na miejscu',
+      body: 'Otworzyliśmy „Po pracy”. Te same wyniki, bez ustawiania filtrów od nowa.',
+    },
+    edit: {
+      title: 'Zmieniłeś pracę? Zmień filtr',
+      body: 'Kończysz teraz o 18:00. Poprawiliśmy godziny na 18:00–21:00 — tym przyciskiem zrobisz to sam.',
+    },
+    edited: {
+      title: 'I znowu jedno kliknięcie',
+      body: 'Nowe godziny, te same trzy dni. Filtr jest Twój — możesz go zmienić albo usunąć w Moich filtrach.',
     },
   },
 };
@@ -597,26 +614,43 @@ const en: Messages = {
   ONBOARDING_BACK: 'Back',
   ONBOARDING_DONE: 'Done',
   ONBOARDING_CLOSE: 'Close the walkthrough',
+  ONBOARDING_PRESET_NAME: 'After work',
   ONBOARDING_STEPS: {
-    search: {
-      title: 'Start by searching',
-      body: 'Type an event or a venue. The list narrows as you type.',
+    categories: {
+      title: "Let's use a real example",
+      body: 'Say you want dance or fitness classes. We tick Dance and Sport & Fitness — the list has just narrowed.',
     },
-    filters: {
-      title: 'Narrow it to what you like',
-      body: 'Date, weekday, hour, category, price. Filters live in the page address, so you can send them to a friend.',
+    weekdays: {
+      title: 'Only your days',
+      body: 'Monday, Tuesday and Thursday. Weekdays stay put even when you change the date range.',
     },
-    view: {
-      title: 'Three ways to browse',
-      body: 'Grid for the pictures, list for fast scanning, map when the neighbourhood is what matters.',
+    hours: {
+      title: 'After work, not during it',
+      body: 'From 16:00 to 21:00, across the next 7 days. Hours only apply inside a date range, so we set both at once.',
     },
-    sort: {
-      title: 'Choose the order',
-      body: 'By default you get a mix of categories. Switch to date, name, venue or price instead.',
+    results: {
+      title: 'That is your evening',
+      body: 'This is what survived the filters. It all lives in the page address, so you can send this view to a friend.',
+    },
+    save: {
+      title: 'Save it instead of rebuilding it weekly',
+      body: 'We saved this set as "After work", dated "next 7 days" — so the filter will not go stale along with today\'s date.',
     },
     presets: {
-      title: 'Save your filters',
-      body: 'Keep the set of filters you just built and come back to it from this menu. It all stays in your browser.',
+      title: 'Your filters live here',
+      body: 'My filters: one tile per saved set. It all stays in your browser — no account needed.',
+    },
+    open: {
+      title: 'One click and you are back',
+      body: 'We opened "After work". Same results, without rebuilding a single filter.',
+    },
+    edit: {
+      title: 'Changed jobs? Change the filter',
+      body: 'You finish at 18:00 now. We moved the hours to 18:00–21:00 — this button is how you would do it yourself.',
+    },
+    edited: {
+      title: 'And one click again',
+      body: 'New hours, same three days. The filter is yours — edit or delete it any time in My filters.',
     },
   },
 };
