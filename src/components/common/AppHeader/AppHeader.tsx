@@ -21,7 +21,7 @@ import { useTheme } from '@mui/material/styles';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import { GROW_WITH_US_PATH, MY_FILTERS_PATH } from '@/config/community';
-import Spark from '@/components/common/Spark/Spark';
+import LogoMark from '@/components/common/LogoMark/LogoMark';
 import ThemeToggle from '@/components/common/ThemeToggle/ThemeToggle';
 import LanguageSwitcher from './LanguageSwitcher';
 import CitySwitcher from './CitySwitcher';
@@ -88,7 +88,7 @@ export default function AppHeader() {
           }}
         >
           <span style={{ color: 'var(--primary)', display: 'inline-flex', flexShrink: 0 }}>
-            <Spark size={26} />
+            <LogoMark size={28} />
           </span>
           <Typography
             variant="h6"
@@ -161,7 +161,7 @@ export default function AppHeader() {
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
                   <span style={{ color: 'var(--primary)', display: 'inline-flex', flexShrink: 0 }}>
-                    <Spark size={22} />
+                    <LogoMark size={24} />
                   </span>
                   <Typography
                     variant="h6"
