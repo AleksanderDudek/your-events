@@ -114,6 +114,10 @@ export default function AppHeader() {
               <Link
                 key={item.href}
                 href={item.href}
+                // Onboarding's last step points here. Desktop only — on a phone
+                // this nav lives in a closed drawer, so the anchor is absent and
+                // the step drops itself (see lib/tourSteps).
+                data-tour={item.href === MY_FILTERS_PATH ? 'presets' : undefined}
                 className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
               >
                 {item.label}

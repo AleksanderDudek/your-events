@@ -32,6 +32,12 @@ const envSchema = z.object({
   // is a duplicate as far as a crawler is concerned. Empty (indexable) is the
   // default so production cannot be hidden by forgetting a variable.
   NEXT_PUBLIC_ROBOTS_NOINDEX: z.string().default(''),
+  // First-run onboarding (welcome sheet + spotlight tour). On everywhere unless
+  // this is the exact string 'false'. The default is on because the feature
+  // exists to help first-time visitors, and the failure mode of a typo should
+  // be "the sheet still shows" rather than "the feature quietly disappeared and
+  // nobody noticed for a month". See @/config/site.
+  NEXT_PUBLIC_ONBOARDING_ENABLED: z.string().default('true'),
 });
 
 function validateEnv() {
@@ -44,6 +50,7 @@ function validateEnv() {
     NEXT_PUBLIC_ENABLED_CITIES: process.env.NEXT_PUBLIC_ENABLED_CITIES,
     NEXT_PUBLIC_CLARITY_PROJECT_ID: process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID,
     NEXT_PUBLIC_ROBOTS_NOINDEX: process.env.NEXT_PUBLIC_ROBOTS_NOINDEX,
+    NEXT_PUBLIC_ONBOARDING_ENABLED: process.env.NEXT_PUBLIC_ONBOARDING_ENABLED,
   });
 
   if (!parsed.success) {

@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import { useConsent } from '@/components/service/useConsent';
+import { useOnboarding } from '@/components/service/useOnboarding';
 import {
   DISCORD_INVITE_URL,
   FEEDBACK_FORM_URL,
@@ -19,6 +20,7 @@ export default function AppFooter() {
   const { t, locale } = useTranslation();
   const { city } = useCity();
   const { reopen } = useConsent();
+  const { isEnabled: isOnboardingEnabled, replay: replayOnboarding } = useOnboarding();
   const year = new Date().getFullYear();
 
   return (
@@ -75,6 +77,19 @@ export default function AppFooter() {
             <button type="button" className={styles.linkButtonReset} onClick={reopen}>
               {t.COOKIE_FOOTER_LINK}
             </button>
+            {/* Replays the welcome sheet without clearing the stored version,
+                so this is a "show me again", not a reset. Gone entirely when
+                the feature flag is off — a link to nothing is worse than no
+                link. */}
+            {isOnboardingEnabled && (
+              <button
+                type="button"
+                className={styles.linkButtonReset}
+                onClick={replayOnboarding}
+              >
+                {t.ONBOARDING_FOOTER_LINK}
+              </button>
+            )}
           </Box>
         </Box>
       </Box>

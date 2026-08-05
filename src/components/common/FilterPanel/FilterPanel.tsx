@@ -100,7 +100,8 @@ export default function FilterPanel() {
         )}
       </Box>
 
-      <Box className={styles.section}>
+      {/* data-tour marks the onboarding spotlight's anchor — see lib/tourSteps. */}
+      <Box className={styles.section} data-tour="search">
         <SearchInput
           key={resetToken}
           value={filters.search}
@@ -296,13 +297,20 @@ export default function FilterPanel() {
   );
 
   if (isMdUp) {
-    return <Box className={styles.sidebar}>{filterContent}</Box>;
+    return (
+      <Box className={styles.sidebar} data-tour="filters">
+        {filterContent}
+      </Box>
+    );
   }
 
   return (
     <>
+      {/* Same tour anchor as the desktop sidebar: only one of the two is ever
+          mounted, so the step follows whichever layout the visitor is in. */}
       <Fab
         color="primary"
+        data-tour="filters"
         onClick={() => setDrawerOpen(true)}
         className={styles.fab}
         aria-label={t.FILTER_TRIGGER(activeCount)}

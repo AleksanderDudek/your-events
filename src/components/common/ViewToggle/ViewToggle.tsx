@@ -28,6 +28,8 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
       onChange={handleChange}
       size="small"
       aria-label="Widok wydarzeń"
+      // Onboarding spotlight anchor — see lib/tourSteps.
+      data-tour="view"
       sx={{
         '& .MuiToggleButton-root': {
           color: 'var(--color-text-muted)',

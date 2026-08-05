@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import AppHeader from '@/components/common/AppHeader/AppHeader';
 import AppFooter from '@/components/common/AppFooter/AppFooter';
 import CookieBanner from '@/components/common/CookieBanner/CookieBanner';
+import Onboarding from '@/components/common/Onboarding/Onboarding';
 import TranslationNotice from '@/components/common/TranslationNotice/TranslationNotice';
 import { useTranslation } from '@/i18n';
 import styles from './AppLayout.module.scss';
@@ -26,6 +27,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </Box>
       <AppFooter />
       <CookieBanner />
+      {/* After the banner on purpose: Onboarding stays closed while a consent
+          choice is outstanding, so the two never stack. */}
+      <Onboarding />
     </Box>
   );
 }
