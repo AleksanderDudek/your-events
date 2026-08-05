@@ -95,10 +95,18 @@ export const TEXT = {
   onboardingStart: 'Pokaż mi',
   onboardingNext: 'Dalej',
   onboardingDone: 'Gotowe',
-  onboardingFirstStep: 'Zacznij od wyszukiwania',
-  // On a phone the search box is inside the closed filter drawer, so the tour
-  // opens on the filter Fab instead.
-  onboardingFirstStepMobile: 'Zawęź do tego, co lubisz',
+  // Step titles of the story the walkthrough performs, in order.
+  storyCategories: 'Zacznijmy od przykładu',
+  storyWeekdays: 'Tylko Twoje dni',
+  storyHours: 'Po pracy, nie w jej trakcie',
+  storyResults: 'To jest Twój wieczór',
+  storySave: 'Zapisz, zamiast klikać to co tydzień',
+  storyPresets: 'Twoje filtry mieszkają tutaj',
+  storyOpen: 'Jedno kliknięcie i jesteś na miejscu',
+  storyEdit: 'Zmieniłeś pracę? Zmień filtr',
+  storyEdited: 'I znowu jedno kliknięcie',
+  // The preset the story saves on the visitor's behalf.
+  storyPresetName: 'Po pracy',
   onboardingStepCount: /Krok \d+ z \d+/,
   onboardingFooterLink: 'Jak to działa?',
 } as const;

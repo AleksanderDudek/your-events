@@ -182,7 +182,8 @@ export default function EventsListView() {
       <FilterPanel />
 
       <Box className={styles.results}>
-        <Box className={styles.resultsHeader}>
+        {/* data-tour marks the onboarding story's anchors — see lib/tourSteps. */}
+        <Box className={styles.resultsHeader} data-tour="results">
           <Box className={styles.headerLeft}>
             <Typography
               variant="body2"

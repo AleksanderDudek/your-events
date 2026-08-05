@@ -8,12 +8,13 @@ import { useConsent } from '@/components/service/useConsent';
 import { useCity } from '@/config/CityProvider';
 import { isCityId } from '@/config/cities';
 import { useTranslation } from '@/i18n';
+import { countActiveFilters, parseFiltersFromParams } from '@/lib/filterUtils';
 import { isOnboardingRoute, isTourRoute, tourPath } from '@/lib/onboarding';
 import { visibleSteps, type TourStep } from '@/lib/tourSteps';
 import WelcomeSheet from './WelcomeSheet';
-import TourOverlay from './TourOverlay';
+import StoryRunner from './StoryRunner';
 
-// The controls the tour points at mount with the page, but a client-side
+// The controls the story points at mount with the page, but a client-side
 // navigation from the city home lands here a frame or two before they exist.
 // Rather than concluding "no anchors, nothing to show" on the first look, the
 // start is retried for about a second.
@@ -23,8 +24,10 @@ const ANCHOR_RETRY_MS = 100;
 /**
  * Decides what — if anything — a visitor is shown on arrival.
  *
- * Mounted once in AppLayout and returns null on every page where onboarding
- * has no business appearing, which is most of them.
+ * Mounted once in AppLayout, so it is on every page of the site: deliberately
+ * cheap. Everything the story needs to actually run (categories, presets, the
+ * filter router) lives in StoryRunner, which only mounts once someone asks for
+ * the tour.
  */
 export default function Onboarding() {
   const {
@@ -45,14 +48,23 @@ export default function Onboarding() {
   const { locale } = useTranslation();
 
   const [steps, setSteps] = useState<TourStep[] | null>(null);
-
   const isTouring = steps !== null;
 
-  // Resolving the anchors is a DOM read, so it cannot happen during render, and
-  // the work is deferred to a timer rather than run in the effect body: the
-  // first tick after a client-side navigation is exactly when the controls may
-  // not be mounted yet, and setting state straight from an effect body would
-  // cascade a render anyway.
+  // Someone who followed a shared filter link came for those results. The story
+  // would overwrite them with dance classes on Thursdays, so it stays quiet.
+  //
+  // Read once, from `window.location` rather than through `useSearchParams`:
+  // this component sits in the root layout, and putting that hook there would
+  // make every prerendered page in the export drag a Suspense requirement
+  // behind it. A lazy initialiser is also the honest shape of the question —
+  // "what did they arrive with", not "what is on screen now", which the story
+  // is about to change from under itself.
+  const [hasIncomingFilters] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return countActiveFilters(parseFiltersFromParams(params)) > 0;
+  });
+
   useEffect(() => {
     if (!isReady || !isTourPending || isTouring) return;
     if (!isTourRoute(pathname, isCityId)) return;
@@ -84,7 +96,7 @@ export default function Onboarding() {
 
   const handleStart = useCallback(() => {
     requestTour();
-    // The city home has none of the controls, so the tour happens on the list.
+    // The city home has none of the controls, so the story runs on the list.
     // The request survives the navigation (it is module state, not component
     // state) and the effect above picks it up on arrival.
     if (!isTourRoute(pathname, isCityId)) {
@@ -92,7 +104,7 @@ export default function Onboarding() {
     }
   }, [requestTour, pathname, router, city.id]);
 
-  const handleTourFinish = useCallback(() => {
+  const handleStoryFinish = useCallback(() => {
     setSteps(null);
     markSeen();
   }, [markSeen]);
@@ -100,11 +112,15 @@ export default function Onboarding() {
   if (!isReady) return null;
 
   if (isTouring) {
-    return <TourOverlay steps={steps} onFinish={handleTourFinish} />;
+    return <StoryRunner steps={steps} onFinish={handleStoryFinish} />;
   }
 
   const showSheet =
-    !hasSeen && !isConsentOpen && !isTourPending && isOnboardingRoute(pathname, isCityId);
+    !hasSeen &&
+    !isConsentOpen &&
+    !isTourPending &&
+    !hasIncomingFilters &&
+    isOnboardingRoute(pathname, isCityId);
   if (!showSheet) return null;
 
   return (

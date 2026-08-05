@@ -6,7 +6,11 @@ export const ONBOARDING_STORAGE_KEY = 'go-to-city.onboarding';
 
 // Bump this after a redesign to re-offer the welcome sheet to everyone. That is
 // the whole reason the stored value is a version rather than a boolean.
-export const ONBOARDING_VERSION = 1;
+//
+// v2: the five-step feature tour became a story the app performs — it builds a
+// real filter set, saves it, opens it and edits it. Anyone who saw v1 was shown
+// something materially different, so they get the offer again.
+export const ONBOARDING_VERSION = 2;
 
 /**
  * The tour version this browser has already been shown, or null for "never".
