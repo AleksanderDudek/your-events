@@ -37,8 +37,9 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # Environment-scoped credentials: e2e exercises the dev database, never
-    # production's.
+    # Environment-scoped configuration: e2e reads the dev schema, never
+    # production's. The credentials are the same either way — it is
+    # NEXT_PUBLIC_SUPABASE_SCHEMA below that does the separating.
     environment: dev
     steps:
       - uses: actions/checkout@v5
@@ -72,6 +73,10 @@ jobs:
           # build/dev marks Wrocław available:false and it's hidden from the picker.
           NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+          # What actually separates dev from production: one Supabase project,
+          # two schemas. Without this the client falls back to 'public' and the
+          # tests read production rows despite `environment: dev` above.
+          NEXT_PUBLIC_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
           NEXT_PUBLIC_BASE_PATH: ''
         run: pnpm exec playwright test --project=chromium --project="Mobile Chrome"
 
@@ -149,4 +154,5 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
         run: pnpm test:e2e:export
