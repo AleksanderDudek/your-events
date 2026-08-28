@@ -9,6 +9,7 @@ repository, which is the whole reason a second repository exists.
 | Built by | `deploy-dev.yml` | `deploy-prod.yml` |
 | Repository serving it | `your-events` (this one) | `your-events-prod` |
 | URL | [/your-events](https://aleksanderdudek.github.io/your-events) | [/your-events-prod](https://aleksanderdudek.github.io/your-events-prod) |
+| Data | `dev` schema | `public` schema |
 | Indexable | No — `noindex` + `robots.txt` disallow | Yes |
 | Clarity | Off | On |
 
@@ -17,10 +18,29 @@ All source, all workflows and all secrets live in **this** repository.
 workflows, no secrets. Do not commit to it by hand — every deploy force-pushes
 over its `gh-pages` branch.
 
+**Dev and production share the Supabase projects and differ only by Postgres
+schema**: production reads `public`, dev reads `dev`, and the `dev` schema is a
+mirror of `public` maintained by the scrape pipeline. One project, two sets of
+tables, one anon key. Nothing but `NEXT_PUBLIC_SUPABASE_SCHEMA` distinguishes
+them, so a change of environment is a change of one variable and never a change
+of credentials.
+
+The schema reaches PostgREST as its `Accept-Profile` header, set from
+`NEXT_PUBLIC_SUPABASE_SCHEMA` in [src/lib/supabase.ts](../src/lib/supabase.ts).
+It defaults to `public` when the variable is absent
+([src/config/env.ts](../src/config/env.ts)) — a forgetful failure therefore
+lands on production data, which is the safe direction for production and the
+wrong one for dev. Dev must set the variable explicitly; that is why it is not
+left to the default.
+
 The reasoning behind the split is in
 [docs/superpowers/specs/2026-08-03-two-environment-cicd-design.md](superpowers/specs/2026-08-03-two-environment-cicd-design.md).
 
 ## One-time setup
+
+**This has been done.** What follows is the record of how, kept because it is
+also the recipe for rebuilding the production side from nothing — after losing
+the deploy key, say, or when standing up a third environment.
 
 ### 1. The production repository
 
@@ -54,21 +74,27 @@ An SSH deploy key rather than a personal access token: it is scoped to exactly
 one repository, grants exactly write access, and does not carry the whole
 account if it leaks.
 
+Neither half is ever printed: the public half goes to the hosting repository and
+the private half to the `prod` environment, both straight from the file.
+
 ```bash
+umask 077
 ssh-keygen -t ed25519 -C "your-events-prod deploy" -N "" -f prod_deploy_key
 
-cat prod_deploy_key.pub
-# → github.com/AleksanderDudek/your-events-prod
-#   → Settings → Deploy keys → Add deploy key
-#   → tick "Allow write access"
+# Public half → the repository it may write to.
+gh repo deploy-key add prod_deploy_key.pub \
+  --repo AleksanderDudek/your-events-prod \
+  --title "your-events deploy (Actions)" --allow-write
 
-cat prod_deploy_key
-# → github.com/AleksanderDudek/your-events
-#   → Settings → Environments → prod → Add secret → PROD_DEPLOY_KEY
-#   → paste the whole thing, including the BEGIN/END lines
+# Private half → the environment that may read it.
+gh secret set PROD_DEPLOY_KEY --env prod \
+  --repo AleksanderDudek/your-events < prod_deploy_key
 
 rm prod_deploy_key prod_deploy_key.pub
 ```
+
+Rotating it is the same three commands plus deleting the old key
+(`gh repo deploy-key delete <id> --repo AleksanderDudek/your-events-prod`).
 
 ### 4. Environments
 
@@ -82,37 +108,45 @@ gh api -X PUT repos/AleksanderDudek/your-events/environments/prod \
 The reviewer rule on `prod` is what makes a release deliberate: every production
 run waits for an approval in the Actions tab.
 
+### 5. Environment variables
+
+The values are in the Variables table below; this is the CLI form of it.
+
+```bash
+gh variable set NEXT_PUBLIC_SUPABASE_SCHEMA --env dev  --body dev
+gh variable set NEXT_PUBLIC_SUPABASE_SCHEMA --env prod --body public
+# …and the rest of the Variables table, per environment.
+```
+
 ## Secrets
 
-Set per environment, in this repository, under Settings → Environments.
+The four Supabase secrets are **repository-level and identical for both
+environments** — there is nothing to override, because both environments talk to
+the same two projects with the same anon keys. What separates them is the schema,
+which is a variable, not a secret. See Variables below.
 
-| Secret | dev | prod |
+| Secret | Level | Value |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | dev Supabase project (Szczecin) | production project (Szczecin) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | its anon key | its anon key |
-| `NEXT_PUBLIC_SUPABASE_URL_WROCLAW` | dev Supabase project (Wrocław) | production project (Wrocław) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW` | its anon key | its anon key |
-| `PROD_DEPLOY_KEY` | — | private half of the deploy key |
+| `NEXT_PUBLIC_SUPABASE_URL` | repository | Szczecin project |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | repository | its anon key |
+| `NEXT_PUBLIC_SUPABASE_URL_WROCLAW` | repository | Wrocław project |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW` | repository | its anon key |
+| `DISCORD_WEBHOOK_URL` | repository | deploy notifications, one channel for both |
+| `PROD_DEPLOY_KEY` | environment `prod` | private half of the deploy key |
 
-**Only `PROD_DEPLOY_KEY` has to be set before the first release.** The four
-Supabase secrets already exist at repository level, and an environment secret
-merely *overrides* a repository one of the same name — so until you add
-environment-level values, dev and production both read today's database and
-nothing breaks. Add the dev-level overrides when the dev database exists; that
-is a two-value change, with no edit to any workflow.
+`PROD_DEPLOY_KEY` is the only environment-scoped secret, and the only one that
+had to exist before the first release. Keeping it on the `prod` environment
+rather than the repository means a workflow that does not declare
+`environment: prod` cannot read it — a dev build cannot push to production even
+if someone edits it to try.
 
-`DISCORD_WEBHOOK_URL` stays a repository-level secret; both environments use the
-same channel.
+Should dev ever need its own credentials, add them as environment secrets of the
+same name: an environment secret overrides the repository one, with no edit to
+any workflow.
 
 The anon key is compiled into the client bundle and is public by nature — it is
 kept in secrets for tidiness and rotation, not for confidentiality. What
-actually protects the data is Supabase RLS.
-
-If dev and production share one Supabase project with the dev tables in a second
-Postgres schema, the four values are identical in both environments and only
-`NEXT_PUBLIC_SUPABASE_SCHEMA` differs. That schema must also be listed under
-Supabase → Settings → API → Exposed schemas, or PostgREST will refuse to serve
-it.
+actually protects the data is Supabase RLS, which is enabled on both schemas.
 
 ## Variables
 
@@ -124,13 +158,24 @@ Environments → *(environment)* → Variables.
 | `NEXT_PUBLIC_SITE_ORIGIN` | `https://aleksanderdudek.github.io` | `https://aleksanderdudek.github.io` |
 | `NEXT_PUBLIC_BASE_PATH` | `/your-events` | `/your-events-prod` |
 | `NEXT_PUBLIC_ENABLED_CITIES` | `wroclaw,szczecin` | `wroclaw,szczecin` |
-| `NEXT_PUBLIC_SUPABASE_SCHEMA` | `public` | `public` |
+| `NEXT_PUBLIC_SUPABASE_SCHEMA` | `dev` | `public` |
 | `NEXT_PUBLIC_CLARITY_PROJECT_ID` | *(not set)* | `xtfje919ui` |
 | `NEXT_PUBLIC_ROBOTS_NOINDEX` | `true` | *(not set)* |
 
 *(not set)* means the variable does not exist in that environment. GitHub
 rejects an empty variable value outright, and it does not need one: an absent
 variable interpolates to an empty string, which is exactly what the build wants.
+
+`NEXT_PUBLIC_SUPABASE_SCHEMA` is the one that decides which data a build shows.
+The named schema must also appear under Supabase → Settings → API → Exposed
+schemas in **both** projects, or PostgREST answers `PGRST106` and the site comes
+up empty. To check a schema is served without deploying anything:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' \
+  -H "apikey: $KEY" -H "Accept-Profile: dev" \
+  "$URL/rest/v1/events?select=id&limit=1"      # expect 200
+```
 
 Clarity is absent on dev deliberately: test traffic pointed at the production
 project corrupts the statistics the tag exists to collect.
