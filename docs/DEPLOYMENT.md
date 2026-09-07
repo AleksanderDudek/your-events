@@ -8,7 +8,7 @@ repository, which is the whole reason a second repository exists.
 | Follows | `main`, every push | `production`, moved by hand |
 | Built by | `deploy-dev.yml` | `deploy-prod.yml` |
 | Repository serving it | `your-events` (this one) | `your-events-prod` |
-| URL | [/your-events](https://aleksanderdudek.github.io/your-events) | [/your-events-prod](https://aleksanderdudek.github.io/your-events-prod) |
+| URL | [/your-events](https://aleksanderdudek.github.io/your-events) | [idznamiasto.pl](https://idznamiasto.pl) |
 | Data | `dev` schema | `public` schema |
 | Indexable | No — `noindex` + `robots.txt` disallow | Yes |
 | Clarity | Off | On |
@@ -155,8 +155,8 @@ Environments → *(environment)* → Variables.
 
 | Variable | dev | prod |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SITE_ORIGIN` | `https://aleksanderdudek.github.io` | `https://aleksanderdudek.github.io` |
-| `NEXT_PUBLIC_BASE_PATH` | `/your-events` | `/your-events-prod` |
+| `NEXT_PUBLIC_SITE_ORIGIN` | `https://aleksanderdudek.github.io` | `https://idznamiasto.pl` |
+| `NEXT_PUBLIC_BASE_PATH` | `/your-events` | *(not set)* |
 | `NEXT_PUBLIC_ENABLED_CITIES` | `wroclaw,szczecin` | `wroclaw,szczecin` |
 | `NEXT_PUBLIC_SUPABASE_SCHEMA` | `dev` | `public` |
 | `NEXT_PUBLIC_CLARITY_PROJECT_ID` | *(not set)* | `xtfje919ui` |
@@ -183,6 +183,42 @@ project corrupts the statistics the tag exists to collect.
 `NEXT_PUBLIC_ROBOTS_NOINDEX` is compared against the exact string `true`. A typo
 therefore fails towards "indexable" — a dev site briefly visible to Google is a
 smaller accident than production silently dropped from it.
+
+## The custom domain
+
+Production serves from **idznamiasto.pl**, registered at OVHcloud. The apex is
+canonical; `www` is a CNAME that GitHub redirects to it.
+
+The zone (OVH → Web Cloud → Domain names → idznamiasto.pl → DNS zone):
+
+| Record | Type | Target |
+| --- | --- | --- |
+| `@` | A ×4 | `185.199.108.153`, `.109.153`, `.110.153`, `.111.153` |
+| `@` | AAAA ×4 | `2606:50c0:8000::153`, `8001::153`, `8002::153`, `8003::153` |
+| `www` | CNAME | `aleksanderdudek.github.io.` |
+| `@` | MX ×3, SPF | OVH mail — unrelated to the site, do not touch |
+
+The domain arrived with three OVH parking redirections (`@`→`www`, `www`→a
+welcome page, `ftp`→the domain). Those were deleted through the **Redirection**
+tab, not the DNS zone: OVH implements a redirect as an A record plus a marker
+TXT, so deleting the visible A record alone leaves half a redirect behind.
+
+**Two places know the domain, and both are derived from one variable.**
+`NEXT_PUBLIC_SITE_ORIGIN` builds every absolute URL the site advertises
+(sitemap, robots, metadata — see [src/config/site.ts](../src/config/site.ts)),
+and the *Claim the custom domain* step in `deploy-prod.yml` strips its scheme to
+write `out/CNAME`. Changing the domain is therefore one variable edit.
+
+That CNAME step is not optional. Setting a custom domain in the Pages UI commits
+a CNAME file to the hosting branch, and every deploy force-pushes over that
+branch — without the step, the first deploy after the change silently drops the
+domain and the site answers on the github.io URL again.
+
+`NEXT_PUBLIC_BASE_PATH` is **absent** on prod, which is what serves the site at
+the domain root. GitHub rejects an empty variable value, so the variable is
+deleted rather than blanked; an absent variable interpolates to an empty string,
+and both [next.config.js](../next.config.js) and
+[src/config/site.ts](../src/config/site.ts) read that as "no base path".
 
 ## Releasing
 
@@ -238,7 +274,7 @@ environment and accept that a release then deploys unattended.
 ## Verifying a deploy
 
 ```bash
-BASE=https://aleksanderdudek.github.io/your-events-prod
+BASE=https://idznamiasto.pl
 
 # The page is served
 curl -sI "$BASE/" | head -1

@@ -70,6 +70,27 @@ jobs:
       - name: Mark the output as not-Jekyll
         run: touch out/.nojekyll
 
+      # Setting a custom domain in the Pages UI commits a CNAME file to the
+      # hosting branch — which this workflow force-pushes over on every run,
+      # taking the domain down with it. Writing the file here makes the domain
+      # a property of the build instead of state living in a repository nobody
+      # is supposed to touch. Derived from the origin the site was built with,
+      # so the two cannot disagree.
+      - name: Claim the custom domain
+        env:
+          SITE_ORIGIN: ${{ vars.NEXT_PUBLIC_SITE_ORIGIN }}
+        run: |
+          set -euo pipefail
+          host=${SITE_ORIGIN#http://}
+          host=${host#https://}
+          host=${host%%/*}
+          if [ -z "$host" ]; then
+            echo "NEXT_PUBLIC_SITE_ORIGIN is empty — refusing to publish without a CNAME"
+            exit 1
+          fi
+          printf '%s\n' "$host" > out/CNAME
+          echo "Custom domain: $host"
+
       - name: Publish to your-events-prod
         env:
           DEPLOY_KEY: ${{ secrets.PROD_DEPLOY_KEY }}
@@ -125,7 +146,7 @@ jobs:
             --arg url "$RUN_URL" \
             --argjson color "$COLOR" \
             --arg event "$EVENT" \
-            --arg page "https://aleksanderdudek.github.io/your-events-prod" \
+            --arg page "https://idznamiasto.pl" \
             '{
               username: "your-events Deploy",
               embeds: [{
