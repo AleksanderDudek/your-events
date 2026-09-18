@@ -12,10 +12,14 @@ import { env } from './env';
 //     basePath = /your-events
 //     SITE_URL = https://aleksanderdudek.github.io/your-events
 //
-//   Production (custom domain, served at root) — set in the build env:
-//     NEXT_PUBLIC_SITE_ORIGIN = https://your-events.pl
-//     NEXT_PUBLIC_BASE_PATH   =            (empty)
-//   and add a public/CNAME file. Then SITE_URL = https://your-events.pl.
+//   Production (custom domain, served at root) — set in the prod environment:
+//     NEXT_PUBLIC_SITE_ORIGIN = https://idznamiasto.pl
+//     NEXT_PUBLIC_BASE_PATH   =            (deleted, so it reads as empty)
+//   Then SITE_URL = https://idznamiasto.pl.
+//
+//   The CNAME file GitHub Pages needs is written from this same origin by
+//   deploy-prod.yml, NOT committed to public/ — public/ ships in the dev build
+//   too, and a CNAME there would hand the production domain to the dev site.
 //
 // Keep NEXT_PUBLIC_BASE_PATH in sync with `basePath` in next.config.js — they
 // describe the same path from two places (TS app vs. CommonJS config).
