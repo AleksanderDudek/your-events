@@ -131,7 +131,7 @@ function renderBody({
 }
 
 export default function EventsListView() {
-  const { events, total, poolTotal, isLoading, isError, isFetching, refetch, filters } = useEvents();
+  const { events, total, isLoading, isError, isFetching, refetch, filters } = useEvents();
   // Fetched only while the map is on screen; it is the whole result set, not a
   // page of it.
   const isMapView = filters.viewMode === 'map';
@@ -190,10 +190,7 @@ export default function EventsListView() {
               aria-live="polite"
               sx={{ color: 'var(--color-text-secondary)' }}
             >
-              {/* The mix is a sample: its count is the sample's size, not the
-                  database's, so it says so rather than reading like a bug next
-                  to the true total. Every other sort keeps today's plain count. */}
-              {filters.sort === 'mix' ? t.SORT_MIX_SUMMARY(total, poolTotal) : t.RESULTS_COUNT(total)}
+              {t.RESULTS_COUNT(total)}
             </Typography>
             {/* The pin count visibly disagreeing with the result count needs a
                 stated reason — events with no coordinates cannot be placed. */}

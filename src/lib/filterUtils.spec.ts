@@ -9,21 +9,24 @@ import {
 const parse = (qs: string) => parseFiltersFromParams(new URLSearchParams(qs));
 
 describe('sort and dir', () => {
-  it('default to a mix, ascending', () => {
-    expect(parse('')).toMatchObject({ sort: 'mix', dir: 'asc' });
-    expect(getDefaultFilters()).toMatchObject({ sort: 'mix', dir: 'asc' });
+  it('default to date, ascending', () => {
+    expect(parse('')).toMatchObject({ sort: 'date', dir: 'asc' });
+    expect(getDefaultFilters()).toMatchObject({ sort: 'date', dir: 'asc' });
   });
 
   it('reads every supported ordering', () => {
-    for (const sort of ['mix', 'date', 'name', 'venue', 'price'] as const) {
+    for (const sort of ['date', 'name', 'venue', 'price'] as const) {
       expect(parse(`sort=${sort}`).sort).toBe(sort);
     }
     expect(parse('dir=desc').dir).toBe('desc');
   });
 
-  // A hand-edited URL must not reach PostgREST as an unknown column.
-  it('falls back to the defaults for junk', () => {
-    expect(parse('sort=DROP+TABLE').sort).toBe('mix');
+  // A hand-edited URL must not reach PostgREST as an unknown column. The
+  // retired `mix` ordering goes through the same gate, so links shared while it
+  // existed land on the default instead of on nothing.
+  it('falls back to the defaults for junk and for retired orderings', () => {
+    expect(parse('sort=DROP+TABLE').sort).toBe('date');
+    expect(parse('sort=mix').sort).toBe('date');
     expect(parse('dir=sideways').dir).toBe('asc');
   });
 

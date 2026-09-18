@@ -11,7 +11,7 @@ function renderControl(overrides: Partial<React.ComponentProps<typeof SortSelect
   const { container } = render(
     <LocaleProvider>
       <SortSelect
-        sort="mix"
+        sort="date"
         dir="asc"
         onSortChange={onSortChange}
         onDirChange={onDirChange}
@@ -23,13 +23,13 @@ function renderControl(overrides: Partial<React.ComponentProps<typeof SortSelect
 }
 
 describe('SortSelect', () => {
-  it('offers all five orderings', async () => {
+  it('offers all four orderings', async () => {
     const user = userEvent.setup();
     renderControl();
 
     await user.click(screen.getByRole('combobox', { name: 'Sortuj' }));
 
-    for (const label of ['Miks', 'Data', 'Nazwa', 'Miejsce', 'Cena']) {
+    for (const label of ['Data', 'Nazwa', 'Miejsce', 'Cena']) {
       expect(screen.getByRole('option', { name: label })).toBeInTheDocument();
     }
   });
@@ -44,14 +44,14 @@ describe('SortSelect', () => {
     expect(onSortChange).toHaveBeenCalledWith('price');
   });
 
-  it('disables the direction toggle under mix', () => {
-    renderControl({ sort: 'mix' });
-    expect(screen.getByRole('button', { name: /sortuj (rosnąco|malejąco)/i })).toBeDisabled();
-  });
-
-  it('enables the direction toggle for every other ordering', () => {
-    renderControl({ sort: 'date' });
-    expect(screen.getByRole('button', { name: /sortuj (rosnąco|malejąco)/i })).toBeEnabled();
+  // Every remaining ordering has a meaningful direction, so the toggle is
+  // never inert — the one ordering that had none is gone.
+  it('enables the direction toggle for every ordering', () => {
+    for (const sort of ['date', 'name', 'venue', 'price'] as const) {
+      const { container } = renderControl({ sort });
+      expect(screen.getByRole('button', { name: /sortuj (rosnąco|malejąco)/i })).toBeEnabled();
+      container.remove();
+    }
   });
 
   it('flips direction on click', async () => {
