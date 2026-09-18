@@ -3,8 +3,8 @@ export type PageSize = 15 | 30 | 60;
 export type ViewMode = 'grid' | 'row' | 'map';
 /** JS `Date#getDay()` numbering: 0 = Sunday … 6 = Saturday. */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-/** How the list is ordered. `mix` is the default: a spread across categories. */
-export type SortKey = 'mix' | 'date' | 'name' | 'venue' | 'price';
+/** How the list is ordered. `date` is the default: soonest first. */
+export type SortKey = 'date' | 'name' | 'venue' | 'price';
 export type SortDir = 'asc' | 'desc';
 
 export interface EventFilters {

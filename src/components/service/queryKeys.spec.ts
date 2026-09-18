@@ -18,11 +18,9 @@ describe('the list key', () => {
   // what identifies the answer.
   it('separates one ordering from another', () => {
     const seen = new Set(
-      (['mix', 'date', 'name', 'venue', 'price'] as const).map((sort) =>
-        key(filters({ sort }))
-      )
+      (['date', 'name', 'venue', 'price'] as const).map((sort) => key(filters({ sort })))
     );
-    expect(seen.size).toBe(5);
+    expect(seen.size).toBe(4);
   });
 
   it('separates ascending from descending', () => {
@@ -37,15 +35,12 @@ describe('the list key', () => {
 });
 
 describe('the map key', () => {
-  // `mix` is not an ordering but a different *set* — a sample of three per
-  // category rather than everything — so the map has to know which it is
-  // showing, or it would put 748 pins under a 36-event list.
-  it('separates the mixed sample from the full set', () => {
-    expect(mapKey(filters({ sort: 'mix' }))).not.toBe(mapKey(filters({ sort: 'date' })));
+  // A map has no reading order: every ordering selects the very same pins, so
+  // keying on either would throw away the whole pin set to redraw it identically.
+  it('ignores the ordering', () => {
+    expect(mapKey(filters({ sort: 'name' }))).toBe(mapKey(filters({ sort: 'date' })));
   });
 
-  // Direction is meaningless on a map, and keying on it would throw away the
-  // whole pin set to redraw the identical pins.
   it('ignores the direction', () => {
     expect(mapKey(filters({ sort: 'name', dir: 'asc' }))).toBe(
       mapKey(filters({ sort: 'name', dir: 'desc' }))

@@ -5,7 +5,6 @@ import { getSupabaseForCity } from '@/lib/supabase';
 import { expandWeekdayDates } from '@/lib/weekdays';
 import { CityId, getCity, CATEGORIES_CITY_ID } from '@/config/cities';
 import { shortId } from '@/lib/slug';
-import { MIX_PER_CATEGORY, buildCategoryMix } from '@/lib/categoryMix';
 
 interface SupabaseEventRow {
   id: number;
@@ -200,11 +199,9 @@ interface PostgrestOrderable {
 // this builder precisely so the two can never disagree about what "matching"
 // or "first" means.
 //
-// `mix` has no clause of its own — it is assembled from one small query per
-// category (see fetchMixedEvents) and falls back to plain date order here,
-// unaffected by `dir` since the direction toggle is disabled under mix (it has
-// no meaning) — which is what the map and the sampler's own queries want, and
-// exactly what this builder did before sorting existed.
+// `date` is both the default sort and the fallback here, so an unrecognised
+// key can never leave a query unordered — which would hand PostgREST licence
+// to return rows in any order it likes, and page 2 could repeat page 1.
 function applyOrder<T>(query: T, filters: EventFilters): T {
   const ascending = filters.dir !== 'desc';
   const builder = query as PostgrestOrderable;
@@ -218,12 +215,10 @@ function applyOrder<T>(query: T, filters: EventFilters): T {
       // cheapest nor the most expensive, and it must never head the list.
       return builder.order('price', { ascending, nullsFirst: false }) as T;
     case 'date':
+    default:
       return builder
         .order('date', { ascending })
         .order('time_start', { ascending }) as T;
-    case 'mix':
-    default:
-      return builder.order('date').order('time_start') as T;
   }
 }
 
@@ -294,76 +289,6 @@ export async function fetchMapEvents(
   }
 
   return { events: mapped, total: count ?? mapped.length };
-}
-
-// The shape supabase-js resolves a query builder to. Query methods (`eq`,
-// `limit`, ...) return `this`, so the same object serves as both the builder
-// and, once awaited, this result.
-interface QueryResult {
-  data: unknown;
-  count: number | null;
-  error: { message: string } | null;
-}
-
-interface NarrowableQuery extends PromiseLike<QueryResult> {
-  eq(column: string, value: string): NarrowableQuery;
-  limit(count: number): NarrowableQuery;
-}
-
-/**
- * The default list, sampled rather than paged: one `limit=3` query per
- * category instead of the whole result set. Fetching everything to reorder it
- * in the browser was measured and rejected — 1.5 MB raw, 405 KB gzipped,
- * 0.66 s for 748 rows. Twelve small queries in parallel cost about 36 rows and
- * one round trip.
- *
- * `Promise.allSettled` rather than `Promise.all`: a category's query failing —
- * network blip, a stale category no longer on the table — must not blank the
- * whole page. That category is silently absent from the mix; the rest still
- * render. Nothing is logged, because a dropped category is an accepted,
- * expected degradation here, not an error to surface.
- */
-export async function fetchMixedEvents(
-  cityId: CityId | string,
-  filters: EventFilters,
-  categoryFilter: ResolvedCategoryFilter,
-  categoryMains: string[],
-  seed: number
-): Promise<{ events: Event[]; total: number; poolTotal: number }> {
-  const city = getCity(cityId);
-  const supabase = getSupabaseForCity(city.id);
-  const cityName = city.displayName.pl;
-
-  const settled = await Promise.allSettled(
-    categoryMains.map((main) =>
-      (buildFilteredQuery(supabase, filters, categoryFilter) as unknown as NarrowableQuery)
-        .eq('category_main', main)
-        .limit(MIX_PER_CATEGORY)
-    )
-  );
-
-  const buckets: Event[][] = [];
-  // PostgREST reports the unrestricted match count in `Content-Range` even
-  // under `limit`, so summing each category's `count` gives the true size of
-  // the pool the sample was drawn from — no extra query needed.
-  let poolTotal = 0;
-  for (const result of settled) {
-    if (result.status !== 'fulfilled') continue;
-    const { data, count, error } = result.value;
-    if (error) continue;
-    buckets.push((data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName)));
-    poolTotal += count ?? 0;
-  }
-
-  // freeOnly has no column to filter on, so it runs client-side per bucket —
-  // before the mix, so a bucket's contribution reflects what will actually be
-  // shown rather than being trimmed unevenly after interleaving.
-  const filteredBuckets = buckets.map((bucket) => applyClientFilters(bucket, filters));
-  const mixed = buildCategoryMix(filteredBuckets, seed);
-
-  const from = (filters.page - 1) * filters.pageSize;
-  const to = from + filters.pageSize;
-  return { events: mixed.slice(from, to), total: mixed.length, poolTotal };
 }
 
 function applyClientFilters(events: Event[], filters: EventFilters): Event[] {

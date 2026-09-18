@@ -28,7 +28,6 @@ vi.mock('@/components/service/useEvents', () => ({
   useEvents: () => ({
     events: [],
     total: 0,
-    poolTotal: 0,
     isLoading: false,
     isError: false,
     isFetching: false,

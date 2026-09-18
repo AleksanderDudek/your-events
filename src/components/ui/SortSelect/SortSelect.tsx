@@ -17,7 +17,7 @@ interface SortSelectProps {
   onDirChange: (dir: SortDir) => void;
 }
 
-const SORT_KEYS: SortKey[] = ['mix', 'date', 'name', 'venue', 'price'];
+const SORT_KEYS: SortKey[] = ['date', 'name', 'venue', 'price'];
 
 // Controlled, like the page-size Select beside it: the caller (EventsListView)
 // owns the state and writes through updateFilters, which already resets to
@@ -26,16 +26,12 @@ export default function SortSelect({ sort, dir, onSortChange, onDirChange }: Sor
   const { t } = useTranslation();
 
   const labels: Record<SortKey, string> = {
-    mix: t.SORT_MIX,
     date: t.SORT_DATE,
     name: t.SORT_NAME,
     venue: t.SORT_VENUE,
     price: t.SORT_PRICE,
   };
 
-  // Direction has no meaning for a shuffled sample, so the toggle goes inert
-  // under mix rather than silently doing nothing on click.
-  const dirDisabled = sort === 'mix';
   const nextDir: SortDir = dir === 'asc' ? 'desc' : 'asc';
 
   return (
@@ -56,7 +52,6 @@ export default function SortSelect({ sort, dir, onSortChange, onDirChange }: Sor
       </FormControl>
       <IconButton
         size="small"
-        disabled={dirDisabled}
         onClick={() => onDirChange(nextDir)}
         aria-label={nextDir === 'asc' ? t.SORT_DIR_ASC : t.SORT_DIR_DESC}
         sx={{ color: 'var(--color-text-muted)' }}

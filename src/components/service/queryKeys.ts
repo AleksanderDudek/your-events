@@ -32,15 +32,16 @@ function queryShape(filters: EventFilters) {
 // The map ignores paging entirely — it shows every matching event at once — so
 // its key drops page/pageSize. Sharing the list key would make page 2 evict the
 // map's full result set and vice versa.
-// A map has no reading order, so `dir` is dropped too — keying on it would
-// throw away the whole pin set to redraw identical pins. `sort` stays, because
-// `mix` is not an ordering but a different SET: a sample of three per category
-// rather than everything. Without it the map would show 748 pins under a
-// 36-event list.
+// A map has no reading order, so `sort`/`dir` are dropped too: every ordering
+// selects the same pins, and keying on them would throw away the whole pin set
+// to redraw identical pins on each sort change. (They do decide WHICH rows
+// survive MAP_EVENT_LIMIT truncation, but that cap is a runaway guard for a
+// city far larger than any we serve, not a product behaviour to cache on.)
 function mapQueryShape(filters: EventFilters) {
-  const { page, pageSize, dir, ...rest } = queryShape(filters);
+  const { page, pageSize, sort, dir, ...rest } = queryShape(filters);
   void page;
   void pageSize;
+  void sort;
   void dir;
   return rest;
 }
@@ -50,11 +51,5 @@ export const eventsKeys = {
     ['events', cityId, 'list', queryShape(filters)] as const,
   map: (cityId: CityId | string, filters: EventFilters) =>
     ['events', cityId, 'map', mapQueryShape(filters)] as const,
-  // The mix is a different fetch shape (one query per category, sampled) from
-  // the ordinary list, so it needs its own cache entry rather than colliding
-  // with `list`'s under the same filters. The seed is part of the key: a new
-  // session-seed must not serve a shuffle taken under the previous one.
-  mix: (cityId: CityId | string, filters: EventFilters, seed: number) =>
-    ['events', cityId, 'mix', queryShape(filters), seed] as const,
   categories: () => ['categories'] as const,
 };
