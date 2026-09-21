@@ -83,8 +83,10 @@ export default async function EventDetailPage({ params }: DetailProps) {
     name: found.name,
     description: found.description,
     ...(found.imageUrl && { image: found.imageUrl }),
-    startDate: `${found.date}T${found.startTime}:00`,
-    ...(found.endTime && { endDate: `${found.date}T${found.endTime}:00` }),
+    // schema.org accepts a bare date when no clock time is known — scraped rows
+    // without a usable time_start reach here with startTime ''.
+    startDate: found.startTime ? `${found.date}T${found.startTime}:00` : found.date,
+    ...(found.startTime && found.endTime && { endDate: `${found.date}T${found.endTime}:00` }),
     location: {
       '@type': 'Place',
       name: found.location.name,
