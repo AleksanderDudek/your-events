@@ -76,6 +76,23 @@ function parseSources(raw: string | null | undefined, fallback: string): string[
   return fallback ? [fallback] : [];
 }
 
+// Scrapers occasionally write a whole DOM fragment into a time column (one
+// Zdrofit row carries "50 min19wolnychShape Funkcjonalny..." as time_start).
+// The Event contract promises HH:MM, and every consumer trusts it — the label
+// renderer, the JSON-LD startDate and the calendar builder, which turns an
+// unparseable time into `new Date(NaN)` and throws mid-prerender, failing the
+// whole static export. Anything that is not a real clock time becomes '', the
+// same value a genuinely time-less event carries, so consumers already handle it.
+function normalizeTime(raw: string | null | undefined): string {
+  if (!raw) return '';
+  // Accept H:MM and HH:MM:SS as well; seconds are dropped.
+  const match = /^\s*(\d{1,2}):([0-5]\d)(?::[0-5]\d)?\s*$/.exec(raw);
+  if (!match) return '';
+  const hours = Number(match[1]);
+  if (hours > 23) return '';
+  return `${String(hours).padStart(2, '0')}:${match[2]}`;
+}
+
 function mapRow(row: SupabaseEventRow, cityName: string): Event {
   return {
     id: String(row.id),
@@ -85,8 +102,8 @@ function mapRow(row: SupabaseEventRow, cityName: string): Event {
     categoryMain: row.category_main,
     categorySub: row.category_sub ?? '',
     date: row.date,
-    startTime: row.time_start,
-    endTime: row.time_end,
+    startTime: normalizeTime(row.time_start),
+    endTime: normalizeTime(row.time_end),
     durationMin: row.duration_min,
     location: {
       name: row.venue,

@@ -222,6 +222,53 @@ describe('eventsApi', () => {
       await expect(fetchEvent('szczecin', '1')).rejects.toThrow('relation missing');
     });
 
+    describe('time normalization', () => {
+      // One scraped Zdrofit row carried a whole DOM fragment in time_start.
+      // Left as-is it reached warsawToUtc, produced new Date(NaN) and threw
+      // during prerender, which aborts the entire static export.
+      it('drops a time that is not a clock value', async () => {
+        const s = setup();
+        s.results.single = {
+          data: makeRow({ time_start: '50 min19wolnychShape FunkcjonalnyAnna MorawskaSala duża' }),
+          error: null,
+        };
+
+        const event = await fetchEvent('szczecin', '1');
+
+        expect(event.startTime).toBe('');
+      });
+
+      it('drops an out-of-range time', async () => {
+        const s = setup();
+        s.results.single = { data: makeRow({ time_start: '25:00', time_end: '19:99' }), error: null };
+
+        const event = await fetchEvent('szczecin', '1');
+
+        expect(event.startTime).toBe('');
+        expect(event.endTime).toBe('');
+      });
+
+      it('pads a single-digit hour and drops seconds', async () => {
+        const s = setup();
+        s.results.single = { data: makeRow({ time_start: '9:05', time_end: '10:30:00' }), error: null };
+
+        const event = await fetchEvent('szczecin', '1');
+
+        expect(event.startTime).toBe('09:05');
+        expect(event.endTime).toBe('10:30');
+      });
+
+      it('keeps an empty time empty', async () => {
+        const s = setup();
+        s.results.single = { data: makeRow({ time_start: '', time_end: '' }), error: null };
+
+        const event = await fetchEvent('szczecin', '1');
+
+        expect(event.startTime).toBe('');
+        expect(event.endTime).toBe('');
+      });
+    });
+
     describe('price mapping', () => {
       it('treats is_free rows as amount 0', async () => {
         const s = setup();
