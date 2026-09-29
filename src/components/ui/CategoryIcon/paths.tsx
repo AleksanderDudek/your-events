@@ -65,6 +65,12 @@ export const CATEGORY_ICON_PATHS: Record<string, ReactNode> = {
   edukacja: (
     <path d="M12 6.5C10 5 7.5 4.5 4 4.5v14c3.5 0 6 .5 8 2 2-1.5 4.5-2 8-2v-14c-3.5 0-6 .5-8 2v14" />
   ),
+  literatura: (
+    <>
+      <path d="M5.5 17.5v-12a2 2 0 0 1 2-2H19v14H7.5a2 2 0 0 0-2 2 2 2 0 0 0 2 2H19" />
+      <path d="M10.5 3.5V10l2-1.5 2 1.5V3.5" />
+    </>
+  ),
   'imprezy-i-rozrywka': (
     <>
       <path d="M9 9.5 4 20l10.5-5z" />

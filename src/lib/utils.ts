@@ -154,11 +154,19 @@ export function categoryColorInkVar(displayName: string, fallback = '#5f5968'): 
 // instead of being cropped to a strip. It used to be 1080×1080 PNG, 83 MB for
 // the set; the same 130 frames are now 904 KB, and every byte of that shipped
 // on every deploy for the handful of events whose source gives us no image.
+// Categories that have no art set of their own yet borrow the closest one,
+// so an event without a photo never points at a missing file (404 = broken
+// image). Remove an entry once /fallbacks/<slug>-1..10.webp exist.
+const FALLBACK_ART_ALIAS: Record<string, string> = {
+  literatura: 'edukacja',
+};
+
 export function categoryFallbackImage(displayName: string, seed: string): string {
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
     hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   }
   const variant = (hash % 10) + 1;
-  return `/fallbacks/${slugify(displayName || 'inne')}-${variant}.webp`;
+  const slug = slugify(displayName || 'inne');
+  return `/fallbacks/${FALLBACK_ART_ALIAS[slug] ?? slug}-${variant}.webp`;
 }
