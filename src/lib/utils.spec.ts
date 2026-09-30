@@ -43,6 +43,12 @@ describe('categoryFallbackImage', () => {
     expect(a).toBe(b); // deterministic
     expect(a).toMatch(/^\/fallbacks\/taniec-([1-9]|10)\.webp$/);
   });
+  it('borrows the Edukacja art for Literatura until it has its own set', () => {
+    const p = categoryFallbackImage('Literatura', 'evt-001');
+    expect(p).toMatch(/^\/fallbacks\/edukacja-([1-9]|10)\.webp$/);
+    const file = path.join(process.cwd(), 'public', p);
+    expect(existsSync(file)).toBe(true);
+  });
   it('varies the variant by seed', () => {
     const paths = new Set(
       ['a', 'b', 'c', 'd', 'e', 'f'].map((s) => categoryFallbackImage('Muzyka', s))
