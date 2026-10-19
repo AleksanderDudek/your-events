@@ -1,9 +1,6 @@
-'use client';
-
 import { useState } from 'react';
-import Link from 'next/link';
-import type { Route } from 'next';
-import { usePathname } from 'next/navigation';
+import AppLink from '@/components/common/AppLink/AppLink';
+import { useLocation } from 'react-router';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Box from '@mui/material/Box';
@@ -29,18 +26,18 @@ import styles from './AppHeader.module.scss';
 
 export default function AppHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const { t } = useTranslation();
   const { city } = useCity();
 
   const navItems = [
-    { label: t.NAV_HOME, href: `/${city.id}` as Route },
-    { label: t.NAV_EVENTS, href: `/${city.id}/wydarzenia` as Route },
+    { label: t.NAV_HOME, href: `/${city.id}` },
+    { label: t.NAV_EVENTS, href: `/${city.id}/wydarzenia` },
     // City-agnostic: these live outside the /{city} subtree.
-    { label: t.NAV_PRESETS, href: MY_FILTERS_PATH as Route },
-    { label: t.NAV_GROW, href: GROW_WITH_US_PATH as Route },
+    { label: t.NAV_PRESETS, href: MY_FILTERS_PATH },
+    { label: t.NAV_GROW, href: GROW_WITH_US_PATH },
   ];
 
   const isActive = (href: string) => {
@@ -73,7 +70,7 @@ export default function AppHeader() {
           px: { xs: 2, sm: 3, md: 4 },
         }}
       >
-        <Link
+        <AppLink
           href="/"
           className={styles.logo}
           // minWidth: 0 lets the wordmark truncate instead of pushing the row
@@ -106,12 +103,12 @@ export default function AppHeader() {
           >
             {t.APP_NAME}
           </Typography>
-        </Link>
+        </AppLink>
 
         {isMdUp ? (
           <Box component="nav" aria-label={t.NAV_MAIN} className={styles.nav}>
             {navItems.map((item) => (
-              <Link
+              <AppLink
                 key={item.href}
                 href={item.href}
                 // Onboarding's last step points here. Desktop only — on a phone
@@ -121,7 +118,7 @@ export default function AppHeader() {
                 className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
               >
                 {item.label}
-              </Link>
+              </AppLink>
             ))}
             <CitySwitcher />
             <LanguageSwitcher />
@@ -198,7 +195,7 @@ export default function AppHeader() {
                   {navItems.map((item) => (
                     <ListItem key={item.href} disablePadding>
                       <ListItemButton
-                        component={Link}
+                        component={AppLink}
                         href={item.href}
                         onClick={() => setDrawerOpen(false)}
                         selected={isActive(item.href)}

@@ -121,6 +121,12 @@ const pl = {
   META_EVENTS_TITLE: (cityLocative: string) => `Wydarzenia w ${cityLocative}`,
   META_DESCRIPTION: (cityLocative: string) =>
     `Odkryj najlepsze wydarzenia w ${cityLocative} — taniec, fitness, warsztaty kulinarne, koncerty i więcej.`,
+  // The installed app is not tied to one city, so its manifest says "your city".
+  PWA_DESCRIPTION:
+    'Odkryj najlepsze wydarzenia w Twoim mieście — taniec, fitness, warsztaty kulinarne, koncerty i więcej.',
+  PWA_UPDATE_READY: 'Dostępna jest nowa wersja aplikacji.',
+  PWA_UPDATE_RELOAD: 'Odśwież',
+  PWA_DISMISS: 'Zamknij',
   LOADING: 'Ładowanie...',
   LOADING_EVENTS: 'Wczytywanie wydarzeń…',
   CALENDAR_ADD: 'Dodaj do kalendarza',
@@ -445,6 +451,11 @@ const en: Messages = {
   META_EVENTS_TITLE: (city: string) => `Events in ${city}`,
   META_DESCRIPTION: (city: string) =>
     `Discover the best events in ${city} — dance, fitness, cooking workshops, concerts and more.`,
+  PWA_DESCRIPTION:
+    'Discover the best events in your city — dance, fitness, cooking workshops, concerts and more.',
+  PWA_UPDATE_READY: 'A new version of the app is available.',
+  PWA_UPDATE_RELOAD: 'Reload',
+  PWA_DISMISS: 'Dismiss',
   LOADING: 'Loading...',
   LOADING_EVENTS: 'Loading events…',
   CALENDAR_ADD: 'Add to calendar',

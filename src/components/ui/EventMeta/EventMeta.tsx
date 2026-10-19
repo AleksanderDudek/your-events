@@ -1,5 +1,3 @@
-'use client';
-
 import PlaceIcon from '@mui/icons-material/Place';
 import { formatDay, formatMonth } from '@/lib/utils';
 import { useTranslation } from '@/i18n';

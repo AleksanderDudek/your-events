@@ -130,6 +130,16 @@ export async function gotoEvents(page: Page): Promise<void> {
 }
 
 /**
+ * Resolves once React has hydrated the page (src/root.tsx sets the marker).
+ * Prerendered buttons exist before that but do nothing when clicked — use this
+ * after a cold `page.goto` before clicking one. Links are fine either way: an
+ * early click is an ordinary page load.
+ */
+export async function waitForHydration(page: Page): Promise<void> {
+  await expect(page.locator('html[data-hydrated="true"]')).toHaveCount(1, { timeout: 20000 });
+}
+
+/**
  * The events list always renders a result count ("Znaleziono N wydarzeń"),
  * even for zero results. Awaiting it is a data-independent signal that the
  * client tree has hydrated — use it after a cold `page.goto` before touching

@@ -1,7 +1,5 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -66,7 +64,6 @@ function HeroBackground({ event }: { event: Event }) {
         // Decorative: the hero's own overlay carries the event title, and the
         // <h1> below repeats it.
         alt=""
-        sizes="(max-width: 900px) 100vw, 900px"
         onError={() => setErrored(true)}
         priority
       />
@@ -78,7 +75,7 @@ function HeroBackground({ event }: { event: Event }) {
 }
 
 export default function EventDetailView({ event, related = [] }: EventDetailViewProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t, locale } = useTranslation();
 
   const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
@@ -101,7 +98,7 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
     <Box className={styles.container}>
       <Button
         startIcon={<ArrowBackIcon />}
-        onClick={() => router.back()}
+        onClick={() => void navigate(-1)}
         className={styles.backButton}
         sx={{ color: 'var(--color-text-secondary)', mb: 2, textTransform: 'none' }}
       >

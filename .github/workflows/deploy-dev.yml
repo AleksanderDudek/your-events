@@ -20,7 +20,7 @@ on:
   repository_dispatch:
     types: [events-updated]
   # The site is a static export: event detail pages exist only for ids present
-  # in the DB at build time (generateStaticParams + dynamicParams=false). New
+  # in the DB at build time (the prerender list in react-router.config.ts). New
   # events added to Supabase between code pushes would 404 until the next build,
   # so rebuild on a schedule to keep the static pages fresh as a fallback.
   # Cron is UTC.
@@ -47,29 +47,32 @@ jobs:
           version: 10
       - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+        # The app reads VITE_* (Vite inlines only that prefix). The GitHub
+        # secrets and variables keep their historical NEXT_PUBLIC_* names, so
+        # moving off Next needed no settings change; they are mapped here.
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          # Per-city (multi-city). NEXT_PUBLIC_* are baked in at build time, so
-          # every new city needs its URL + anon key here or it stays
-          # available:false and is hidden from the picker.
-          NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+          VITE_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # Per-city (multi-city). VITE_* are baked in at build time, so every
+          # new city needs its URL + anon key here or it stays available:false
+          # and is hidden from the picker.
+          VITE_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
+          VITE_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
           # Not secrets — they ship in the page source. Kept as environment
           # variables so dev and prod differ by configuration, not by code.
-          NEXT_PUBLIC_SITE_ORIGIN: ${{ vars.NEXT_PUBLIC_SITE_ORIGIN }}
-          NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
-          NEXT_PUBLIC_ENABLED_CITIES: ${{ vars.NEXT_PUBLIC_ENABLED_CITIES }}
-          NEXT_PUBLIC_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
+          VITE_SITE_ORIGIN: ${{ vars.NEXT_PUBLIC_SITE_ORIGIN }}
+          VITE_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
+          VITE_ENABLED_CITIES: ${{ vars.NEXT_PUBLIC_ENABLED_CITIES }}
+          VITE_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
           # Empty on dev on purpose: test traffic pointed at the production
           # Clarity project would corrupt the statistics the tag exists for.
-          NEXT_PUBLIC_CLARITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_CLARITY_PROJECT_ID }}
-          NEXT_PUBLIC_ROBOTS_NOINDEX: ${{ vars.NEXT_PUBLIC_ROBOTS_NOINDEX }}
+          VITE_CLARITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_CLARITY_PROJECT_ID }}
+          VITE_ROBOTS_NOINDEX: ${{ vars.NEXT_PUBLIC_ROBOTS_NOINDEX }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: ./out

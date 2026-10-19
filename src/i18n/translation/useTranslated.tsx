@@ -1,5 +1,3 @@
-'use client';
-
 // The React face of the translation engine (`./engine`). The engine is
 // framework-free and synchronous-read-only; this module is the only place
 // that touches `useSyncExternalStore`, effects and the active locale.

@@ -11,15 +11,57 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           version: 10
       - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm type-check
       - run: pnpm test
+
+  # The build is where this app can break without lint, types or unit tests
+  # noticing: the prerender runs every page's loader against Supabase,
+  # vite-plugin-pwa has to produce the service worker, and finalizeExport
+  # refuses an out/ missing any file a deploy needs. Without this job, a PR
+  # that breaks any of it is first caught by the post-merge dev deploy.
+  #
+  # Built exactly as deploy-dev.yml builds — same environment, same variables,
+  # base path /your-events included — so a green check means that deploy will
+  # build too.
+  #
+  # A required status check on main, under its name below — keep the name
+  # stable, or update the branch protection with it.
+  export:
+    name: Static export build
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+        # Same mapping as deploy-dev.yml: the app reads VITE_*, the GitHub
+        # secrets and variables keep their NEXT_PUBLIC_* names.
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
+          VITE_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+          VITE_SITE_ORIGIN: ${{ vars.NEXT_PUBLIC_SITE_ORIGIN }}
+          VITE_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
+          VITE_ENABLED_CITIES: ${{ vars.NEXT_PUBLIC_ENABLED_CITIES }}
+          VITE_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
+          VITE_CLARITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_CLARITY_PROJECT_ID }}
+          VITE_ROBOTS_NOINDEX: ${{ vars.NEXT_PUBLIC_ROBOTS_NOINDEX }}

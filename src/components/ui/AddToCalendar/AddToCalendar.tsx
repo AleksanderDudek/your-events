@@ -1,5 +1,3 @@
-'use client';
-
 import { useCallback, useMemo, useState } from 'react';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';

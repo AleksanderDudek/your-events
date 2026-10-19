@@ -1,5 +1,3 @@
-'use client';
-
 import Box from '@mui/material/Box';
 import { Event } from '@/types/event.types';
 import EventRow from '@/components/common/EventRow/EventRow';

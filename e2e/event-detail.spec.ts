@@ -57,10 +57,7 @@ test.describe('Event detail', () => {
     await expect(link).toHaveAttribute('rel', /noopener/);
   });
 
-  // NOTE: 404 handling for a non-existent id is intentionally NOT covered here.
-  // These tests run against `next dev`, where rendering the not-found boundary
-  // trips a Turbopack "Could not parse module next/document" error and returns
-  // HTTP 500. In the production static export (what GitHub Pages serves) the
-  // missing route falls back to a static 404 page, so this is a dev-server-only
-  // artifact — asserting on it would be a false alarm, not a real signal.
+  // 404 handling for a non-existent id is covered against the static export
+  // (e2e-export/not-found.spec.ts): there it is GitHub Pages' 404.html that
+  // answers, which the dev server has no equivalent of.
 });

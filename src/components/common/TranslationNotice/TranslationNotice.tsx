@@ -1,5 +1,3 @@
-'use client';
-
 // Surfaces the translation layer's status to the visitor, and — where the
 // on-device Translator API does not exist at all — offers Google's page
 // widget as an explicit, opt-in fallback.

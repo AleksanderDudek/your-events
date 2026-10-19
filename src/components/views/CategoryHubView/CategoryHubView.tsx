@@ -1,7 +1,4 @@
-'use client';
-
-import Link from 'next/link';
-import type { Route } from 'next';
+import AppLink from '@/components/common/AppLink/AppLink';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -34,8 +31,8 @@ export default function CategoryHubView({ citySlug, categorySlug, categoryName, 
       <EventGrid events={events} hrefFor={(event) => eventPathIn(citySlug, categorySlug, event)} />
       <Box sx={{ textAlign: 'center', mt: 4 }}>
         <Button
-          component={Link}
-          href={`/${citySlug}/wydarzenia?categories=${categorySlug}` as Route}
+          component={AppLink}
+          href={`/${citySlug}/wydarzenia?categories=${categorySlug}`}
           variant="outlined"
         >
           {t.CATEGORY_HUB_SEE_ALL}

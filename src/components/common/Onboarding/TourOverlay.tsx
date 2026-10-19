@@ -1,5 +1,3 @@
-'use client';
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -106,6 +104,7 @@ export default function TourOverlay({ steps, onStepEnter, onFinish }: TourOverla
 
     // The previous step's hole must go immediately, or the spotlight sits on a
     // control the tour has already moved past while the next page loads.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAnchor(null);
     setHole(null);
 

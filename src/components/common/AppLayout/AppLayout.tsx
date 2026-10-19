@@ -1,5 +1,3 @@
-'use client';
-
 import Box from '@mui/material/Box';
 import AppHeader from '@/components/common/AppHeader/AppHeader';
 import AppFooter from '@/components/common/AppFooter/AppFooter';

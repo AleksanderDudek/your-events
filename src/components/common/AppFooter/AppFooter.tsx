@@ -1,7 +1,4 @@
-'use client';
-
-import Link from 'next/link';
-import type { Route } from 'next';
+import AppLink from '@/components/common/AppLink/AppLink';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useTranslation } from '@/i18n';
@@ -52,9 +49,9 @@ export default function AppFooter() {
             {t.FOOTER_COMMUNITY}
           </Typography>
           <Box className={styles.links}>
-            <Link href={GROW_WITH_US_PATH as Route} className={styles.link}>
+            <AppLink href={GROW_WITH_US_PATH} className={styles.link}>
               {t.GROW_HEADLINE}
-            </Link>
+            </AppLink>
             <a
               href={DISCORD_INVITE_URL}
               className={styles.link}

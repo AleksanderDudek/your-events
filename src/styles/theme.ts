@@ -1,5 +1,3 @@
-'use client';
-
 import { createTheme } from '@mui/material/styles';
 
 // Palette values mirror tokens.scss (brief §1). MUI runs in cssVariables mode so

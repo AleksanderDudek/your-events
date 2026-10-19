@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { renderWithRouter } from '@/test-utils/router';
+import { screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { describe, it, expect, beforeEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
@@ -12,25 +13,25 @@ describe('AppFooter', () => {
   });
 
   it('renders without crashing', () => {
-    render(<AppFooter />);
+    renderWithRouter(<AppFooter />);
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
   });
 
   it('passes accessibility check', async () => {
-    const { container } = render(<AppFooter />);
+    const { container } = renderWithRouter(<AppFooter />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
   it('displays copyright with current year', () => {
-    render(<AppFooter />);
+    renderWithRouter(<AppFooter />);
     const year = new Date().getFullYear();
     expect(screen.getByText(`© ${year} Idź na miasto`)).toBeInTheDocument();
   });
 
   it('renders a "Cookies" control that reopens the consent choice', async () => {
     const user = userEvent.setup();
-    render(<AppFooter />);
+    renderWithRouter(<AppFooter />);
 
     const control = screen.getByRole('button', { name: 'Cookies' });
     expect(control.tagName).toBe('BUTTON');

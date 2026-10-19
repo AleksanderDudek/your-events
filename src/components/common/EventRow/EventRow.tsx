@@ -1,7 +1,4 @@
-'use client';
-
-import Link from 'next/link';
-import type { Route } from 'next';
+import AppLink from '@/components/common/AppLink/AppLink';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -39,7 +36,7 @@ export default function EventRow({ event }: EventRowProps) {
   const translatedName = useTranslated(event.name);
 
   return (
-    <Link href={href as Route} className={styles.link}>
+    <AppLink href={href} className={styles.link}>
       <Box
         component="article"
         role="article"
@@ -101,6 +98,6 @@ export default function EventRow({ event }: EventRowProps) {
           <ChevronRightIcon sx={{ color: 'var(--color-text-muted)' }} />
         </Box>
       </Box>
-    </Link>
+    </AppLink>
   );
 }

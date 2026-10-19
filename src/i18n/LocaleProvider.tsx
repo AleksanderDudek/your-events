@@ -1,5 +1,3 @@
-'use client';
-
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { DEFAULT_LOCALE, LOCALES, Locale, Messages, messages } from './messages';
 

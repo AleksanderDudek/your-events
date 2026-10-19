@@ -1,0 +1,12 @@
+{
+  // The service worker runs in a ServiceWorkerGlobalScope, whose globals clash
+  // with the DOM lib the app is checked against — so it gets its own pass.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["esnext", "webworker"],
+    "types": ["vite/client"],
+    "incremental": false
+  },
+  "include": ["src/sw.ts", "src/vite-env.d.ts"],
+  "exclude": []
+}

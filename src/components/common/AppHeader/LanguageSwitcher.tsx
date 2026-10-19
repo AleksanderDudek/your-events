@@ -1,5 +1,3 @@
-'use client';
-
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { Locale, useTranslation } from '@/i18n';

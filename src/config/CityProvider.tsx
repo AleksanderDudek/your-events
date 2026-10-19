@@ -1,5 +1,3 @@
-'use client';
-
 import {
   createContext,
   useCallback,
@@ -8,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { usePathname } from 'next/navigation';
+import { useLocation } from 'react-router';
 import {
   AVAILABLE_CITIES,
   CITIES,
@@ -22,8 +20,8 @@ import {
 
 const STORAGE_KEY = 'go-to-city.city';
 
-// First path segment, when it is a valid available city (basePath is already
-// stripped from usePathname()).
+// First path segment, when it is a valid available city (basename is already
+// stripped from useLocation()).
 function cityFromPathname(pathname: string): CityId | null {
   const seg = pathname.split('/').filter(Boolean)[0];
   return seg && isCityId(seg) && getCity(seg).available ? seg : null;
@@ -42,10 +40,10 @@ interface CityContextValue {
 const CityContext = createContext<CityContextValue | null>(null);
 
 export function CityProvider({ children }: { children: React.ReactNode }) {
-  // The URL is the source of truth for the city. usePathname() is reactive, so
+  // The URL is the source of truth for the city. useLocation() is reactive, so
   // header, main and footer all follow client navigation between cities. On
   // city-less routes (the "/" picker) we fall back to a stored/geolocated city.
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const urlCity = cityFromPathname(pathname);
 
   // Fallback city for city-less routes, reconciled after hydration. Ignored
