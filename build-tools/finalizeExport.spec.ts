@@ -17,6 +17,28 @@ async function read(path: string): Promise<string> {
   return readFile(join(root, path), 'utf8');
 }
 
+async function remove(path: string) {
+  await rm(join(root, path), { force: true });
+}
+
+/**
+ * A complete client build served at a domain root, as React Router and
+ * vite-plugin-pwa write it: pages, the SPA fallback, the SEO files, the PWA.
+ */
+async function putRootBuild() {
+  await put('client/index.html', 'home');
+  await put('client/__spa-fallback.html', 'spa fallback');
+  await put('client/sitemap.xml', 'xml');
+  await put('client/robots.txt', 'txt');
+  await put('client/sw.js');
+  await put('client/manifest.webmanifest');
+  await put('client/offline.html');
+}
+
+async function finalizeAtRoot() {
+  await finalizeExport({ clientDir: join(root, 'client'), outDir: join(root, 'out'), basePath: '' });
+}
+
 async function exists(path: string): Promise<boolean> {
   return access(join(root, path)).then(
     () => true,
@@ -41,17 +63,20 @@ describe('finalizeExport', () => {
     await put('client/index.html', 'spa fallback');
     await put('client/assets/app-abc.js');
     await put('client/sw.js');
+    await put('client/manifest.webmanifest');
+    await put('client/offline.html');
     await put('client/your-events/index.html', 'home');
     await put('client/your-events/wroclaw/wydarzenia/index.html', 'list');
-    await put('client/your-events/wroclaw/muzyka/jazz-1.data', 'data');
+    await put('client/your-events/wroclaw/muzyka/jazz-1/_.data', 'data');
     await put('client/your-events/sitemap.xml', 'xml');
+    await put('client/your-events/robots.txt', 'txt');
 
     await finalizeExport({ clientDir: join(root, 'client'), outDir: join(root, 'out'), basePath: '/your-events' });
 
     expect(await read('out/index.html')).toBe('home');
     expect(await read('out/404.html')).toBe('spa fallback');
     expect(await read('out/wroclaw/wydarzenia/index.html')).toBe('list');
-    expect(await read('out/wroclaw/muzyka/jazz-1.data')).toBe('data');
+    expect(await read('out/wroclaw/muzyka/jazz-1/_.data')).toBe('data');
     expect(await read('out/sitemap.xml')).toBe('xml');
     expect(await exists('out/assets/app-abc.js')).toBe(true);
     expect(await exists('out/sw.js')).toBe(true);
@@ -61,11 +86,10 @@ describe('finalizeExport', () => {
   // Served at a domain root, the pages are already where they belong; only the
   // fallback, which React Router names __spa-fallback.html there, is renamed.
   it('renames __spa-fallback.html when there is no base path', async () => {
-    await put('client/index.html', 'home');
-    await put('client/__spa-fallback.html', 'spa fallback');
+    await putRootBuild();
     await put('client/wroclaw/index.html', 'city');
 
-    await finalizeExport({ clientDir: join(root, 'client'), outDir: join(root, 'out'), basePath: '' });
+    await finalizeAtRoot();
 
     expect(await read('out/index.html')).toBe('home');
     expect(await read('out/404.html')).toBe('spa fallback');
@@ -76,43 +100,47 @@ describe('finalizeExport', () => {
   // Resource routes (sitemap.xml, robots.txt) also get a loader-data twin from
   // the prerender. Nothing ever fetches it — the file itself is the resource.
   it('drops the data twins of prerendered resource files', async () => {
-    await put('client/index.html', 'home');
-    await put('client/__spa-fallback.html');
-    await put('client/sitemap.xml', 'xml');
+    await putRootBuild();
     await put('client/sitemap.xml.data');
     await put('client/robots.txt.data');
-    await put('client/robots.txt', 'txt');
-    await put('client/wroclaw/muzyka/jazz-1.data', 'page data');
+    await put('client/wroclaw/muzyka/jazz-1/_.data', 'page data');
 
-    await finalizeExport({ clientDir: join(root, 'client'), outDir: join(root, 'out'), basePath: '' });
+    await finalizeAtRoot();
 
     expect(await exists('out/sitemap.xml.data')).toBe(false);
     expect(await exists('out/robots.txt.data')).toBe(false);
     expect(await read('out/sitemap.xml')).toBe('xml');
-    expect(await read('out/wroclaw/muzyka/jazz-1.data')).toBe('page data');
+    expect(await read('out/wroclaw/muzyka/jazz-1/_.data')).toBe('page data');
   });
 
   it('marks the output as not-Jekyll', async () => {
-    await put('client/index.html', 'home');
-    await put('client/__spa-fallback.html');
-    await finalizeExport({ clientDir: join(root, 'client'), outDir: join(root, 'out'), basePath: '' });
+    await putRootBuild();
+    await finalizeAtRoot();
     expect(await exists('out/.nojekyll')).toBe(true);
   });
 
   it('replaces whatever a previous build left in the output directory', async () => {
     await put('out/stale.html');
-    await put('client/index.html', 'home');
-    await put('client/__spa-fallback.html');
-    await finalizeExport({ clientDir: join(root, 'client'), outDir: join(root, 'out'), basePath: '' });
+    await putRootBuild();
+    await finalizeAtRoot();
     expect(await exists('out/stale.html')).toBe(false);
   });
 
-  // A deploy without a home page is a blank site. Failing the build is the
-  // better outcome: the previous deploy stays up.
-  it('fails when the home page was not produced', async () => {
-    await put('client/__spa-fallback.html');
-    await expect(
-      finalizeExport({ clientDir: join(root, 'client'), outDir: join(root, 'out'), basePath: '' })
-    ).rejects.toThrow(/index\.html/);
+  // The build is the last place a missing piece can be caught: the deploy
+  // publishes whatever out/ holds, and failing here keeps the previous deploy
+  // up. A missing home page is a blank site; a missing sw.js or manifest is the
+  // PWA quietly gone; missing SEO files drop the site from crawlers' view.
+  it.each([
+    ['index.html', 'client/index.html'],
+    ['404.html', 'client/__spa-fallback.html'],
+    ['sw.js', 'client/sw.js'],
+    ['manifest.webmanifest', 'client/manifest.webmanifest'],
+    ['offline.html', 'client/offline.html'],
+    ['sitemap.xml', 'client/sitemap.xml'],
+    ['robots.txt', 'client/robots.txt'],
+  ])('fails when %s was not produced', async (name, source) => {
+    await putRootBuild();
+    await remove(source);
+    await expect(finalizeAtRoot()).rejects.toThrow(name);
   });
 });

@@ -10,6 +10,20 @@ interface FinalizeOptions {
   basePath: string;
 }
 
+// What every deploy must contain: the home page and the fallback that answers
+// every other path (without them the site is blank), the PWA (without it the
+// app silently stops being installable and offline-capable), and the files
+// crawlers read first.
+const REQUIRED_FILES = [
+  'index.html',
+  '404.html',
+  'sw.js',
+  'manifest.webmanifest',
+  'offline.html',
+  'sitemap.xml',
+  'robots.txt',
+] as const;
+
 async function exists(path: string): Promise<boolean> {
   return access(path).then(
     () => true,
@@ -64,9 +78,11 @@ export async function finalizeExport({ clientDir, outDir, basePath }: FinalizeOp
   // starts with an underscore.
   await writeFile(join(outDir, '.nojekyll'), '');
 
-  for (const required of ['index.html', '404.html']) {
+  // The deploy publishes whatever out/ holds, so this is the last place a
+  // missing piece can stop it — and failing keeps the previous deploy up.
+  for (const required of REQUIRED_FILES) {
     if (!(await exists(join(outDir, required)))) {
-      throw new Error(`finalizeExport: ${required} is missing from ${outDir} — refusing to ship a blank site`);
+      throw new Error(`finalizeExport: ${required} is missing from ${outDir} — refusing to ship an incomplete site`);
     }
   }
 }

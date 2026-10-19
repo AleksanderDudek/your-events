@@ -248,6 +248,11 @@ Executed in one pass. What changed against the plan, and why:
   since the sort control (2026-08-03) became the first combobox; fixed to target
   the page-size control by name.
 
+- **CI builds the site** (`CI` → *Static export build*, a required check on
+  `main`), and `finalizeExport` refuses an `out/` without the service worker,
+  manifest, offline page or SEO files. Before, a broken build was first caught
+  by the post-merge deploy.
+
 Pre-existing, not addressed: the Mobile Chrome project of the dev e2e suite
 fails the same ~16 tests it fails on `main` (desktop-oriented selectors against
 the mobile header drawer / filter sheet).

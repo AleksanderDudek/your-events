@@ -53,6 +53,16 @@ result into `out/`, the directory both deploy workflows publish:
 | `manifest.webmanifest`, `sw.js`, `offline.html` | the PWA (below) |
 | `assets/` | hashed JS/CSS |
 
+`finalizeExport` fails the build when `out/` lacks any file a deploy needs —
+the home page, `404.html`, `sw.js`, the manifest, `offline.html`,
+`sitemap.xml`, `robots.txt` — so a broken build stops the deploy and the
+previous one stays up.
+
+Every pull request builds the site exactly as `deploy-dev.yml` does (`CI` →
+*Static export build*, in the `dev` environment). It is a required status check
+on `main`: a change that breaks the prerender, the service worker or the output
+cannot be merged. Renaming that job means updating the branch protection too.
+
 ### Variable names
 
 The app reads `VITE_*` — Vite inlines only that prefix into the bundles. The
