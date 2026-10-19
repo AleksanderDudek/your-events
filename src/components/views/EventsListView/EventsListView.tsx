@@ -1,5 +1,3 @@
-'use client';
-
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Select from '@mui/material/Select';
@@ -26,6 +24,7 @@ import { useFilterNavigation } from '@/components/service/useFilterNavigation';
 import { countActiveFilters } from '@/lib/filterUtils';
 import { PAGE_SIZE_OPTIONS, withBasePath } from '@/lib/constants';
 import { eventPath } from '@/lib/slug';
+import { withTrailingSlash } from '@/lib/href';
 import { useTranslation } from '@/i18n';
 import { PageSize, ViewMode, SortKey, SortDir, EventFilters } from '@/types/filter.types';
 import { Event } from '@/types/event.types';
@@ -109,13 +108,13 @@ function renderBody({
           const safeName = translatedName.replace(/</g, '&lt;');
           // Venue name is a proper noun, left untranslated.
           const safeVenue = ev.location.name?.replace(/</g, '&lt;') ?? '';
-          // Leaflet popups render raw HTML outside React, so basePath is applied
-          // manually; the trailing slash matches the static export's route
-          // (trailingSlash: true) so the link resolves without a redirect.
+          // Leaflet popups render raw HTML outside React, so the base path is
+          // applied manually; the trailing slash matches the prerendered page's
+          // URL so the link resolves without a redirect.
           // eventPath keys its slug off `ev.name` (untranslated) — must not use
           // translatedName here, or the link would point at a page that was
           // never built.
-          const href = `${withBasePath(eventPath(citySlug, ev, displayNameToSlug))}/`;
+          const href = withBasePath(withTrailingSlash(eventPath(citySlug, ev, displayNameToSlug)));
           const arrow =
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
           return (

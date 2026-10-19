@@ -1,5 +1,3 @@
-'use client';
-
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { FilterPreset } from '@/types/preset.types';
 import {

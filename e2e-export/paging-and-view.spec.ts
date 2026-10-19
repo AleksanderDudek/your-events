@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// These specs run against the STATIC EXPORT (`next build` + a plain file
+// These specs run against the STATIC EXPORT (`pnpm build` + a plain file
 // server) — the artifact GitHub Pages actually serves. The regular e2e suite
-// drives `next dev`, which has a real server and an RSC endpoint behind it, so
-// it is structurally blind to export-only breakage: the App Router pins a
-// prerendered page's canonical URL to the query string the document was
-// cold-loaded with, and same-route pushes get deduped against it. That shipped
-// a list where clicking page 2 snapped the view back to whatever mode the URL
-// was loaded with and never left page 1.
+// drives the dev server, which renders every page on request, so it is
+// structurally blind to export-only breakage. One shipped under the old Next
+// export: its router pinned a prerendered page's URL to the query string the
+// document was cold-loaded with and deduped same-route pushes against it — a
+// list where clicking page 2 snapped the view back to whatever mode the URL
+// was loaded with and never left page 1. These keep that shape from returning.
 //
 // Everything here is a URL/DOM-shape assertion, never an event name or count —
 // same rule as the dev suite (the data changes daily).
@@ -96,7 +96,9 @@ test.describe('Static export: paging and view mode stay independent', () => {
   test('changing the page size returns to page 1', async ({ page }) => {
     await gotoList(page, '?page=2');
 
-    await page.getByRole('combobox').first().click();
+    // By name: the sort control is a combobox too, and comes first. The page-size
+    // control appears above and below the list; either one will do.
+    await page.getByRole('combobox', { name: 'Na stronie' }).first().click();
     await page.getByRole('option', { name: '30' }).first().click();
 
     await expect.poll(() => currentPage(page)).toBe('1');

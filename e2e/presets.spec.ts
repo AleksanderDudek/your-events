@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, CITY } from './support/helpers';
+import { TEXT, CITY, waitForHydration } from './support/helpers';
 
 // Saved filters live in localStorage and are written by one component, read by
 // another, on a different route. Only a real browser run proves that round
@@ -37,6 +37,7 @@ test.describe('My filters (saved presets)', () => {
 
   test('presets survive a reload — they are the point of saving them', async ({ page }) => {
     await page.goto('/moje-filtry');
+    await waitForHydration(page);
     await page.getByRole('button', { name: TEXT.presetsNew }).click();
     await page.getByLabel(TEXT.presetsName).fill('Wieczory taneczne');
     await page.getByRole('button', { name: TEXT.presetsSave, exact: true }).click();
@@ -50,6 +51,7 @@ test.describe('My filters (saved presets)', () => {
     // A preset saved as "this weekend" must not freeze the weekend it was made
     // in — the href is rebuilt from today's date every time the page renders.
     await page.goto('/moje-filtry');
+    await waitForHydration(page);
     await page.getByRole('button', { name: TEXT.presetsNew }).click();
     await page.getByLabel(TEXT.presetsName).fill('Weekend');
     await page.getByLabel(TEXT.presetsWhen).click();

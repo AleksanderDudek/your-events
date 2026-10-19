@@ -1,8 +1,5 @@
-'use client';
-
 import { useCallback, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import type { Route } from 'next';
+import { useAppNavigate } from '@/components/service/useAppNavigate';
 import { useCategories } from '@/components/service/useCategories';
 import { usePresets } from '@/components/service/usePresets';
 import { useFilterNavigation } from '@/components/service/useFilterNavigation';
@@ -36,7 +33,7 @@ interface StoryRunnerProps {
  * no buyer. This component only exists once the visitor has asked for the tour.
  */
 export default function StoryRunner({ steps, onFinish }: StoryRunnerProps) {
-  const router = useRouter();
+  const navigate = useAppNavigate();
   const { city } = useCity();
   const { t } = useTranslation();
   const { bySlug } = useCategories();
@@ -85,13 +82,13 @@ export default function StoryRunner({ steps, onFinish }: StoryRunnerProps) {
           return;
 
         case 'goToPresets':
-          router.push(MY_FILTERS_PATH as Route);
+          navigate(MY_FILTERS_PATH);
           return;
 
         case 'openPreset':
           // Straight to the preset's own URL — the same link its tile carries,
           // so the story opens the preset exactly the way the visitor will.
-          router.push(presetHref(storyPreset(), new Date()) as Route);
+          navigate(presetHref(storyPreset(), new Date()));
           return;
 
         case 'editPresetHours':
@@ -99,11 +96,11 @@ export default function StoryRunner({ steps, onFinish }: StoryRunnerProps) {
           // saved preset moves to the later hour AND we go back to Moje filtry,
           // which is where the visitor would have made that edit themselves.
           save(storyPreset(STORY_HOUR_FROM_LATER));
-          router.push(MY_FILTERS_PATH as Route);
+          navigate(MY_FILTERS_PATH);
           return;
       }
     },
-    [updateFilters, availableCategories, save, storyPreset, router]
+    [updateFilters, availableCategories, save, storyPreset, navigate]
   );
 
   return <TourOverlay steps={steps} onStepEnter={runStep} onFinish={onFinish} />;

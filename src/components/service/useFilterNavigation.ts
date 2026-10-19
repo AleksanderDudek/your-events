@@ -1,7 +1,5 @@
-'use client';
-
 import { useCallback, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useNavigate, useSearchParams } from 'react-router';
 import { EventFilters } from '@/types/filter.types';
 import {
   parseFiltersFromParams,
@@ -9,9 +7,8 @@ import {
   getDefaultFilters,
 } from '@/lib/filterUtils';
 import { useCity } from '@/config/CityProvider';
-import { withBasePath } from '@/lib/constants';
 
-// Filter state lives in the query string, and `router.push()` writes it
+// Filter state lives in the query string, and `navigate()` commits it
 // ASYNCHRONOUSLY: anything that reads `window.location` right after a push still
 // sees the pre-push URL. Two updates in the same tick therefore both build on
 // the stale query string and the last one silently undoes the others — that is
@@ -61,7 +58,8 @@ function liveQuery(fallback: string): string {
  * consecutive updates within one tick accumulate instead of overwriting.
  */
 export function useFilterNavigation() {
-  const searchParams = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { city } = useCity();
   const query = searchParams.toString();
 
@@ -87,25 +85,14 @@ export function useFilterNavigation() {
       pending.query = nextQuery;
       pending.filters = next;
 
-      // Why not router.push(): in the STATIC EXPORT (what GitHub Pages serves —
-      // dev is fine, which is why this survived) the App Router pins the page's
-      // canonical URL to the query string the document was cold-loaded with. A
-      // push to the same route then does not navigate: it replaceState()s the
-      // loaded query back over the requested one. Land on ?viewMode=row, switch
-      // to grid, click page 2 → the URL snapped back to ?viewMode=row, the list
-      // flipped to rows and stayed on page 1. Clearing filters hit the same wall
-      // from the other side (a push to the query-LESS URL read as "already
-      // here").
-      //
-      // Writing history ourselves and replaying a popstate is what makes the
-      // router re-read the location — a soft navigation, no reload, and immune
-      // to that deduping. history.pushState is not base-path-aware the way
-      // router.push is, so the prefix goes on by hand.
-      const href = withBasePath(`/${city.id}/wydarzenia/${nextQuery ? `?${nextQuery}` : ''}`);
-      window.history.pushState(null, '', href);
-      window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+      // A soft navigation to the list with the new query. (Under Next's static
+      // export this had to be a hand-written pushState + popstate: its router
+      // pinned the URL to the cold-loaded query string and replaced a same-route
+      // push back over it. React Router navigates normally;
+      // e2e-export/paging-and-view.spec.ts keeps that shape from coming back.)
+      void navigate(`/${city.id}/wydarzenia/${nextQuery ? `?${nextQuery}` : ''}`);
     },
-    [city.id, query]
+    [city.id, navigate, query]
   );
 
   /** Change a filter. Always returns to page 1 — the old page may not exist. */

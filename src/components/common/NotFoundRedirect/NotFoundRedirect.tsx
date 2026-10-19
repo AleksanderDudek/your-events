@@ -1,11 +1,10 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import type { Route } from 'next';
+import { useLocation } from 'react-router';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import AppLink from '@/components/common/AppLink/AppLink';
+import { useAppNavigate } from '@/components/service/useAppNavigate';
 import { isCityId } from '@/config/cities';
 import { useTranslation } from '@/i18n';
 
@@ -14,8 +13,8 @@ const SECONDS = 6;
 // redirectTo === '/' means "decide from the path": if it starts with a valid
 // city, send to that city's search; otherwise to the picker.
 export default function NotFoundRedirect({ redirectTo = '/' }: { redirectTo?: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const navigate = useAppNavigate();
+  const { pathname } = useLocation();
   const { t } = useTranslation();
   const [left, setLeft] = useState(SECONDS);
 
@@ -24,12 +23,12 @@ export default function NotFoundRedirect({ redirectTo = '/' }: { redirectTo?: st
 
   useEffect(() => {
     const tick = window.setInterval(() => setLeft((n) => Math.max(0, n - 1)), 1000);
-    const go = window.setTimeout(() => router.push(target as Route), SECONDS * 1000);
+    const go = window.setTimeout(() => navigate(target), SECONDS * 1000);
     return () => {
       window.clearInterval(tick);
       window.clearTimeout(go);
     };
-  }, [router, target]);
+  }, [navigate, target]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center', px: 3 }}>
@@ -45,7 +44,7 @@ export default function NotFoundRedirect({ redirectTo = '/' }: { redirectTo?: st
       <Typography variant="body2" sx={{ color: 'var(--color-text-muted)', mb: 3 }} role="status" aria-live="polite">
         {t.NOTFOUND_REDIRECT(left)}
       </Typography>
-      <Button component="a" href={target} variant="contained" color="primary" sx={{ minHeight: 44 }}>
+      <Button component={AppLink} href={target} variant="contained" color="primary" sx={{ minHeight: 44 }}>
         {t.NOTFOUND_CTA}
       </Button>
     </Box>

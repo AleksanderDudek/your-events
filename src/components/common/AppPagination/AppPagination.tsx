@@ -1,5 +1,3 @@
-'use client';
-
 import Box from '@mui/material/Box';
 import Pagination from '@mui/material/Pagination';
 import Select from '@mui/material/Select';

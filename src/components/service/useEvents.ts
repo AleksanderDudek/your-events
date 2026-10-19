@@ -1,8 +1,6 @@
-'use client';
-
 import { useMemo } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'react-router';
 import { fetchEvents, fetchMapEvents, ResolvedCategoryFilter } from './eventsApi';
 import { eventsKeys } from './queryKeys';
 import { parseFiltersFromParams } from '@/lib/filterUtils';
@@ -15,7 +13,7 @@ import { useCity } from '@/config/CityProvider';
  * disagree about what the user asked for.
  */
 function useResolvedFilters() {
-  const searchParams = useSearchParams();
+  const [searchParams] = useSearchParams();
   const filters = parseFiltersFromParams(searchParams);
   const { bySlug } = useCategories();
   const { city } = useCity();

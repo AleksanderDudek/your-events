@@ -1,8 +1,6 @@
-'use client';
-
 import { useCallback, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import type { Route } from 'next';
+import { useLocation } from 'react-router';
+import { useAppNavigate } from '@/components/service/useAppNavigate';
 import { useOnboarding } from '@/components/service/useOnboarding';
 import { useConsent } from '@/components/service/useConsent';
 import { useCity } from '@/config/CityProvider';
@@ -42,8 +40,8 @@ export default function Onboarding() {
   // on screen, and two stacked overlays on a first visit is the failure this
   // design most wants to avoid.
   const { isOpen: isConsentOpen } = useConsent();
-  const pathname = usePathname();
-  const router = useRouter();
+  const { pathname } = useLocation();
+  const navigate = useAppNavigate();
   const { city } = useCity();
   const { locale } = useTranslation();
 
@@ -100,9 +98,9 @@ export default function Onboarding() {
     // The request survives the navigation (it is module state, not component
     // state) and the effect above picks it up on arrival.
     if (!isTourRoute(pathname, isCityId)) {
-      router.push(tourPath(city.id) as Route);
+      navigate(tourPath(city.id));
     }
-  }, [requestTour, pathname, router, city.id]);
+  }, [requestTour, pathname, navigate, city.id]);
 
   const handleStoryFinish = useCallback(() => {
     setSteps(null);

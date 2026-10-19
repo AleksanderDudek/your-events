@@ -1,4 +1,5 @@
-import { render, screen, within } from '@testing-library/react';
+import { renderWithRouter } from '@/test-utils/router';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -52,17 +53,17 @@ describe('MyFiltersView', () => {
   });
 
   it('invites the user to create one when nothing is saved', () => {
-    render(<MyFiltersView />);
+    renderWithRouter(<MyFiltersView />);
     expect(screen.getByText('Nie masz jeszcze własnych filtrów')).toBeInTheDocument();
   });
 
   it('renders a saved preset as a tile pointing at its city and filters', () => {
     seed([preset()]);
-    render(<MyFiltersView />);
+    renderWithRouter(<MyFiltersView />);
 
     const link = screen.getByRole('link', { name: /Taniec w weekend/ });
     const href = link.getAttribute('href') ?? '';
-    expect(href).toMatch(/^\/wroclaw\/wydarzenia\?/);
+    expect(href).toMatch(/^\/wroclaw\/wydarzenia\/\?/);
     expect(href).toContain('categories=taniec');
     expect(href).toContain('freeOnly=true');
     // The weekend window is resolved at render, not stored — so it carries dates.
@@ -71,7 +72,7 @@ describe('MyFiltersView', () => {
 
   it('summarises a preset so the tile says what it does', () => {
     seed([preset()]);
-    render(<MyFiltersView />);
+    renderWithRouter(<MyFiltersView />);
     // Category, then the resolved window, then the flags — one line, in order.
     expect(
       screen.getByText('Taniec · Najbliższy weekend · tylko bezpłatne')
@@ -86,7 +87,7 @@ describe('MyFiltersView', () => {
         filters: { ...preset().filters, categories: [], dateWindow: 'none', freeOnly: false },
       }),
     ]);
-    render(<MyFiltersView />);
+    renderWithRouter(<MyFiltersView />);
     expect(screen.getByText('Wszystkie wydarzenia')).toBeInTheDocument();
   });
 
@@ -94,7 +95,7 @@ describe('MyFiltersView', () => {
     const user = userEvent.setup();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     seed([preset()]);
-    render(<MyFiltersView />);
+    renderWithRouter(<MyFiltersView />);
 
     await user.click(screen.getByRole('button', { name: 'Usuń' }));
 
@@ -106,7 +107,7 @@ describe('MyFiltersView', () => {
     const user = userEvent.setup();
     vi.spyOn(window, 'confirm').mockReturnValue(false);
     seed([preset()]);
-    render(<MyFiltersView />);
+    renderWithRouter(<MyFiltersView />);
 
     await user.click(screen.getByRole('button', { name: 'Usuń' }));
 
@@ -116,7 +117,7 @@ describe('MyFiltersView', () => {
   it('duplicates a preset next to the original', async () => {
     const user = userEvent.setup();
     seed([preset()]);
-    render(<MyFiltersView />);
+    renderWithRouter(<MyFiltersView />);
 
     await user.click(screen.getByRole('button', { name: 'Powiel' }));
 
@@ -127,7 +128,7 @@ describe('MyFiltersView', () => {
 
   it('creates a preset through the editor', async () => {
     const user = userEvent.setup();
-    render(<MyFiltersView />);
+    renderWithRouter(<MyFiltersView />);
 
     await user.click(screen.getByRole('button', { name: /Nowy filtr/ }));
     await user.type(screen.getByLabelText('Nazwa'), 'Wieczory taneczne');
@@ -138,7 +139,7 @@ describe('MyFiltersView', () => {
 
   it('refuses to save a preset with no name', async () => {
     const user = userEvent.setup();
-    render(<MyFiltersView />);
+    renderWithRouter(<MyFiltersView />);
 
     await user.click(screen.getByRole('button', { name: /Nowy filtr/ }));
     await user.click(screen.getByRole('button', { name: 'Zapisz' }));
@@ -149,7 +150,7 @@ describe('MyFiltersView', () => {
 
   it('passes accessibility check', async () => {
     seed([preset()]);
-    const { container } = render(<MyFiltersView />);
+    const { container } = renderWithRouter(<MyFiltersView />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });

@@ -1,7 +1,4 @@
-'use client';
-
-import Link from 'next/link';
-import type { Route } from 'next';
+import AppLink from '@/components/common/AppLink/AppLink';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import PlaceIcon from '@mui/icons-material/Place';
@@ -61,7 +58,7 @@ export default function CityPickerView() {
           const name = city.displayName[locale];
           const image = CITY_IMAGES[city.id];
           return (
-            <Link key={city.id} href={`/${city.id}` as Route} style={{ textDecoration: 'none' }}>
+            <AppLink key={city.id} href={`/${city.id}`} style={{ textDecoration: 'none' }}>
               <Box
                 sx={{
                   // Uniform card: fixed width + fixed aspect ratio → every card
@@ -84,10 +81,8 @@ export default function CityPickerView() {
                 }}
               >
                 {image ? (
-                  // Plain <img> (not next/image): images are unoptimized in the
-                  // static export anyway, and next/image drops the basePath from
-                  // the src. withBasePath applies the real base path so it works
-                  // under /your-events and at the root alike.
+                  // A public/ asset: withBasePath applies the real base path so
+                  // it works under /your-events and at the root alike.
                   <Box
                     component="img"
                     src={withBasePath(image)}
@@ -149,7 +144,7 @@ export default function CityPickerView() {
                   </Typography>
                 </Box>
               </Box>
-            </Link>
+            </AppLink>
           );
         })}
       </Box>

@@ -1,5 +1,3 @@
-'use client';
-
 import Chip from '@mui/material/Chip';
 import CategoryIcon from '@/components/ui/CategoryIcon/CategoryIcon';
 import { categoryColorVar, categoryColorInkVar, categoryColorSolidVar } from '@/lib/utils';

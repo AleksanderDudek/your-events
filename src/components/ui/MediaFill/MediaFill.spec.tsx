@@ -36,7 +36,7 @@ describe('MediaFill', () => {
     // `contain` is the server-rendered default, so the first paint can never
     // hide part of a poster.
     const { container } = render(
-      <MediaFill src="/fallbacks/taniec-1.webp" alt="Warsztat tańca" sizes="100vw" />
+      <MediaFill src="/fallbacks/taniec-1.webp" alt="Warsztat tańca" />
     );
     expect(screen.getByAltText('Warsztat tańca')).toBeInTheDocument();
     expect(container.querySelectorAll('img')).toHaveLength(2);
@@ -44,7 +44,7 @@ describe('MediaFill', () => {
   });
 
   it('marks the image decorative when the caller passes no alt text', () => {
-    render(<MediaFill src="/fallbacks/taniec-1.webp" alt="" sizes="100vw" />);
+    render(<MediaFill src="/fallbacks/taniec-1.webp" alt="" />);
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 });

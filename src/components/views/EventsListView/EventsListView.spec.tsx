@@ -1,11 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithRouter } from '@/test-utils/router';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi } from 'vitest';
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
-}));
 
 vi.mock('@mui/material/useMediaQuery', () => ({
   default: () => true,
@@ -65,23 +61,23 @@ import EventsListView from './EventsListView';
 
 describe('EventsListView', () => {
   it('renders without crashing', () => {
-    render(<EventsListView />);
+    renderWithRouter(<EventsListView />);
     expect(screen.getByText('Znaleziono 0 wydarzeń')).toBeInTheDocument();
   });
 
   it('passes accessibility check', async () => {
-    const { container } = render(<EventsListView />);
+    const { container } = renderWithRouter(<EventsListView />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
   it('shows empty state when no events', () => {
-    render(<EventsListView />);
+    renderWithRouter(<EventsListView />);
     expect(screen.getByText('Nie znaleziono wydarzeń')).toBeInTheDocument();
   });
 
   it('has aria-live on results count', () => {
-    render(<EventsListView />);
+    renderWithRouter(<EventsListView />);
     const count = screen.getByText('Znaleziono 0 wydarzeń');
     expect(count).toHaveAttribute('aria-live', 'polite');
   });

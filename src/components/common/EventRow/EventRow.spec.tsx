@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { renderWithRouter } from '@/test-utils/router';
+import { screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi } from 'vitest';
 
@@ -17,6 +18,7 @@ vi.mock('@/components/service/useCategories', () => ({
 
 import EventRow from './EventRow';
 import { eventPath } from '@/lib/slug';
+import { withTrailingSlash } from '@/lib/href';
 import { Event } from '@/types/event.types';
 
 const mockEvent: Event = {
@@ -40,35 +42,35 @@ const mockEvent: Event = {
 
 describe('EventRow', () => {
   it('renders without crashing', () => {
-    render(<EventRow event={mockEvent} />);
+    renderWithRouter(<EventRow event={mockEvent} />);
     expect(screen.getByText('Hip Hop Choreo')).toBeInTheDocument();
   });
 
   it('passes accessibility check', async () => {
-    const { container } = render(<EventRow event={mockEvent} />);
+    const { container } = renderWithRouter(<EventRow event={mockEvent} />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
   it('displays date in mono font column', () => {
-    render(<EventRow event={mockEvent} />);
+    renderWithRouter(<EventRow event={mockEvent} />);
     expect(screen.getByText('14')).toBeInTheDocument();
   });
 
   it('links to event detail', () => {
-    render(<EventRow event={mockEvent} />);
+    renderWithRouter(<EventRow event={mockEvent} />);
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', eventPath('szczecin', mockEvent, new Map()));
+    expect(link).toHaveAttribute('href', withTrailingSlash(eventPath('szczecin', mockEvent, new Map())));
   });
 
   describe('time placement', () => {
     it('renders the time range', () => {
-      render(<EventRow event={mockEvent} />);
+      renderWithRouter(<EventRow event={mockEvent} />);
       expect(screen.getByText('18:00–19:15')).toBeInTheDocument();
     });
 
     it('puts the time in the right column, not the venue meta line', () => {
-      render(<EventRow event={mockEvent} />);
+      renderWithRouter(<EventRow event={mockEvent} />);
 
       const time = screen.getByText('18:00–19:15');
       const venue = screen.getByText('Kimama Dance Studio');
@@ -79,7 +81,7 @@ describe('EventRow', () => {
     });
 
     it('still renders the time slot when the event has no time', () => {
-      render(<EventRow event={{ ...mockEvent, startTime: '', endTime: '', durationMin: null }} />);
+      renderWithRouter(<EventRow event={{ ...mockEvent, startTime: '', endTime: '', durationMin: null }} />);
 
       // Slot is empty but present, so the price keeps its y-offset.
       expect(screen.queryByText('18:00–19:15')).not.toBeInTheDocument();
