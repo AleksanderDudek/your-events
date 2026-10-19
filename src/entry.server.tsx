@@ -15,6 +15,9 @@ export default async function handleRequest(
   responseHeaders: Headers,
   routerContext: EntryContext
 ) {
+  // Becomes 500 if anything fails while rendering; the build then reports the
+  // path instead of writing a broken page.
+  let status = responseStatusCode;
   const cache = createEmotionCache();
   const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache);
 
@@ -25,7 +28,7 @@ export default async function handleRequest(
     {
       signal: AbortSignal.timeout(streamTimeout + 1000),
       onError(error: unknown) {
-        responseStatusCode = 500;
+        status = 500;
         console.error(error);
       },
     }
@@ -50,5 +53,5 @@ export default async function handleRequest(
   const document = styles ? html.replace('</head>', () => `${styles}</head>`) : html;
 
   responseHeaders.set('Content-Type', 'text/html; charset=utf-8');
-  return new Response(document, { headers: responseHeaders, status: responseStatusCode });
+  return new Response(document, { headers: responseHeaders, status });
 }
