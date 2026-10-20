@@ -1,3 +1,5 @@
+'use client';
+
 import Typography from '@mui/material/Typography';
 import { useTranslation } from '@/i18n';
 import { useTranslated } from '@/i18n/translation';

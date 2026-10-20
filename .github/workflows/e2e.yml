@@ -12,9 +12,9 @@ name: E2E (insights · non-blocking)
 # To make this a real merge gate later: drop `continue-on-error` on the test
 # step and add "E2E (insights · non-blocking) / e2e" to branch protection.
 #
-# Two jobs run in parallel: `e2e` drives the dev server (`react-router dev`),
-# `e2e-export` drives the static export that actually ships. They catch
-# different classes of bug — see the comment above each.
+# Two jobs run in parallel: `e2e` drives `next dev`, `e2e-export` drives the
+# static export that actually ships. They catch different classes of bug — see
+# the comment above each.
 
 on:
   pull_request:
@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 20
     # Environment-scoped configuration: e2e reads the dev schema, never
     # production's. The credentials are the same either way — it is
-    # VITE_SUPABASE_SCHEMA below that does the separating.
+    # NEXT_PUBLIC_SUPABASE_SCHEMA below that does the separating.
     environment: dev
     steps:
       - uses: actions/checkout@v5
@@ -50,7 +50,7 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: '24'
+          node-version: '20'
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -66,19 +66,18 @@ jobs:
         continue-on-error: true # insights only — never fail the job
         env:
           # Anon key is public (RLS-protected) and already a repo secret used by
-          # the deploy workflows. Serve the app at the domain root for the tests.
-          # The app reads VITE_*; the secrets keep their NEXT_PUBLIC_* names.
-          VITE_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # deploy.yml. Serve the app at the domain root for the tests.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           # Per-city (multi-city): Wrocław events endpoint. Without these the
           # build/dev marks Wrocław available:false and it's hidden from the picker.
-          VITE_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
-          VITE_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
           # What actually separates dev from production: one Supabase project,
           # two schemas. Without this the client falls back to 'public' and the
           # tests read production rows despite `environment: dev` above.
-          VITE_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
-          VITE_BASE_PATH: ''
+          NEXT_PUBLIC_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
+          NEXT_PUBLIC_BASE_PATH: ''
         run: pnpm exec playwright test --project=chromium --project="Mobile Chrome"
 
       - name: Build insights summary
@@ -118,12 +117,12 @@ jobs:
               await github.rest.issues.createComment({ owner, repo, issue_number, body });
             }
 
-  # The static-export suite: the artifact GitHub Pages actually serves. The dev
-  # server renders every page on request, so whatever only exists in the build
-  # — prerendered HTML, the .data files client navigation fetches, 404.html,
-  # the service worker — is invisible to the job above. That is how a list
-  # whose paging silently snapped back to the cold-load URL once shipped with
-  # every dev-server test green. Separate job so it runs in parallel.
+  # The static-export suite: the artifact GitHub Pages actually serves. `next
+  # dev` keeps a real server and an RSC endpoint behind the app, so App Router
+  # behaviour that only differs under `output: 'export'` is invisible to the job
+  # above — that is how a list whose paging silently snapped back to the
+  # cold-load URL in production shipped with every dev-server test green.
+  # Separate job so it runs in parallel with the dev suite.
   e2e-export:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -137,7 +136,7 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: '24'
+          node-version: '20'
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -151,9 +150,9 @@ jobs:
       - name: Run static-export E2E tests
         continue-on-error: true # insights only, same policy as the job above
         env:
-          VITE_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          VITE_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
-          VITE_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
-          VITE_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
         run: pnpm test:e2e:export

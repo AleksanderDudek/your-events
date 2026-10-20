@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';

@@ -15,7 +15,7 @@ import { slugify } from './utils';
 // broken; it matters more than the weights.
 //
 // Everything here is pure and runs at build time, over the city's events that
-// the prerender has already loaded. It costs no extra queries.
+// generateStaticParams has already loaded. It costs no extra queries.
 
 /** How many suggestions to render at most. */
 export const MAX_RELATED = 12;

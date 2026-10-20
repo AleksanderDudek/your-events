@@ -341,19 +341,8 @@ export async function fetchCategories(): Promise<DbCategory[]> {
   return (data ?? []) as DbCategory[];
 }
 
-// Build-time counterpart of fetchCategories, for the prerender: every hub and
-// event page's loader needs the taxonomy, and without this each of them made
-// its own round trip. The browser keeps calling fetchCategories through
-// react-query, which has its own cache and refresh rules.
-let categoriesCache: Promise<DbCategory[]> | undefined;
-
-export function getCategories(): Promise<DbCategory[]> {
-  categoriesCache ??= fetchCategories();
-  return categoriesCache;
-}
-
-// Build-time cache: one fetch-all per city per build process. Shared by the
-// sitemap and every prerendered detail/hub page's loader so we never refetch.
+// Build-time cache: one fetch-all per city per build process. Shared by
+// generateStaticParams and every static detail/hub page so we never refetch.
 const cityEventsCache = new Map<string, Promise<Event[]>>();
 
 // PostgREST caps a response at 1000 rows, so the whole-city read is paged.

@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "types": ["node", "vite/client", "vite-plugin-pwa/react"],
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -12,27 +15,31 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    // The build configs import .ts files by their real name, as Vite's native
-    // config loader (and Node's type stripping) require.
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": false,
     "jsx": "react-jsx",
     "incremental": true,
-    // React Router typegen writes route-module types (./+types/<route>) here.
-    "rootDirs": [".", "./.react-router/types"],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".react-router/types/**/*"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
-    "build",
-    "out",
-    // The service worker runs in a worker scope, not the DOM — own tsconfig.
-    "src/sw.ts",
     "playwright.config.ts",
     "playwright.export.config.ts",
+    "vitest.config.ts",
     "e2e",
     "e2e-export"
   ]

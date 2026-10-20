@@ -6,8 +6,8 @@ import { env } from './env';
 // project URL/anon key change.
 //
 // For non-default cities, supply env vars in the form
-// VITE_SUPABASE_URL_<CITY_ID_UPPER> and
-// VITE_SUPABASE_ANON_KEY_<CITY_ID_UPPER>. Missing entries fall back to
+// NEXT_PUBLIC_SUPABASE_URL_<CITY_ID_UPPER> and
+// NEXT_PUBLIC_SUPABASE_ANON_KEY_<CITY_ID_UPPER>. Missing entries fall back to
 // the default project so the app keeps working until a city's project is wired
 // up. Cities without their own resolved endpoint are marked `available: false`
 // in CITIES and hidden from the picker.
@@ -169,43 +169,43 @@ export const DEFAULT_CITY_ID: CityId = 'szczecin';
 // deliberate architectural inconsistency (see the multi-city design spec).
 export const CATEGORIES_CITY_ID: CityId = 'szczecin';
 
-// Per-city Supabase env vars MUST be referenced statically
-// (import.meta.env.NAME), not via a computed key (import.meta.env[`...${k}`]).
-// Vite inlines VITE_* into the bundles only for static references; a dynamic key
-// reads an object that holds nothing at runtime in the static export — so the
-// city would silently stay unavailable no matter how the secret is set.
+// Per-city Supabase env vars MUST be referenced statically (process.env.NAME),
+// not via a computed key (process.env[`...${k}`]). Next.js inlines NEXT_PUBLIC_*
+// into the browser bundle only for static references; a dynamic key is left as
+// a runtime `process.env[...]` lookup, which is undefined in the static export —
+// so the city would silently stay unavailable no matter how the secret is set.
 //
 // Every city is pre-wired below (suffix = city id upper-cased, '-' → '_'), so
-// bringing one online is purely an env change: set its VITE_SUPABASE_URL_
-// <CITY> + VITE_SUPABASE_ANON_KEY_<CITY>, then add it to
-// VITE_ENABLED_CITIES. Unset entries resolve to `undefined` and the city
+// bringing one online is purely an env change: set its NEXT_PUBLIC_SUPABASE_URL_
+// <CITY> + NEXT_PUBLIC_SUPABASE_ANON_KEY_<CITY>, then add it to
+// NEXT_PUBLIC_ENABLED_CITIES. Unset entries resolve to `undefined` and the city
 // stays without a dedicated project (see resolveSupabase).
 const CITY_SUPABASE_ENV: Partial<Record<CityId, { url?: string; anonKey?: string }>> = {
-  wroclaw: { url: import.meta.env.VITE_SUPABASE_URL_WROCLAW, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_WROCLAW },
-  szczecin: { url: import.meta.env.VITE_SUPABASE_URL_SZCZECIN, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_SZCZECIN },
-  warszawa: { url: import.meta.env.VITE_SUPABASE_URL_WARSZAWA, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_WARSZAWA },
-  krakow: { url: import.meta.env.VITE_SUPABASE_URL_KRAKOW, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_KRAKOW },
-  lodz: { url: import.meta.env.VITE_SUPABASE_URL_LODZ, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_LODZ },
-  poznan: { url: import.meta.env.VITE_SUPABASE_URL_POZNAN, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_POZNAN },
-  gdansk: { url: import.meta.env.VITE_SUPABASE_URL_GDANSK, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_GDANSK },
-  bydgoszcz: { url: import.meta.env.VITE_SUPABASE_URL_BYDGOSZCZ, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_BYDGOSZCZ },
-  torun: { url: import.meta.env.VITE_SUPABASE_URL_TORUN, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_TORUN },
-  lublin: { url: import.meta.env.VITE_SUPABASE_URL_LUBLIN, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_LUBLIN },
-  katowice: { url: import.meta.env.VITE_SUPABASE_URL_KATOWICE, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_KATOWICE },
-  bialystok: { url: import.meta.env.VITE_SUPABASE_URL_BIALYSTOK, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_BIALYSTOK },
-  kielce: { url: import.meta.env.VITE_SUPABASE_URL_KIELCE, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_KIELCE },
-  olsztyn: { url: import.meta.env.VITE_SUPABASE_URL_OLSZTYN, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_OLSZTYN },
-  rzeszow: { url: import.meta.env.VITE_SUPABASE_URL_RZESZOW, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_RZESZOW },
-  opole: { url: import.meta.env.VITE_SUPABASE_URL_OPOLE, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_OPOLE },
-  gorzow: { url: import.meta.env.VITE_SUPABASE_URL_GORZOW, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_GORZOW },
-  'zielona-gora': { url: import.meta.env.VITE_SUPABASE_URL_ZIELONA_GORA, anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY_ZIELONA_GORA },
+  wroclaw: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_WROCLAW, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW },
+  szczecin: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_SZCZECIN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SZCZECIN },
+  warszawa: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_WARSZAWA, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_WARSZAWA },
+  krakow: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_KRAKOW, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_KRAKOW },
+  lodz: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_LODZ, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_LODZ },
+  poznan: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_POZNAN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN },
+  gdansk: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_GDANSK, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_GDANSK },
+  bydgoszcz: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_BYDGOSZCZ, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_BYDGOSZCZ },
+  torun: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_TORUN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_TORUN },
+  lublin: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_LUBLIN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_LUBLIN },
+  katowice: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_KATOWICE, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_KATOWICE },
+  bialystok: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_BIALYSTOK, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_BIALYSTOK },
+  kielce: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_KIELCE, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_KIELCE },
+  olsztyn: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_OLSZTYN, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_OLSZTYN },
+  rzeszow: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_RZESZOW, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_RZESZOW },
+  opole: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_OPOLE, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_OPOLE },
+  gorzow: { url: process.env.NEXT_PUBLIC_SUPABASE_URL_GORZOW, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_GORZOW },
+  'zielona-gora': { url: process.env.NEXT_PUBLIC_SUPABASE_URL_ZIELONA_GORA, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_ZIELONA_GORA },
 };
 
-// Explicit env allowlist of live cities. `null` when VITE_ENABLED_CITIES
+// Explicit env allowlist of live cities. `null` when NEXT_PUBLIC_ENABLED_CITIES
 // is empty/unset → treat every city as enabled (availability then depends solely
 // on Supabase config, preserving the pre-toggle behaviour).
 const ENABLED_CITIES: ReadonlySet<string> | null = (() => {
-  const ids = env.VITE_ENABLED_CITIES.split(',')
+  const ids = env.NEXT_PUBLIC_ENABLED_CITIES.split(',')
     .map((s) => s.trim())
     .filter(Boolean);
   return ids.length > 0 ? new Set(ids) : null;
@@ -230,16 +230,16 @@ function resolveSupabase(cityId: CityId): {
   // The default city always uses the shared env vars (backwards compatible).
   if (cityId === DEFAULT_CITY_ID) {
     return {
-      url: env.VITE_SUPABASE_URL,
-      anonKey: env.VITE_SUPABASE_ANON_KEY,
+      url: env.NEXT_PUBLIC_SUPABASE_URL,
+      anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       hasSupabase: true,
     };
   }
   // No dedicated project — fall back to the default so queries don't crash, but
   // report no data source so the city can't go live on the wrong data.
   return {
-    url: env.VITE_SUPABASE_URL,
-    anonKey: env.VITE_SUPABASE_ANON_KEY,
+    url: env.NEXT_PUBLIC_SUPABASE_URL,
+    anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     hasSupabase: false,
   };
 }

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
-import { renderWithRouter } from '@/test-utils/router';
+import { render, screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import userEvent from '@testing-library/user-event';
 import CookieBanner from './CookieBanner';
@@ -9,7 +8,7 @@ import { resetConsentStoreForTests } from '@/components/service/useConsent';
 import { LocaleProvider } from '@/i18n';
 
 function renderBanner() {
-  return renderWithRouter(
+  return render(
     <LocaleProvider>
       <CookieBanner />
     </LocaleProvider>

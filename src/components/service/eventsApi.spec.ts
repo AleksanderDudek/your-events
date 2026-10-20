@@ -5,7 +5,6 @@ import {
   fetchEvent,
   fetchCategories,
   fetchMapEvents,
-  getCategories,
   MAP_EVENT_LIMIT,
 } from './eventsApi';
 import { getSupabaseForCity } from '@/lib/supabase';
@@ -791,24 +790,6 @@ describe('eventsApi', () => {
       s.results.categories = { data: null, count: null, error: { message: 'boom' } };
 
       await expect(fetchCategories()).rejects.toBeInstanceOf(ServerError);
-    });
-  });
-
-  // Every prerendered hub and event page needs the taxonomy. Read once per
-  // build, not once per page — ~2000 round trips is what made the build crawl.
-  describe('getCategories (build-time)', () => {
-    it('reads the taxonomy once and shares it between callers', async () => {
-      const s = setup();
-      const rows = [{ slug: 'muzyka', parent_slug: null, display_name: 'Muzyka' }];
-      s.results.categories = { data: rows, count: null, error: null };
-
-      const [first, second] = await Promise.all([getCategories(), getCategories()]);
-      const third = await getCategories();
-
-      expect(first).toEqual(rows);
-      expect(second).toBe(first);
-      expect(third).toBe(first);
-      expect(s.client.from).toHaveBeenCalledTimes(1);
     });
   });
 });

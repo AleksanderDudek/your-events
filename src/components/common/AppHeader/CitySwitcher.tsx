@@ -1,5 +1,8 @@
+'use client';
+
 import { useState } from 'react';
-import { useAppNavigate } from '@/components/service/useAppNavigate';
+import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -26,14 +29,14 @@ export default function CitySwitcher({ onSelected }: CitySwitcherProps = {}) {
   const { locale, t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  const navigate = useAppNavigate();
+  const router = useRouter();
 
   const pickFrom = availableCities.length > 0 ? availableCities : cities;
 
   const handleSelect = (id: CityId) => {
     setCity(id);
     setAnchorEl(null);
-    navigate(`/${id}`);
+    router.push(`/${id}` as Route);
     onSelected?.();
   };
 

@@ -1,8 +1,11 @@
+'use client';
+
 import { useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import AppLink from '@/components/common/AppLink/AppLink';
+import Link from 'next/link';
+import type { Route } from 'next';
 import { useConsent } from '@/components/service/useConsent';
 import { useTranslation } from '@/i18n';
 import { PRIVACY_PATH } from '@/config/community';
@@ -47,7 +50,7 @@ export default function CookieBanner() {
         </Typography>
         <Typography variant="body2">
           {t.COOKIE_BODY}{' '}
-          <AppLink href={PRIVACY_PATH}>{t.COOKIE_MORE}</AppLink>
+          <Link href={PRIVACY_PATH as Route}>{t.COOKIE_MORE}</Link>
         </Typography>
       </Box>
       {/* Both buttons are deliberately the same variant/weight: reject must be

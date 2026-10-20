@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { withBasePath } from '@/lib/constants';
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import styles from './MediaFill.module.scss';
 
 interface MediaFillProps {
@@ -7,6 +9,7 @@ interface MediaFillProps {
   // Empty string marks the image decorative — the caller's aria-label already
   // names the event in both places this is used.
   alt: string;
+  sizes: string;
   onError?: () => void;
   priority?: boolean;
 }
@@ -17,22 +20,6 @@ interface MediaFillProps {
 // clear of the text drawn into them — while portrait flyers (0.67, which would
 // lose 62%) and square art (1.0, 44%) keep every pixel.
 const MAX_CROP = 0.25;
-
-// Both layers fill the slot, which is `position: relative` in every caller. Inline
-// rather than in the module so the layer geometry cannot be lost to a stylesheet
-// that has not loaded yet — the same style next/image's `fill` used to write.
-const FILL: CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  width: '100%',
-  height: '100%',
-  color: 'transparent',
-};
-
-/** Site-relative art (category fallbacks) lives under the base path; remote URLs do not. */
-function resolveSrc(src: string): string {
-  return src.startsWith('/') && !src.startsWith('//') ? withBasePath(src) : src;
-}
 
 type Fit = 'contain' | 'cover';
 
@@ -68,7 +55,7 @@ export function pickFit(imageRatio: number, slotRatio: number): Fit {
  * under-fill, never hide part of a poster. Both layers share a URL, so the
  * browser fetches and decodes the image once.
  */
-export default function MediaFill({ src, alt, onError, priority }: MediaFillProps) {
+export default function MediaFill({ src, alt, sizes, onError, priority }: MediaFillProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   // Keyed by src so a new source falls back to `contain` during render rather
   // than through an effect — the next image's ratio is unknown until it loads,
@@ -82,9 +69,9 @@ export default function MediaFill({ src, alt, onError, priority }: MediaFillProp
     const { width, height } = img.getBoundingClientRect();
     if (!width || !height) return;
 
-    // Keyed by the src PROP, not img.src — the browser resolves the latter to
-    // an absolute, base-path-prefixed URL, which would never match and would
-    // pin every image to `contain`.
+    // Keyed by the src PROP, not img.src — next/image resolves the latter to an
+    // absolute, base-path-prefixed URL, which would never match and would pin
+    // every image to `contain`.
     setDecided({ src, fit: pickFit(img.naturalWidth / img.naturalHeight, width / height) });
   }, [src]);
 
@@ -103,39 +90,33 @@ export default function MediaFill({ src, alt, onError, priority }: MediaFillProp
     return () => observer.disconnect();
   }, [decideFit]);
 
-  const url = resolveSrc(src);
-  // Eager + high priority for the detail hero (the LCP element); everything
-  // else waits until it scrolls near the viewport.
-  const loading = priority ? 'eager' : 'lazy';
-  const fetchPriority = priority ? 'high' : undefined;
-
   return (
     <>
       {fit === 'contain' && (
-        <img
-          src={url}
+        <Image
+          src={src}
           alt=""
           aria-hidden
+          fill
+          sizes={sizes}
           className={styles.backdrop}
-          style={FILL}
-          loading={loading}
-          fetchPriority={fetchPriority}
-          decoding="async"
-          // No onError here: the foreground carries the same src and reports
-          // the failure once.
+          // No onError here: the foreground carries the same src and reports the
+          // failure once. `unoptimized` because next.config uses output:'export'.
+          unoptimized
+          priority={priority}
         />
       )}
-      <img
+      <Image
         ref={imgRef}
-        src={url}
+        src={src}
         alt={alt}
+        fill
+        sizes={sizes}
         className={fit === 'cover' ? styles.foregroundCover : styles.foreground}
-        style={FILL}
-        loading={loading}
-        fetchPriority={fetchPriority}
-        decoding="async"
         onLoad={decideFit}
         onError={onError}
+        unoptimized
+        priority={priority}
       />
     </>
   );

@@ -21,12 +21,12 @@ over its `gh-pages` branch.
 **Dev and production share the Supabase projects and differ only by Postgres
 schema**: production reads `public`, dev reads `dev`, and the `dev` schema is a
 mirror of `public` maintained by the scrape pipeline. One project, two sets of
-tables, one anon key. Nothing but the schema variable distinguishes them, so a
-change of environment is a change of one variable and never a change of
-credentials.
+tables, one anon key. Nothing but `NEXT_PUBLIC_SUPABASE_SCHEMA` distinguishes
+them, so a change of environment is a change of one variable and never a change
+of credentials.
 
 The schema reaches PostgREST as its `Accept-Profile` header, set from
-`VITE_SUPABASE_SCHEMA` in [src/lib/supabase.ts](../src/lib/supabase.ts).
+`NEXT_PUBLIC_SUPABASE_SCHEMA` in [src/lib/supabase.ts](../src/lib/supabase.ts).
 It defaults to `public` when the variable is absent
 ([src/config/env.ts](../src/config/env.ts)) — a forgetful failure therefore
 lands on production data, which is the safe direction for production and the
@@ -35,90 +35,6 @@ left to the default.
 
 The reasoning behind the split is in
 [docs/superpowers/specs/2026-08-03-two-environment-cicd-design.md](superpowers/specs/2026-08-03-two-environment-cicd-design.md).
-
-## The build
-
-`pnpm build` is `react-router build` (Vite + React Router framework mode,
-`ssr: false`). It prerenders every page to HTML — the event permalinks and
-category hubs from the database, through build-time `loader`s — and
-[build-tools/finalizeExport.ts](../build-tools/finalizeExport.ts) shapes the
-result into `out/`, the directory both deploy workflows publish:
-
-| In `out/` | What it is |
-| --- | --- |
-| `<path>/index.html` | a prerendered page |
-| `<path>/_.data` | the same page's loader data, fetched on client-side navigation |
-| `404.html` | the SPA fallback: boots the router at any path the build did not write |
-| `sitemap.xml`, `robots.txt` | generated from the same data as the pages |
-| `manifest.webmanifest`, `sw.js`, `offline.html` | the PWA (below) |
-| `assets/` | hashed JS/CSS |
-
-`finalizeExport` fails the build when `out/` lacks any file a deploy needs —
-the home page, `404.html`, `sw.js`, the manifest, `offline.html`,
-`sitemap.xml`, `robots.txt` — so a broken build stops the deploy and the
-previous one stays up.
-
-Every pull request builds the site exactly as `deploy-dev.yml` does (`CI` →
-*Static export build*, in the `dev` environment). It is a required status check
-on `main`: a change that breaks the prerender, the service worker or the output
-cannot be merged. Renaming that job means updating the branch protection too.
-
-### Variable names
-
-The app reads `VITE_*` — Vite inlines only that prefix into the bundles. The
-GitHub secrets and variables kept their historical `NEXT_PUBLIC_*` names, and
-each workflow maps one onto the other (`VITE_SUPABASE_URL: ${{
-secrets.NEXT_PUBLIC_SUPABASE_URL }}`), so the move off Next.js needed no change
-in the repository settings. The tables below list the GitHub names. For local
-development, `.env.local` uses the `VITE_*` names directly.
-
-Renaming the GitHub side to `VITE_*` is optional tidying: create the new names,
-point the workflows at them, then delete the old ones.
-
-### The service worker
-
-`vite-plugin-pwa` ([build-tools/pwa.ts](../build-tools/pwa.ts)) writes the web
-manifest and builds [src/sw.ts](../src/sw.ts) with Workbox. Only the app shell
-is precached (JS, CSS, icons, `offline.html` — about 1.8 MB); pages, their
-`.data`, Supabase reads and images are cached as they are used:
-
-| Request | Strategy | Kept |
-| --- | --- | --- |
-| Pages | network first, 3 s timeout, then cache, then `offline.html` | 50, 7 days |
-| `*.data` | network first, 3 s timeout | 100, 7 days |
-| Supabase `GET /rest/v1/` | network first, 5 s timeout | 100, 1 day |
-| Own images | cache first | 200, 30 days |
-| Event art (third-party) | stale-while-revalidate | 60, 7 days |
-| Google Fonts | stylesheet stale-while-revalidate, files cache first | 1 year |
-
-Pages and `.data` are dropped whenever a new version of the code activates:
-they name the previous version's bundles, which go with it.
-
-A new deploy is noticed on the next page load, or within the hour by a tab
-left open. The worker installs in the background and waits; the page shows a
-"new version" prompt and switches only when asked — it never reloads under
-someone mid-filter. A data-only rebuild (the 3-hourly cron, the scraper's
-dispatch) changes no precached file, so `sw.js` stays the same and nobody is
-prompted.
-
-There is no service worker in `pnpm dev`. To try it locally:
-`pnpm preview` (builds at the domain root and serves `out/`).
-
-If a broken worker ever ships, set `selfDestroying: true` in
-`build-tools/pwa.ts` and deploy: the next visit replaces it with one that
-unregisters itself and clears its caches.
-
-## Moving off Next.js: the one-time transition
-
-`deploy-prod.yml` runs from `main` but builds the `production` branch. Until
-`production` is released past the Vite migration, that branch is still the
-Next.js app — so the workflow passes every variable under both names (Vite
-reads `VITE_*`, Next reads `NEXT_PUBLIC_*`, each ignores the other), pins Node
-24 (which both need), and keeps the `.nojekyll` step Next's `_next/` depends on.
-
-Once the first Vite release is live, delete the `NEXT_PUBLIC_*` block from the
-build step of `deploy-prod.yml`; the `.nojekyll` step can go too
-(`finalizeExport` writes the marker itself).
 
 ## One-time setup
 
@@ -197,7 +113,6 @@ run waits for an approval in the Actions tab.
 The values are in the Variables table below; this is the CLI form of it.
 
 ```bash
-# GitHub-side names; the workflows map them to VITE_* (see "Variable names").
 gh variable set NEXT_PUBLIC_SUPABASE_SCHEMA --env dev  --body dev
 gh variable set NEXT_PUBLIC_SUPABASE_SCHEMA --env prod --body public
 # …and the rest of the Variables table, per environment.
@@ -302,9 +217,8 @@ domain and the site answers on the github.io URL again.
 `NEXT_PUBLIC_BASE_PATH` is **absent** on prod, which is what serves the site at
 the domain root. GitHub rejects an empty variable value, so the variable is
 deleted rather than blanked; an absent variable interpolates to an empty string,
-which [build-tools/basePath.ts](../build-tools/basePath.ts) reads as "no base
-path" (only a variable that is not passed at all falls back to `/your-events`).
-The app takes the result from Vite's `base`, so nothing else needs to agree.
+and both [next.config.js](../next.config.js) and
+[src/config/site.ts](../src/config/site.ts) read that as "no base path".
 
 ## Releasing
 
@@ -365,17 +279,9 @@ BASE=https://idznamiasto.pl
 # The page is served
 curl -sI "$BASE/" | head -1
 
-# The bundles are served — the failure this catches is a blank site
-asset=$(curl -s "$BASE/" | grep -o 'assets/entry\.client[^"]*\.js' | head -1)
+# _next/ survived Jekyll — the failure this catches is a blank site
+asset=$(curl -s "$BASE/" | grep -o '_next/static[^"]*' | head -1)
 curl -sI "$BASE/$asset" | head -1
-
-# The PWA: manifest, service worker and its offline page
-curl -sI "$BASE/manifest.webmanifest" | head -1
-curl -sI "$BASE/sw.js" | head -1
-curl -sI "$BASE/offline.html" | head -1
-
-# An event added since the build: 404 status, and the page recovers by itself
-curl -s -o /dev/null -w '%{http_code}\n' "$BASE/wroclaw/muzyka/nie-ma-takiego-00000000/"   # expect 404
 
 # Production is indexable; dev is not
 curl -s "$BASE/robots.txt" | head -3

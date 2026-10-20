@@ -1,10 +1,14 @@
-import { screen, within } from '@testing-library/react';
-import { renderWithRouter } from '@/test-utils/router';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import AppHeader from './AppHeader';
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/events',
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 // The header renders two different trees off one breakpoint query, so the mock
 // is switchable rather than pinned to desktop.
@@ -17,38 +21,38 @@ describe('AppHeader (desktop)', () => {
   });
 
   it('renders without crashing', () => {
-    renderWithRouter(<AppHeader />);
+    render(<AppHeader />);
     expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
   it('passes accessibility check', async () => {
-    const { container } = renderWithRouter(<AppHeader />);
+    const { container } = render(<AppHeader />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
   it('shows navigation links', () => {
-    renderWithRouter(<AppHeader />);
+    render(<AppHeader />);
     expect(screen.getByText('Strona główna')).toBeInTheDocument();
     expect(screen.getByText('Wydarzenia')).toBeInTheDocument();
     expect(screen.getByText('Rozwijaj z nami')).toBeInTheDocument();
   });
 
   it('links to the community page outside the city subtree', () => {
-    renderWithRouter(<AppHeader />);
+    render(<AppHeader />);
     expect(screen.getByRole('link', { name: 'Rozwijaj z nami' })).toHaveAttribute(
       'href',
-      '/rozwijaj-z-nami/'
+      '/rozwijaj-z-nami'
     );
   });
 
   it('has correct nav aria-label', () => {
-    renderWithRouter(<AppHeader />);
+    render(<AppHeader />);
     expect(screen.getByLabelText('Główna nawigacja')).toBeInTheDocument();
   });
 
   it('keeps the city, language and theme controls in the bar', () => {
-    renderWithRouter(<AppHeader />);
+    render(<AppHeader />);
     expect(screen.getByLabelText('Wybierz miasto')).toBeInTheDocument();
     expect(screen.getByLabelText('Język')).toBeInTheDocument();
   });
@@ -61,7 +65,7 @@ describe('AppHeader (mobile)', () => {
 
   it('leaves nothing but the wordmark and the menu button in the bar', () => {
     // Four controls plus the wordmark did not fit a 390px row.
-    renderWithRouter(<AppHeader />);
+    render(<AppHeader />);
     const bar = screen.getByRole('banner');
     const buttons = within(bar).getAllByRole('button');
     expect(buttons).toHaveLength(1);
@@ -71,7 +75,7 @@ describe('AppHeader (mobile)', () => {
 
   it('opens a drawer carrying the wordmark, the links and the settings', async () => {
     const user = userEvent.setup();
-    renderWithRouter(<AppHeader />);
+    render(<AppHeader />);
     await user.click(screen.getByRole('button', { name: 'Otwórz menu' }));
 
     const drawer = screen.getByRole('presentation');
@@ -88,7 +92,7 @@ describe('AppHeader (mobile)', () => {
     // The name used to be hidden below sm to keep it out of the header row; in
     // the drawer that left no clue which city was selected.
     const user = userEvent.setup();
-    renderWithRouter(<AppHeader />);
+    render(<AppHeader />);
     await user.click(screen.getByRole('button', { name: 'Otwórz menu' }));
 
     const cityButton = within(screen.getByRole('presentation')).getByLabelText('Wybierz miasto');
@@ -97,7 +101,7 @@ describe('AppHeader (mobile)', () => {
 
   it('passes accessibility check with the drawer open', async () => {
     const user = userEvent.setup();
-    const { container } = renderWithRouter(<AppHeader />);
+    const { container } = render(<AppHeader />);
     await user.click(screen.getByRole('button', { name: 'Otwórz menu' }));
 
     const results = await axe(container);

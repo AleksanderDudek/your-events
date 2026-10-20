@@ -1,5 +1,4 @@
-import { renderWithRouter } from '@/test-utils/router';
-import { screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi } from 'vitest';
 
@@ -18,7 +17,6 @@ vi.mock('@/components/service/useCategories', () => ({
 
 import EventCard from './EventCard';
 import { eventPath } from '@/lib/slug';
-import { withTrailingSlash } from '@/lib/href';
 import { Event } from '@/types/event.types';
 
 const mockEvent: Event = {
@@ -42,35 +40,35 @@ const mockEvent: Event = {
 
 describe('EventCard', () => {
   it('renders without crashing', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
+    render(<EventCard event={mockEvent} />);
     expect(screen.getByText('Hip Hop Choreo')).toBeInTheDocument();
   });
 
   it('passes accessibility check', async () => {
-    const { container } = renderWithRouter(<EventCard event={mockEvent} />);
+    const { container } = render(<EventCard event={mockEvent} />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
   it('displays event details', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
+    render(<EventCard event={mockEvent} />);
     expect(screen.getByText('Kimama Dance Studio')).toBeInTheDocument();
     expect(screen.getByText('35 PLN')).toBeInTheDocument();
   });
 
   it('links to event detail page', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
+    render(<EventCard event={mockEvent} />);
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', withTrailingSlash(eventPath('szczecin', mockEvent, new Map())));
+    expect(link).toHaveAttribute('href', eventPath('szczecin', mockEvent, new Map()));
   });
 
   it('has article role with aria-label', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
+    render(<EventCard event={mockEvent} />);
     expect(screen.getByRole('article')).toBeInTheDocument();
   });
 
   it('shows the day number and month in the date badge', () => {
-    renderWithRouter(<EventCard event={mockEvent} />);
+    render(<EventCard event={mockEvent} />);
     expect(screen.getByText('14')).toBeInTheDocument();   // 2026-03-14
     // pl-PL short month, uppercased. Regex (not exact) because some ICU builds
     // append a period ("mar." → "MAR."); substring match is stable across both.
@@ -79,17 +77,17 @@ describe('EventCard', () => {
 
   describe('time badge', () => {
     it('shows the time range on the hero band', () => {
-      renderWithRouter(<EventCard event={mockEvent} />);
+      render(<EventCard event={mockEvent} />);
       expect(screen.getByText('18:00–19:15')).toBeInTheDocument();
     });
 
     it('omits the badge entirely when the event has no time', () => {
-      renderWithRouter(<EventCard event={{ ...mockEvent, startTime: '', endTime: '', durationMin: null }} />);
+      render(<EventCard event={{ ...mockEvent, startTime: '', endTime: '', durationMin: null }} />);
       expect(screen.queryByText('18:00–19:15')).not.toBeInTheDocument();
     });
 
     it('carries the time in the article aria-label (the badge is aria-hidden)', () => {
-      renderWithRouter(<EventCard event={mockEvent} />);
+      render(<EventCard event={mockEvent} />);
       expect(screen.getByRole('article')).toHaveAccessibleName(
         expect.stringContaining('18:00–19:15') as unknown as string
       );
