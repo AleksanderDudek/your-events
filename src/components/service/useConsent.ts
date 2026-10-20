@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useSyncExternalStore } from 'react';
 import { CONSENT_STORAGE_KEY, ConsentChoice, parseConsent } from '@/lib/consent';
 

@@ -23,7 +23,7 @@ export function getSupabaseForCity(
   // casting the whole return type, which would swallow unrelated type errors.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const client = createClient<any, string>(city.supabase.url, city.supabase.anonKey, {
-    db: { schema: env.VITE_SUPABASE_SCHEMA },
+    db: { schema: env.NEXT_PUBLIC_SUPABASE_SCHEMA },
   });
   clientCache.set(city.id, client);
   return client;

@@ -1,3 +1,5 @@
+'use client';
+
 // All imports that touch `window` (Leaflet, its CSS) happen here. This module
 // is only loaded via the dynamic import in EventsMap.tsx (ssr: false), never
 // at SSR/build time.
@@ -51,9 +53,8 @@ interface CategorisedMarkerOptions extends L.MarkerOptions {
 }
 
 function createPinIcon(category: string, color: string): L.DivIcon {
-  // Inline SVG — avoids Leaflet's default icon URLs (which break once bundled:
-  // they resolve relative to the stylesheet) and lets each pin carry its
-  // category's colour and glyph.
+  // Inline SVG — avoids Leaflet's default icon URLs (which break in Next's
+  // static export) and lets each pin carry its category's colour and glyph.
   return L.divIcon({
     html: pinMarkup(category, color),
     className: styles.pinIcon,

@@ -1,5 +1,8 @@
+'use client';
+
 import { useState } from 'react';
-import AppLink from '@/components/common/AppLink/AppLink';
+import Link from 'next/link';
+import type { Route } from 'next';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -133,8 +136,8 @@ export default function MyFiltersView() {
                   data-tour={tileIndex === 0 ? 'preset-tile' : undefined}
                   style={accent ? ({ '--tile-accent': accent } as React.CSSProperties) : undefined}
                 >
-                  <AppLink
-                    href={presetHref(preset, new Date())}
+                  <Link
+                    href={presetHref(preset, new Date()) as Route}
                     className={styles.tileLink}
                   >
                     <span className={styles.tileHead}>
@@ -153,7 +156,7 @@ export default function MyFiltersView() {
                       {t.PRESETS_OPEN}
                       <ArrowForwardIcon fontSize="inherit" />
                     </span>
-                  </AppLink>
+                  </Link>
 
                   <div className={styles.tileActions}>
                     <Tooltip title={t.PRESETS_EDIT}>

@@ -1,5 +1,8 @@
-import AppLink from '@/components/common/AppLink/AppLink';
+'use client';
+
+import Link from 'next/link';
 import { useState } from 'react';
+import type { Route } from 'next';
 import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import { Event } from '@/types/event.types';
@@ -57,7 +60,7 @@ export default function EventCard({ event, href: hrefOverride }: EventCardProps)
   const { locale } = useTranslation();
 
   return (
-    <AppLink href={href} className={styles.link}>
+    <Link href={href as Route} className={styles.link}>
       <Card
         component="article"
         role="article"
@@ -113,7 +116,7 @@ export default function EventCard({ event, href: hrefOverride }: EventCardProps)
           </div>
         </div>
       </Card>
-    </AppLink>
+    </Link>
   );
 }
 
@@ -131,6 +134,7 @@ function ImageWrapper({ event }: { event: Event }) {
         // Real poster gets the event name; the category-art fallback is
         // decorative (the article's aria-label already names the event).
         alt={stage === 0 ? translatedName : ''}
+        sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
         onError={() => setStage((s) => (s === 0 ? 1 : 2))}
       />
     );

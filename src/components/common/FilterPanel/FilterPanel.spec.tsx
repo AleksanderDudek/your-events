@@ -1,8 +1,12 @@
-import { screen } from '@testing-library/react';
-import { renderWithRouter } from '@/test-utils/router';
+import { render, screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi } from 'vitest';
 import FilterPanel from './FilterPanel';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 vi.mock('@mui/material/useMediaQuery', () => ({
   default: () => true,
@@ -23,18 +27,18 @@ vi.mock('@/components/service/useCategories', () => ({
 
 describe('FilterPanel', () => {
   it('renders without crashing', () => {
-    renderWithRouter(<FilterPanel />);
+    render(<FilterPanel />);
     expect(screen.getByText('Filtry')).toBeInTheDocument();
   });
 
   it('passes accessibility check', async () => {
-    const { container } = renderWithRouter(<FilterPanel />);
+    const { container } = render(<FilterPanel />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
   it('shows filter sections', () => {
-    renderWithRouter(<FilterPanel />);
+    render(<FilterPanel />);
     expect(screen.getByText('Kategorie')).toBeInTheDocument();
     expect(screen.getByText('Data')).toBeInTheDocument();
     expect(screen.getByText('Dni tygodnia')).toBeInTheDocument();
@@ -42,7 +46,7 @@ describe('FilterPanel', () => {
   });
 
   it('shows search input', () => {
-    renderWithRouter(<FilterPanel />);
+    render(<FilterPanel />);
     expect(screen.getByPlaceholderText('Szukaj wydarzenia lub miejsca...')).toBeInTheDocument();
   });
 });

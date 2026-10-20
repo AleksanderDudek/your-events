@@ -1,3 +1,5 @@
+'use client';
+
 import Card from '@mui/material/Card';
 import Skeleton from '@mui/material/Skeleton';
 

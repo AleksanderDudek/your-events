@@ -1,0 +1,22 @@
+{
+  "name": "Idź na miasto",
+  "short_name": "Idź na miasto",
+  "start_url": "/your-events/",
+  "icons": [
+    {
+      "src": "/your-events/favicons/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/your-events/favicons/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#f4553b",
+  "background_color": "#fbf8f3",
+  "display": "standalone"
+}

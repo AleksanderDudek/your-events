@@ -1,3 +1,5 @@
+'use client';
+
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import ForumIcon from '@mui/icons-material/Forum';

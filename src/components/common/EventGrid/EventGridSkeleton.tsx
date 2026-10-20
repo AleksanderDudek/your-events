@@ -1,3 +1,5 @@
+'use client';
+
 import Box from '@mui/material/Box';
 import SkeletonCard from '@/components/ui/SkeletonCard/SkeletonCard';
 import styles from './EventGrid.module.scss';

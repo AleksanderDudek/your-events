@@ -1,5 +1,8 @@
+'use client';
+
 import { useState } from 'react';
-import AppLink from '@/components/common/AppLink/AppLink';
+import Link from 'next/link';
+import type { Route } from 'next';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -104,8 +107,8 @@ export default function SavePresetButton({ filters, cityId }: SavePresetButtonPr
         message={t.PRESETS_SAVED_TOAST}
         action={
           <Button
-            component={AppLink}
-            href={MY_FILTERS_PATH}
+            component={Link}
+            href={MY_FILTERS_PATH as Route}
             size="small"
             sx={{ color: 'var(--accent)' }}
           >

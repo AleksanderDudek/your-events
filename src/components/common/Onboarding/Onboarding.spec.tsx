@@ -13,17 +13,14 @@ import { parsePresets } from '@/lib/presets';
 import type { EventFilters } from '@/types/filter.types';
 import Onboarding from './Onboarding';
 
-const navigate = vi.fn();
+const push = vi.fn();
 const updateFilters = vi.fn();
 let pathname = '/szczecin/wydarzenia/';
 let currentFilters: EventFilters = getDefaultFilters();
 
-// The router is reduced to the two things Onboarding uses: where we are, and a
-// way to go somewhere else. Navigation is captured, never performed.
-vi.mock('react-router', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('react-router')>()),
-  useLocation: () => ({ pathname, search: '', hash: '', state: null, key: 'test' }),
-  useNavigate: () => navigate,
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname,
+  useRouter: () => ({ push }),
 }));
 
 // The story writes filters through this hook; capturing the calls is how the
@@ -91,7 +88,7 @@ describe('Onboarding', () => {
     localStorage.clear();
     resetConsentStoreForTests();
     resetOnboardingStoreForTests();
-    navigate.mockClear();
+    push.mockClear();
     updateFilters.mockClear();
     pathname = '/szczecin/wydarzenia/';
     currentFilters = getDefaultFilters();
@@ -154,7 +151,7 @@ describe('Onboarding', () => {
       renderOnboarding();
       await user.click(await screen.findByRole('button', { name: 'Pokaż mi' }));
 
-      expect(navigate).toHaveBeenCalledWith('/szczecin/wydarzenia/');
+      expect(push).toHaveBeenCalledWith('/szczecin/wydarzenia');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
@@ -215,11 +212,11 @@ describe('Onboarding', () => {
       await next(user, 'Zapisz, zamiast klikać to co tydzień');
 
       await next(user, 'Twoje filtry mieszkają tutaj');
-      expect(navigate).toHaveBeenCalledWith('/moje-filtry/');
+      expect(push).toHaveBeenCalledWith('/moje-filtry');
 
       await next(user, 'Jedno kliknięcie i jesteś na miejscu');
-      const opened = navigate.mock.calls.at(-1)?.[0] as string;
-      expect(opened).toContain('/szczecin/wydarzenia/?');
+      const opened = push.mock.calls.at(-1)?.[0] as string;
+      expect(opened).toContain('/szczecin/wydarzenia?');
       expect(decodeURIComponent(opened)).toContain('16:00');
 
       // "You changed jobs" — the saved preset moves to the later hour, and we
@@ -227,12 +224,12 @@ describe('Onboarding', () => {
       await next(user, 'Zmieniłeś pracę? Zmień filtr');
       await waitFor(() => expect(storedPresets()[0].filters.hourFrom).toBe('18:00'));
       expect(storedPresets()[0].filters.hourTo).toBe('21:00');
-      expect(navigate).toHaveBeenLastCalledWith('/moje-filtry/');
+      expect(push).toHaveBeenLastCalledWith('/moje-filtry');
       // Still one preset — the edit replaced it rather than adding a second.
       expect(storedPresets()).toHaveLength(1);
 
       await next(user, 'I znowu jedno kliknięcie');
-      const reopened = navigate.mock.calls.at(-1)?.[0] as string;
+      const reopened = push.mock.calls.at(-1)?.[0] as string;
       expect(decodeURIComponent(reopened)).toContain('18:00');
     });
 

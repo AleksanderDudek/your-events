@@ -45,30 +45,14 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: '24'
+          node-version: '20'
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm build
-        # This workflow runs from main but builds the `production` branch, which
-        # may still be the Next.js app until the Vite migration is released. So
-        # both spellings are passed: Vite reads VITE_*, Next reads NEXT_PUBLIC_*,
-        # each ignores the other. Drop the NEXT_PUBLIC_* half once production
-        # has been released past the migration (see docs/DEPLOYMENT.md).
         env:
-          VITE_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          VITE_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
-          VITE_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
-          VITE_SITE_ORIGIN: ${{ vars.NEXT_PUBLIC_SITE_ORIGIN }}
-          VITE_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
-          VITE_ENABLED_CITIES: ${{ vars.NEXT_PUBLIC_ENABLED_CITIES }}
-          VITE_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
-          VITE_CLARITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_CLARITY_PROJECT_ID }}
-          VITE_ROBOTS_NOINDEX: ${{ vars.NEXT_PUBLIC_ROBOTS_NOINDEX }}
-          # Transitional — the Next.js build of the production branch.
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
@@ -82,9 +66,7 @@ jobs:
 
       # A blank production page is the failure mode this guards against: Pages
       # served from a branch runs the tree through Jekyll, which drops every
-      # directory whose name starts with an underscore (Next's _next/). The Vite
-      # build writes the marker itself (build-tools/finalizeExport.ts); this
-      # step stays for the Next.js build of the production branch.
+      # directory whose name starts with an underscore — including _next/.
       - name: Mark the output as not-Jekyll
         run: touch out/.nojekyll
 

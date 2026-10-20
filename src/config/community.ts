@@ -4,8 +4,8 @@
 // can never drift apart — swapping an invite or moving the route is a one-line
 // change here instead of a grep across the tree.
 
-// Route of the "Rozwijaj z nami" page. A STATIC segment, so the router ranks it
-// ahead of the dynamic /:city segment — no city id can shadow it.
+// Route of the "Rozwijaj z nami" page. A STATIC segment, so Next resolves it
+// ahead of the dynamic /[city] segment — no city id can shadow it.
 export const GROW_WITH_US_PATH = '/rozwijaj-z-nami';
 
 // Route of the privacy policy page the cookie banner links to.

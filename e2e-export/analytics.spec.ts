@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 // The Microsoft Clarity tag must ship ONLY in the Pages deploy build, which is
-// the one place VITE_CLARITY_PROJECT_ID is set. Every other build runs
-// the same app under a robot: the dev server behind the main Playwright config, and
+// the one place NEXT_PUBLIC_CLARITY_PROJECT_ID is set. Every other build runs
+// the same app under a robot: `next dev` behind the main Playwright config, and
 // this static export behind the current one. While the tag was unconditional,
 // each test's page-load opened its own Clarity session — hundreds of ~1s
 // recordings pointing at localhost, whose CSS Clarity's replay can never fetch,

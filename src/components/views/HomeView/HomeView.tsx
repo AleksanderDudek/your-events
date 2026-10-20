@@ -1,5 +1,8 @@
+'use client';
+
 import { useEffect, useState } from 'react';
-import AppLink from '@/components/common/AppLink/AppLink';
+import Link from 'next/link';
+import type { Route } from 'next';
 import Button from '@mui/material/Button';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import BoltIcon from '@mui/icons-material/Bolt';
@@ -26,13 +29,13 @@ import {
 import styles from './HomeView.module.scss';
 
 interface CtaUrls {
-  now: string;
-  today: string;
-  weekend: string;
-  sport: string;
-  art: string;
-  food: string;
-  dance: string;
+  now: Route;
+  today: Route;
+  weekend: Route;
+  sport: Route;
+  art: Route;
+  food: Route;
+  dance: Route;
 }
 
 // How long each side of the toggle lingers before the swap.
@@ -52,9 +55,6 @@ export default function HomeView() {
   const [showCity, setShowCity] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Intentional: the prerendered HTML and the hydration pass show the
-    // generic word; the loop may only start once we are in the browser.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowCity(true);
 
     // Reduced-motion users see the selected city once and stop — no toggling.
@@ -75,7 +75,7 @@ export default function HomeView() {
       ? city.accusativeForm[locale]
       : t.HOME_HERO_HEADLINE_GENERIC_WORD;
   const cityLocative = city.locativeForm[locale];
-  const listHref = `/${city.id}/wydarzenia`;
+  const listHref = `/${city.id}/wydarzenia` as Route;
   // CTA hrefs depend on the user's current Date, which would differ between
   // build-time SSR and client render. Ship the fallback in static HTML, then
   // upgrade once mounted so the URL on hover / right-click is correct.
@@ -91,18 +91,14 @@ export default function HomeView() {
 
   useEffect(() => {
     const now = new Date();
-    // Intentional: these windows depend on the visitor's clock, so they are
-    // computed after hydration — the prerendered page would otherwise carry
-    // links frozen at build time.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrls({
-      now: buildNowUrl(city.id, now),
-      today: buildTodayUrl(city.id, now),
-      weekend: buildWeekendUrl(city.id, now),
-      sport: buildSportNowUrl(city.id, now),
-      art: buildArtUrl(city.id, now),
-      food: buildFoodUrl(city.id, now),
-      dance: buildDanceUrl(city.id, now),
+      now: buildNowUrl(city.id, now) as Route,
+      today: buildTodayUrl(city.id, now) as Route,
+      weekend: buildWeekendUrl(city.id, now) as Route,
+      sport: buildSportNowUrl(city.id, now) as Route,
+      art: buildArtUrl(city.id, now) as Route,
+      food: buildFoodUrl(city.id, now) as Route,
+      dance: buildDanceUrl(city.id, now) as Route,
     });
   }, [city.id]);
 
@@ -195,7 +191,7 @@ export default function HomeView() {
 
       <section className={styles.tiles} aria-label={t.HOME_HERO_HEADLINE}>
         {tiles.map((tile) => (
-          <AppLink key={tile.key} href={tile.href} className={`${styles.tile} ${tile.className}`}>
+          <Link key={tile.key} href={tile.href} className={`${styles.tile} ${tile.className}`}>
             <span className={styles.tileIcon} aria-hidden="true">
               {tile.icon}
             </span>
@@ -205,7 +201,7 @@ export default function HomeView() {
               <span>{tile.cta}</span>
               <ArrowForwardIcon fontSize="small" />
             </span>
-          </AppLink>
+          </Link>
         ))}
       </section>
 
@@ -214,8 +210,8 @@ export default function HomeView() {
           <h2 className={styles.mapSectionTitle}>{t.HOME_MAP_TITLE}</h2>
           <p className={styles.mapSectionSub}>{t.HOME_MAP_SUB}</p>
         </div>
-        <AppLink
-          href={`/${city.id}/wydarzenia?viewMode=map`}
+        <Link
+          href={`/${city.id}/wydarzenia?viewMode=map` as Route}
           className={styles.mapSectionMap}
           aria-label={t.HOME_MAP_CTA}
         >
@@ -233,12 +229,12 @@ export default function HomeView() {
               <ArrowForwardIcon fontSize="small" />
             </span>
           </span>
-        </AppLink>
+        </Link>
       </section>
 
       <div className={styles.browseAll}>
         <Button
-          component={AppLink}
+          component={Link}
           href={listHref}
           variant="outlined"
           endIcon={<ArrowForwardIcon />}

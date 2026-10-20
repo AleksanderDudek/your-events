@@ -17,8 +17,8 @@ vi.mock('@supabase/supabase-js', () => ({ createClient }));
 async function loadSupabase(schema?: string) {
   vi.resetModules();
   createClient.mockClear();
-  if (schema === undefined) delete process.env.VITE_SUPABASE_SCHEMA;
-  else process.env.VITE_SUPABASE_SCHEMA = schema;
+  if (schema === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_SCHEMA;
+  else process.env.NEXT_PUBLIC_SUPABASE_SCHEMA = schema;
   return import('./supabase');
 }
 

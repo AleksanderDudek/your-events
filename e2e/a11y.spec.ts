@@ -59,10 +59,10 @@ test.describe('Accessibility (axe)', () => {
     await firstCard(page).click();
     await expect(page).toHaveURL(new RegExp(`/${CITY}/`));
     await expect(page.getByRole('heading', { level: 1 })).not.toBeEmpty();
-    // Wait for the title to land before scanning: on client navigation the
-    // router updates document.title a beat after the DOM, and an empty title
-    // trips axe's document-title rule (the static export ships the <title> in
-    // the HTML, so a cold load never races).
+    // Wait for the async metadata title to land before scanning: in `next dev`
+    // client navigation updates document.title a beat after the DOM, and an
+    // empty title trips axe's document-title rule (a dev-only race — the static
+    // export ships the <title> in the HTML).
     await expect(page).toHaveTitle(/\S/);
     await expectNoSeriousViolations(page);
   });
