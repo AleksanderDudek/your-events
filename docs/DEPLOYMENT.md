@@ -271,6 +271,11 @@ Production rebuilds also wait for approval, cron included. If approving
 data-only rebuilds becomes tiresome, remove the reviewer rule from the `prod`
 environment and accept that a release then deploys unattended.
 
+Every pull request also builds the site exactly as `deploy-dev.yml` does (`CI`
+→ *Static export build*, in the `dev` environment). It is a required status
+check on `main`, so a change that breaks the prerender cannot be merged.
+Renaming that job means updating the branch protection too.
+
 ## Verifying a deploy
 
 ```bash
