@@ -5,6 +5,7 @@ import { getSupabaseForCity } from '@/lib/supabase';
 import { expandWeekdayDates } from '@/lib/weekdays';
 import { CityId, getCity, CATEGORIES_CITY_ID } from '@/config/cities';
 import { shortId } from '@/lib/slug';
+import { boundingBox, distanceMeters } from '@/lib/geo';
 
 interface SupabaseEventRow {
   id: number;
@@ -33,6 +34,11 @@ interface SupabaseEventRow {
   updated_at: string;
 }
 
+// The columns the client-side filters read (see matchesClientFilters) — all a
+// scan has to fetch.
+type ClientFilterRow = Pick<SupabaseEventRow, 'id' | 'lat' | 'lng' | 'is_free' | 'price' | 'price_label'>;
+const CLIENT_FILTER_COLUMNS = 'id,lat,lng,is_free,price,price_label';
+
 // A "descriptive" label carries meaningful words beyond a bare number + currency
 // (e.g. "Karnet od 189 zł"), so it should be shown verbatim rather than reduced
 // to a number. "40 zł" / "35 PLN" strip down to nothing → not descriptive.
@@ -47,7 +53,7 @@ function isDescriptivePriceLabel(label: string | null | undefined): boolean {
   return residual.length > 0;
 }
 
-function parsePriceAmount(row: SupabaseEventRow): number | null {
+function parsePriceAmount(row: Pick<SupabaseEventRow, 'is_free' | 'price' | 'price_label'>): number | null {
   if (row.is_free) return 0;
   // Reject prices parsed from URL fragments (e.g. price=196331 for a
   // kupbilecik ticket id). isRealisticPrice in the UI also guards.
@@ -151,12 +157,23 @@ export const MAP_EVENT_LIMIT = 1000;
  * never disagree about what "matching" means. Paging and map-specific narrowing
  * are left to the caller — that is the only thing the two differ on.
  */
-function buildFilteredQuery(
+// The column list is a type parameter, not a plain string: supabase-js parses
+// the literal to type the rows, and a widened `string` would type them as a
+// parse error instead.
+interface QueryShape<Columns extends string> {
+  /** PostgREST `select` list. */
+  columns?: Columns;
+  /** Ask for an exact count alongside the rows. */
+  withCount?: boolean;
+}
+
+function buildFilteredQuery<Columns extends string = '*'>(
   supabase: ReturnType<typeof getSupabaseForCity>,
   filters: EventFilters,
-  categoryFilter: ResolvedCategoryFilter
+  categoryFilter: ResolvedCategoryFilter,
+  { columns = '*' as Columns, withCount = true }: QueryShape<Columns> = {}
 ) {
-  let query = supabase.from('events').select('*', { count: 'exact' });
+  let query = supabase.from('events').select(columns, withCount ? { count: 'exact' } : undefined);
 
   // People search either for what ("jazz") or for where ("Filharmonia"), so one
   // box matches both columns. This `or=` group ANDs with the category one below.
@@ -202,6 +219,20 @@ function buildFilteredQuery(
   if (filters.dateMode && filters.hourFrom) query = query.gte('time_start', filters.hourFrom);
   if (filters.dateMode && filters.hourTo) query = query.lte('time_start', filters.hourTo);
 
+  // Proximity, first pass: the box around the circle, as four comparisons on
+  // plain columns — no extension, no index, and it works against every schema
+  // as it stands. The exact circle is the browser's job (matchesClientFilters);
+  // the box only has to contain it. Rows with no coordinates fail the
+  // comparisons and drop out here.
+  if (filters.near) {
+    const box = boundingBox(filters.near, filters.near.radius);
+    query = query
+      .gte('lat', box.south)
+      .lte('lat', box.north)
+      .gte('lng', box.west)
+      .lte('lng', box.east);
+  }
+
   return applyOrder(query, filters);
 }
 
@@ -231,12 +262,115 @@ function applyOrder<T>(query: T, filters: EventFilters): T {
       // Nulls last in BOTH directions. An unknown price is neither the
       // cheapest nor the most expensive, and it must never head the list.
       return builder.order('price', { ascending, nullsFirst: false }) as T;
+    case 'distance':
+      // The database cannot measure distance; the scan sorts by it afterwards
+      // (scanMatchingIds). What it can do is hand over the ties — one venue,
+      // many events — already in the order they should keep: soonest first,
+      // whichever way the distance runs.
+      return builder
+        .order('date', { ascending: true })
+        .order('time_start', { ascending: true }) as T;
     case 'date':
     default:
       return builder
         .order('date', { ascending })
         .order('time_start', { ascending }) as T;
   }
+}
+
+// The filters with no column to compare against: free entry is derived from
+// three price columns, and a circle is not a range. Both run on raw rows, so a
+// scan can apply them to its six columns without building whole events.
+function hasClientFilters(filters: EventFilters): boolean {
+  return filters.freeOnly || filters.near !== null;
+}
+
+function matchesClientFilters(row: ClientFilterRow, filters: EventFilters): boolean {
+  if (filters.freeOnly) {
+    const amount = parsePriceAmount(row);
+    if (amount !== 0 && amount !== null) return false;
+  }
+  if (filters.near) {
+    if (row.lat === null || row.lng === null) return false;
+    if (distanceMeters(filters.near, { lat: row.lat, lng: row.lng }) > filters.near.radius) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// PostgREST ends a response at 1000 rows whatever was asked for, so a scan
+// requests exactly that much per page and keeps going while pages come back
+// full. The page cap is a runaway guard, not a product limit: 20 pages is 20k
+// matching events in one city.
+const SCAN_PAGE_SIZE = 1000;
+const SCAN_MAX_PAGES = 20;
+
+/**
+ * The ids of every event passing the client filters, in list order.
+ *
+ * Only the columns those filters read are fetched — ~95 bytes a row against
+ * ~2.4 KB for a whole one (measured on Wrocław's 5 km box: 7 KB gzipped
+ * against 505 KB) — so the total and the page boundaries are found without
+ * downloading every match in full.
+ */
+async function scanMatchingIds(
+  supabase: ReturnType<typeof getSupabaseForCity>,
+  filters: EventFilters,
+  categoryFilter: ResolvedCategoryFilter
+): Promise<number[]> {
+  const matches: ClientFilterRow[] = [];
+  for (let page = 0; page < SCAN_MAX_PAGES; page += 1) {
+    const from = page * SCAN_PAGE_SIZE;
+    // `id` breaks ties, so rows sharing a date and time cannot trade places
+    // between two pages of the scan and be counted twice or not at all.
+    const { data, error } = await buildFilteredQuery(supabase, filters, categoryFilter, {
+      columns: CLIENT_FILTER_COLUMNS,
+      withCount: false,
+    })
+      .order('id', { ascending: true })
+      .range(from, from + SCAN_PAGE_SIZE - 1);
+    if (error) throw new ServerError(error.message);
+
+    const batch = (data as ClientFilterRow[] | null) ?? [];
+    for (const row of batch) {
+      if (matchesClientFilters(row, filters)) matches.push(row);
+    }
+    if (batch.length < SCAN_PAGE_SIZE) break;
+  }
+
+  const near = filters.near;
+  if (filters.sort === 'distance' && near) {
+    const sign = filters.dir === 'desc' ? -1 : 1;
+    // Every match has coordinates: the circle let none through without them.
+    const distance = new Map(
+      matches.map((row) => [
+        row.id,
+        distanceMeters(near, { lat: row.lat as number, lng: row.lng as number }),
+      ])
+    );
+    // Array#sort is stable, so equal distances keep the database's date order.
+    matches.sort((a, b) => sign * ((distance.get(a.id) ?? 0) - (distance.get(b.id) ?? 0)));
+  }
+  return matches.map((row) => row.id);
+}
+
+/** Whole rows for `ids`, in the order given — `in` answers in whatever order it likes. */
+async function fetchRowsInOrder(
+  supabase: ReturnType<typeof getSupabaseForCity>,
+  ids: number[],
+  cityName: string
+): Promise<Event[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from('events').select('*').in('id', ids);
+  if (error) throw new ServerError(error.message);
+  const byId = new Map(((data as SupabaseEventRow[] | null) ?? []).map((row) => [row.id, row]));
+  // An id whose row vanished between the scan and now (a scraper run) is
+  // skipped; the page is one short until the next refetch.
+  return ids.flatMap((id) => {
+    const row = byId.get(id);
+    return row ? [mapRow(row, cityName)] : [];
+  });
 }
 
 export async function fetchEvents(
@@ -246,26 +380,27 @@ export async function fetchEvents(
 ): Promise<{ events: Event[]; total: number }> {
   const city = getCity(cityId);
   const supabase = getSupabaseForCity(city.id);
+  const cityName = city.displayName.pl;
   const from = (filters.page - 1) * filters.pageSize;
   const to = from + filters.pageSize - 1;
 
-  const needsClientFilter = filters.freeOnly;
-
-  let query = buildFilteredQuery(supabase, filters, categoryFilter);
-  if (!needsClientFilter) query = query.range(from, to);
-
-  const { data, count, error } = await query;
-  if (error) throw new ServerError(error.message);
-
-  const cityName = city.displayName.pl;
-  const mapped = (data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName));
-
-  if (!needsClientFilter) {
-    return { events: mapped, total: count ?? 0 };
+  // A filter the database cannot evaluate also defeats its count and its
+  // paging, so such a list is found in two steps: every matching id (the
+  // scan), then whole rows for this page only.
+  if (hasClientFilters(filters)) {
+    const ids = await scanMatchingIds(supabase, filters, categoryFilter);
+    const events = await fetchRowsInOrder(supabase, ids.slice(from, to + 1), cityName);
+    return { events, total: ids.length };
   }
 
-  const filtered = applyClientFilters(mapped, filters);
-  return { events: filtered.slice(from, to + 1), total: filtered.length };
+  const { data, count, error } = await buildFilteredQuery(supabase, filters, categoryFilter).range(
+    from,
+    to
+  );
+  if (error) throw new ServerError(error.message);
+
+  const events = ((data as SupabaseEventRow[] | null) ?? []).map((row) => mapRow(row, cityName));
+  return { events, total: count ?? 0 };
 }
 
 /**
@@ -296,23 +431,20 @@ export async function fetchMapEvents(
   if (error) throw new ServerError(error.message);
 
   const cityName = city.displayName.pl;
-  const mapped = (data as SupabaseEventRow[] ?? []).map((row) => mapRow(row, cityName));
+  const rows = (data as SupabaseEventRow[] | null) ?? [];
 
-  // freeOnly has no column to filter on, so it is applied here — as in
-  // fetchEvents — which means the total has to be recomputed from the result.
-  if (filters.freeOnly) {
-    const filtered = applyClientFilters(mapped, filters);
-    return { events: filtered, total: filtered.length };
+  // The filters with no column behind them (free entry, the circle) run here,
+  // as in fetchEvents — so the database's count is no longer the count of what
+  // is shown, and is recomputed.
+  if (hasClientFilters(filters)) {
+    const events = rows
+      .filter((row) => matchesClientFilters(row, filters))
+      .map((row) => mapRow(row, cityName));
+    return { events, total: events.length };
   }
 
-  return { events: mapped, total: count ?? mapped.length };
-}
-
-function applyClientFilters(events: Event[], filters: EventFilters): Event[] {
-  if (filters.freeOnly) {
-    return events.filter((e) => e.price.amount === 0 || e.price.amount === null);
-  }
-  return events;
+  const events = rows.map((row) => mapRow(row, cityName));
+  return { events, total: count ?? events.length };
 }
 
 export async function fetchEvent(cityId: CityId | string, id: string): Promise<Event> {
