@@ -138,5 +138,27 @@ export function useFilterNavigation() {
     });
   }, [applyFilters, readCurrentFilters]);
 
-  return { filters, readCurrentFilters, updateFilters, updatePagination, clearFilters };
+  /**
+   * clearFilters, minus the search term. On a phone the search box sits on the
+   * page, outside the drawer whose "clear" this backs, so emptying it is not
+   * that button's business.
+   */
+  const clearFiltersExceptSearch = useCallback(() => {
+    const current = readCurrentFilters();
+    applyFilters({
+      ...getDefaultFilters(),
+      viewMode: current.viewMode,
+      pageSize: current.pageSize,
+      search: current.search,
+    });
+  }, [applyFilters, readCurrentFilters]);
+
+  return {
+    filters,
+    readCurrentFilters,
+    updateFilters,
+    updatePagination,
+    clearFilters,
+    clearFiltersExceptSearch,
+  };
 }

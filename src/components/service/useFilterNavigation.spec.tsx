@@ -61,6 +61,18 @@ describe('useFilterNavigation', () => {
     expect(window.location.search).toBe('?pageSize=30&viewMode=map');
   });
 
+  // On a phone the search box sits on the page, outside the drawer this clear
+  // belongs to.
+  it('can clear every filter but the search term', async () => {
+    const useFilterNavigation = await loadHook();
+    settleUrl('search=jazz&categories=muzyka&freeOnly=true&viewMode=row');
+    const { result } = renderHook(() => useFilterNavigation());
+
+    act(() => result.current.clearFiltersExceptSearch());
+
+    expect(window.location.search).toBe('?search=jazz&viewMode=row');
+  });
+
   // The exported build's router dedupes ANY same-route push against the URL the
   // page was cold-loaded with: it replaces the requested query with the loaded
   // one, which flipped the view back and pinned the list on page 1. Every
