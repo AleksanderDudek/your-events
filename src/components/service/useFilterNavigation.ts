@@ -125,7 +125,7 @@ export function useFilterNavigation() {
   );
 
   /**
-   * Reset every filter (search, categories, date, hour, freeOnly, page) to its
+   * Reset every filter (search, categories, date, hour, freeOnly, near, page) to its
    * default. viewMode and pageSize are display preferences, not filters, so the
    * user keeps whatever they picked.
    */

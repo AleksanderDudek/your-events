@@ -119,6 +119,7 @@ function makeFilters(overrides: Partial<EventFilters> = {}): EventFilters {
     hourFrom: null,
     hourTo: null,
     freeOnly: false,
+    near: null,
     page: 1,
     pageSize: 15,
     viewMode: 'grid',

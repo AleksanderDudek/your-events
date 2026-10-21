@@ -30,6 +30,7 @@ export default function SortSelect({ sort, dir, onSortChange, onDirChange }: Sor
     name: t.SORT_NAME,
     venue: t.SORT_VENUE,
     price: t.SORT_PRICE,
+    distance: t.SORT_DISTANCE,
   };
 
   const nextDir: SortDir = dir === 'asc' ? 'desc' : 'asc';

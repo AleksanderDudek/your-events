@@ -51,3 +51,20 @@ describe('the map key', () => {
     expect(mapKey(filters({ page: 1 }))).toBe(mapKey(filters({ page: 5 })));
   });
 });
+
+describe('the proximity filter in the keys', () => {
+  const near = { lat: 51.11, lng: 17.032, radius: 1000, label: 'Rynek' };
+
+  it('separates one point, or one radius, from another', () => {
+    expect(key(filters({ near }))).not.toBe(key(filters({ near: null })));
+    expect(key(filters({ near }))).not.toBe(key(filters({ near: { ...near, lat: 51.12 } })));
+    expect(key(filters({ near }))).not.toBe(key(filters({ near: { ...near, radius: 2000 } })));
+    expect(mapKey(filters({ near }))).not.toBe(mapKey(filters({ near: { ...near, radius: 2000 } })));
+  });
+
+  // Renaming a point does not move it: same question, same cached answer.
+  it('ignores the label', () => {
+    expect(key(filters({ near }))).toBe(key(filters({ near: { ...near, label: 'Świdnicka' } })));
+    expect(mapKey(filters({ near }))).toBe(mapKey(filters({ near: { ...near, label: null } })));
+  });
+});
