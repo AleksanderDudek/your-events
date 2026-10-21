@@ -170,13 +170,17 @@ point, which would mean nothing there.
 
 ## Privacy
 
-- Location is requested only on the button press.
+- The filter requests location only on the button press. (Separately, and
+  before this feature, `CityProvider` asks for a position on city-less pages to
+  suggest the nearest city; that one is neither sent nor stored.)
 - A fix is **rounded to 3 decimals (~100 m) before it goes anywhere** — the URL,
   the query, the preset. Filtering to a 500 m minimum loses nothing at that
   precision, and a shared link or a recorded session URL (Clarity records page
   addresses when consented) does not pinpoint a home.
-- The database receives the search box, as any query parameter; nothing new is
-  stored.
+- The database receives the search box, as any query parameter; nothing is
+  stored server-side. In the browser the rounded fix stays in `sessionStorage`
+  for the tab (to call it "your location"), and in `localStorage` only inside a
+  saved filter.
 - Typed addresses go to Photon (Komoot GmbH). The privacy page gains a
   *Lokalizacja / Location* section saying all of the above, and Komoot joins
   the list of processors.

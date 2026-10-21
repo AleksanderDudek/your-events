@@ -36,8 +36,17 @@ describe('PrivacyView', () => {
   it('explains what happens to a location and to a typed address', () => {
     render(<PrivacyView />);
     expect(screen.getByRole('heading', { level: 2, name: 'Lokalizacja' })).toBeInTheDocument();
-    expect(screen.getByText(/zaokrąglamy ją do ok\. 100 m/)).toBeInTheDocument();
+    expect(screen.getByText(/zaokrągla ją do ok\. 100 m/)).toBeInTheDocument();
     expect(screen.getByText(/Komoot GmbH/)).toBeInTheDocument();
+  });
+
+  // The page must not claim more than the site does: the point stays in the
+  // browser (the tab, or a saved filter), and pages with no city ask for a
+  // location of their own to suggest one.
+  it('owns up to where a location is kept, and to the city suggestion', () => {
+    render(<PrivacyView />);
+    expect(screen.getByText(/zostaje w Twojej przeglądarce/)).toBeInTheDocument();
+    expect(screen.getByText(/podpowiedzieć najbliższe miasto/)).toBeInTheDocument();
   });
 
   it('passes accessibility check', async () => {
