@@ -23,6 +23,14 @@
 .results {
   flex: 1;
   min-width: 0;
+  // Room under the last card and the pagination for the floating "Filtry"
+  // button phones get (56 px tall, 16 px off the bottom). From md up the
+  // filters are a sidebar instead.
+  padding-bottom: 88px;
+
+  @include md {
+    padding-bottom: 0;
+  }
 }
 
 .resultsHeader {
