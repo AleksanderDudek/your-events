@@ -1,14 +1,29 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, CITY_OTHER, gotoEvents } from './support/helpers';
+import {
+  TEXT,
+  CITY_OTHER,
+  gotoEvents,
+  openHeaderMenu,
+  skipFirstVisitPrompts,
+} from './support/helpers';
 
 // Cross-cutting shell features: language switching (pl↔en), the header city
-// switcher (multi-city data source) and header navigation.
+// switcher (multi-city data source) and header navigation. On a phone the
+// switchers sit in the header menu, which openHeaderMenu opens.
+
+// The first-visit prompts are not what these specs are about; on a phone the
+// cookie banner also sits over the bottom of the header menu.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
+
 test.describe('Navigation, i18n and city switching', () => {
   test('language switch re-renders the UI in English', async ({ page }) => {
     await gotoEvents(page);
     // Sanity: Polish default copy is present first.
     await expect(page.getByText(TEXT.resultsCount)).toBeVisible();
 
+    await openHeaderMenu(page);
     await page.getByRole('button', { name: TEXT.langEn }).click();
 
     // Same result-count string, now in English → the whole tree re-localised.
@@ -20,6 +35,7 @@ test.describe('Navigation, i18n and city switching', () => {
     // header button — a bare goto can click it before its onClick is attached,
     // making the menu never open (the cause of a cold-start CI flake here).
     await gotoEvents(page);
+    await openHeaderMenu(page);
     await page.getByRole('button', { name: TEXT.cityLabel }).click();
     // Wrocław is the launch city being tested here (always available).
     await expect(page.getByRole('option', { name: /Wroc/ })).toBeVisible();
@@ -29,6 +45,7 @@ test.describe('Navigation, i18n and city switching', () => {
     // End-to-end city change (not just "the menu opens"): pick the other
     // available city (Szczecin) and land on its subtree.
     await gotoEvents(page);
+    await openHeaderMenu(page);
     await page.getByRole('button', { name: TEXT.cityLabel }).click();
     await page.getByRole('option', { name: TEXT.cityOther }).click();
 
@@ -43,6 +60,7 @@ test.describe('Navigation, i18n and city switching', () => {
     // Polish (so SSR/static HTML matches), then the stored 'en' is re-applied
     // post-hydration. Playwright retries until the English copy reappears.
     await gotoEvents(page);
+    await openHeaderMenu(page);
     await page.getByRole('button', { name: TEXT.langEn }).click();
     await expect(page.getByText(TEXT.resultsCountEn)).toBeVisible();
 

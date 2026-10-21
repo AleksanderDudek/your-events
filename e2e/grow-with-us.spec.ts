@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { TEXT } from './support/helpers';
+import { TEXT, closeHeaderMenu, openHeaderMenu, skipFirstVisitPrompts } from './support/helpers';
 
 // The "Rozwijaj z nami" page. It lives OUTSIDE the /{city} subtree (static
 // segment, resolved ahead of /[city]) and holds the two feedback channels, so
@@ -10,6 +10,12 @@ import { TEXT } from './support/helpers';
 const GROW_PATH = '/rozwijaj-z-nami';
 const DISCORD_INVITE_URL = 'https://discord.gg/dbSmbbCSa';
 const FEEDBACK_FORM_URL = 'https://forms.gle/LpRDCRVTBE6yx7M96';
+
+// The first-visit prompts are not what these specs are about; on a phone the
+// cookie banner also sits over the bottom of the header menu.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 test.describe('Grow with us', () => {
   test('renders the page at its own top-level route', async ({ page }) => {
@@ -47,7 +53,10 @@ test.describe('Grow with us', () => {
     await page.goto(GROW_PATH);
     await expect(page.getByText(TEXT.growPunch)).toBeVisible();
 
+    await openHeaderMenu(page);
     await page.getByRole('button', { name: TEXT.langEn }).click();
+    // An open drawer hides the page from role queries.
+    await closeHeaderMenu(page);
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(
       TEXT.growHeadlineEn

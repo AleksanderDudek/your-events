@@ -39,6 +39,10 @@ export const TEXT = {
   heroPrompt: 'Chcesz zrobić coś fajnego?',
   cityLabel: 'Wybierz miasto',
   cityPickerTitle: 'Wybierz swoje miasto',
+  // Below md the header's links and settings sit in a drawer behind this
+  // button; the drawer has its own close button.
+  menuOpen: 'Otwórz menu',
+  menuClose: 'Zamknij menu',
   langEn: 'Angielski',
   langLabel: 'Język',
   // View toggle aria-labels
@@ -179,6 +183,42 @@ export async function openFilters(page: Page): Promise<void> {
  * Harmless on desktop where there is no drawer.
  */
 export async function closeFilters(page: Page): Promise<void> {
+  await closeDrawer(page);
+}
+
+/**
+ * On a phone the header collapses into a drawer behind "Otwórz menu", with the
+ * city switcher and the language toggle at its bottom. Open it so they are
+ * reachable. No-op on desktop, where they sit in the header itself. Decided by
+ * viewport width, for the same reason as openFilters.
+ *
+ * The button is in the server HTML before React attaches its handler, so a
+ * click straight after a cold goto (a static page has no data to wait for) can
+ * land on a dead button: retry until the drawer is really open.
+ */
+export async function openHeaderMenu(page: Page): Promise<void> {
+  const width = page.viewportSize()?.width ?? 0;
+  if (width >= 900) return;
+  const close = page.getByRole('button', { name: TEXT.menuClose });
+  await expect(async () => {
+    if (!(await close.isVisible())) {
+      await page.getByRole('button', { name: TEXT.menuOpen }).click({ timeout: 2000 });
+    }
+    await expect(close).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 20000 });
+}
+
+/**
+ * Close the phone header menu, if open. Escape rather than its close button:
+ * that button's label follows the language, which the caller may just have
+ * switched. While the drawer is open MUI hides the page from role queries.
+ */
+export async function closeHeaderMenu(page: Page): Promise<void> {
+  await closeDrawer(page);
+}
+
+/** Close whichever MUI drawer is open, if any, the way a keyboard user would. */
+async function closeDrawer(page: Page): Promise<void> {
   const backdrop = page.locator('.MuiDrawer-root .MuiBackdrop-root').first();
   if (await backdrop.isVisible().catch(() => false)) {
     await page.keyboard.press('Escape');
