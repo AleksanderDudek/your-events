@@ -7,6 +7,15 @@
   margin-top: auto;
 }
 
+// The floating "Filtry" button phones get on the events list (FilterPanel) is
+// 56 px tall and 16 px off the bottom edge. The footer is what sits under it at
+// the end of the page, so it keeps that much clear below its last row — or the
+// copyright line stays beneath the button, with nothing left to scroll.
+// Keyed to the button itself: pages and layouts without it keep the plain 24 px.
+:global(body:has([data-floating-filters])) .footer {
+  padding-bottom: calc(24px + 72px + env(safe-area-inset-bottom));
+}
+
 .inner {
   max-width: 1400px;
   margin: 0 auto;

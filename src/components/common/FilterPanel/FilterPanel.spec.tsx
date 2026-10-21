@@ -110,6 +110,33 @@ describe('FilterPanel on a phone', () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  // The drawer is portalled out of the container, so it gets its own check.
+  it('passes accessibility check with the drawer open', async () => {
+    view.query = 'freeOnly=true';
+    const user = userEvent.setup();
+    render(<FilterPanel />);
+
+    await user.click(screen.getByRole('button', { name: /^Filtry/ }));
+    const drawer = await screen.findByRole('dialog', { name: 'Filtry' });
+    expect(await axe(drawer)).toHaveNoViolations();
+  });
+
+  // Rotating a tablet across the breakpoint swaps the drawer for the sidebar.
+  // Rotating back must not bring it up again on its own.
+  it('forgets an open drawer once the layout turns into the sidebar', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<FilterPanel />);
+    await user.click(screen.getByRole('button', { name: /^Filtry/ }));
+    await screen.findByRole('dialog');
+
+    view.isMdUp = true;
+    rerender(<FilterPanel />);
+    view.isMdUp = false;
+    rerender(<FilterPanel />);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it("clears what the drawer holds but leaves the page's search alone", async () => {
     view.query = 'search=jazz&freeOnly=true';
     window.history.replaceState(null, '', `/?${view.query}`);

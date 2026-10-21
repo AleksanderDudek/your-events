@@ -41,8 +41,9 @@
   padding: 8px 0;
 }
 
-// The search box above the results, phones only. From md up the search sits
-// in the sidebar, and this also hides the copy the prerendered HTML carries.
+// The search box above the results, phones only. From md up the search sits in
+// the sidebar; this hides the phone copy a server render shows desktop before
+// hydration knows the breakpoint.
 .pageSearch {
   @include md {
     display: none;

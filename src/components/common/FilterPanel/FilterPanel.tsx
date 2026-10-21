@@ -44,6 +44,10 @@ export default function FilterPanel() {
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Crossing into the sidebar layout (a tablet turned sideways) unmounts the
+  // drawer but not this flag, and crossing back would reopen it unasked. Reset
+  // during render rather than in an effect, so that never paints.
+  if (isMdUp && drawerOpen) setDrawerOpen(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   // Bumped on "clear filters" to remount SearchInput. The box keeps the typed
   // text in local state (it debounces), and when the term never made it into the
@@ -352,10 +356,10 @@ export default function FilterPanel() {
 
   return (
     <>
-      {/* The search box, on the page rather than in the drawer. The static
-          export is prerendered before the breakpoint is known, so this branch
-          is what desktop gets until hydration too — the CSS hides it from md
-          up, or desktop would show it and then shift the list. */}
+      {/* The search box, on the page rather than in the drawer. A server
+          render cannot know the breakpoint (useMediaQuery answers false
+          there — `next dev` renders this branch for desktop until hydration),
+          so the CSS hides it from md up rather than show it and shift the list. */}
       <Box className={styles.pageSearch} role="search" aria-label={t.SEARCH_LABEL}>
         {searchBox}
       </Box>
@@ -364,10 +368,13 @@ export default function FilterPanel() {
           mounted, so the step follows whichever layout the visitor is in.
           Labelled, large and centred: a bare icon in a corner was easy to
           miss, and the middle is equally in reach of either thumb. */}
+      {/* data-floating-filters: the footer keeps room for this button while
+          it exists — see AppFooter.module.scss. */}
       <Fab
         variant="extended"
         color="primary"
         data-tour="filters"
+        data-floating-filters=""
         onClick={() => setDrawerOpen(true)}
         aria-label={t.FILTER_TRIGGER(drawerCount)}
         sx={{
@@ -413,6 +420,8 @@ export default function FilterPanel() {
         // of every filter label for screen readers and tests to trip on.
         ModalProps={{ keepMounted: false }}
         PaperProps={{
+          // MUI makes the paper a modal dialog; this is its name.
+          'aria-label': t.FILTER_TITLE,
           sx: {
             maxHeight: '85vh',
             borderTopLeftRadius: 16,
