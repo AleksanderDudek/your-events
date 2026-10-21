@@ -1,6 +1,6 @@
-import { EventFilters, PageSize, ViewMode, Weekday } from '@/types/filter.types';
+import { EventFilters, NearFilter, PageSize, ViewMode, Weekday } from '@/types/filter.types';
 import { FilterPreset, PresetDateWindow, PresetFilters } from '@/types/preset.types';
-import { filtersToSearchParams } from './filterUtils';
+import { filtersToSearchParams, parseNear } from './filterUtils';
 import { getUpcomingWeekend } from './homeFilters';
 import { sortWeekdays } from './weekdays';
 import { DEFAULT_PAGE_SIZE } from './constants';
@@ -41,6 +41,7 @@ export function emptyPresetFilters(): PresetFilters {
     hourFrom: null,
     hourTo: null,
     freeOnly: false,
+    near: null,
     viewMode: 'grid',
     pageSize: DEFAULT_PAGE_SIZE,
   };
@@ -64,6 +65,7 @@ export function presetFiltersFromEventFilters(filters: EventFilters): PresetFilt
     hourFrom: filters.hourFrom,
     hourTo: filters.hourTo,
     freeOnly: filters.freeOnly,
+    near: filters.near ? { ...filters.near } : null,
     viewMode: filters.viewMode,
     pageSize: filters.pageSize,
   };
@@ -115,6 +117,7 @@ export function presetToEventFilters(preset: FilterPreset, now: Date): Partial<E
     hourFrom: range ? preset.filters.hourFrom : null,
     hourTo: range ? preset.filters.hourTo : null,
     freeOnly: preset.filters.freeOnly,
+    near: preset.filters.near,
     viewMode: preset.filters.viewMode,
     pageSize: preset.filters.pageSize,
   };
@@ -148,6 +151,19 @@ function asWeekdays(value: unknown): Weekday[] {
   return sortWeekdays(days);
 }
 
+// Stored presets are untrusted input (see parsePresets), and a point is opened
+// by turning it into a query string — so it passes the URL's own gate.
+function asNear(value: unknown): NearFilter | null {
+  if (!value || typeof value !== 'object') return null;
+  const v = value as Record<string, unknown>;
+  if (typeof v.lat !== 'number' || typeof v.lng !== 'number') return null;
+  return parseNear(
+    `${v.lat},${v.lng}`,
+    typeof v.radius === 'number' ? String(v.radius) : null,
+    typeof v.label === 'string' ? v.label : null
+  );
+}
+
 function parsePresetFilters(raw: unknown): PresetFilters {
   const base = emptyPresetFilters();
   if (!raw || typeof raw !== 'object') return base;
@@ -165,6 +181,7 @@ function parsePresetFilters(raw: unknown): PresetFilters {
     hourFrom: asPattern(value.hourFrom, TIME_REGEX),
     hourTo: asPattern(value.hourTo, TIME_REGEX),
     freeOnly: value.freeOnly === true,
+    near: asNear(value.near),
     viewMode: VIEW_MODES.includes(value.viewMode as ViewMode) ? (value.viewMode as ViewMode) : 'grid',
     pageSize: PAGE_SIZES.includes(value.pageSize as PageSize)
       ? (value.pageSize as PageSize)
@@ -265,6 +282,7 @@ export function duplicatePreset(
       ...presets[index].filters,
       categories: [...presets[index].filters.categories],
       weekdays: [...presets[index].filters.weekdays],
+      near: presets[index].filters.near ? { ...presets[index].filters.near } : null,
     },
     createdAt,
   };

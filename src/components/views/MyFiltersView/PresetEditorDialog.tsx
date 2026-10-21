@@ -20,6 +20,7 @@ import { useCategories } from '@/components/service/useCategories';
 import { AVAILABLE_CITIES } from '@/config/cities';
 import WeekdayPicker from '@/components/ui/WeekdayPicker/WeekdayPicker';
 import { MAX_NAME_LENGTH, emptyPresetFilters } from '@/lib/presets';
+import { formatDistance } from '@/lib/utils';
 import type { FilterPreset, PresetDateWindow } from '@/types/preset.types';
 
 interface PresetEditorDialogProps {
@@ -124,7 +125,16 @@ export default function PresetEditorDialog({
           select
           label={t.PRESETS_CITY}
           value={preset.cityId}
-          onChange={(e) => setPreset((p) => ({ ...p, cityId: e.target.value }))}
+          onChange={(e) => {
+            const cityId = e.target.value;
+            setPreset((p) => ({
+              ...p,
+              cityId,
+              // A point is a place in one city; carried to another it would
+              // ask for events nowhere near it.
+              filters: { ...p.filters, near: cityId === p.cityId ? p.filters.near : null },
+            }));
+          }}
           fullWidth
         >
           {AVAILABLE_CITIES.map((city) => (
@@ -229,6 +239,24 @@ export default function PresetEditorDialog({
               onChange={(e) => setFilters({ hourTo: e.target.value || null })}
               slotProps={{ inputLabel: { shrink: true } }}
               fullWidth
+            />
+          </Box>
+        )}
+
+        {/* Set from the events list, where there is a map and a geocoder; here
+            it can only be kept or dropped. */}
+        {filters.near && (
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              {t.FILTER_NEAR}
+            </Typography>
+            <Chip
+              label={t.NEAR_CHIP(
+                formatDistance(filters.near.radius, locale),
+                filters.near.label ?? t.NEAR_PICKED_POINT
+              )}
+              onDelete={() => setFilters({ near: null })}
+              size="small"
             />
           </Box>
         )}

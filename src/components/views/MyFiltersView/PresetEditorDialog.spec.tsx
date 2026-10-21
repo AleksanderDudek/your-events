@@ -18,6 +18,15 @@ vi.mock('@/components/service/useCategories', () => ({
   }),
 }));
 
+// Two live cities, so a preset can move from one to the other.
+vi.mock('@/config/cities', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/config/cities')>();
+  return {
+    ...actual,
+    AVAILABLE_CITIES: actual.CITIES.filter((city) => ['wroclaw', 'szczecin'].includes(city.id)),
+  };
+});
+
 function blankDraft(): FilterPreset {
   return {
     id: 'new',
@@ -89,5 +98,63 @@ describe('PresetEditorDialog required-field feedback', () => {
 
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onSave.mock.calls[0][0]).toMatchObject({ name: 'Weekend' });
+  });
+});
+
+describe('PresetEditorDialog and a saved point', () => {
+  const near = { lat: 51.11, lng: 17.032, radius: 1500, label: 'Rynek' };
+
+  function renderWithPoint() {
+    const onSave = vi.fn();
+    render(
+      <LocaleProvider>
+        <PresetEditorDialog
+          open
+          draft={{
+            ...blankDraft(),
+            name: 'Blisko Rynku',
+            cityId: 'wroclaw',
+            filters: { ...emptyPresetFilters(), near },
+          }}
+          onSave={onSave}
+          onCancel={vi.fn()}
+        />
+      </LocaleProvider>
+    );
+    return { onSave };
+  }
+
+  it('shows the point and keeps it on save', async () => {
+    const user = userEvent.setup();
+    const { onSave } = renderWithPoint();
+
+    expect(screen.getByText(/W promieniu 1,5\skm: Rynek/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Zapisz' }));
+
+    expect(onSave.mock.calls[0][0].filters.near).toEqual(near);
+  });
+
+  it('can drop the point', async () => {
+    const user = userEvent.setup();
+    const { onSave } = renderWithPoint();
+
+    await user.click(screen.getByTestId('CancelIcon'));
+    await user.click(screen.getByRole('button', { name: 'Zapisz' }));
+
+    expect(onSave.mock.calls[0][0].filters.near).toBeNull();
+  });
+
+  // A point is a place in one city; carried to another it would ask for
+  // events nowhere near it.
+  it('drops the point when the preset moves to another city', async () => {
+    const user = userEvent.setup();
+    const { onSave } = renderWithPoint();
+
+    await user.click(screen.getByRole('combobox', { name: 'Miasto' }));
+    await user.click(screen.getByRole('option', { name: 'Szczecin' }));
+    await user.click(screen.getByRole('button', { name: 'Zapisz' }));
+
+    expect(onSave.mock.calls[0][0]).toMatchObject({ cityId: 'szczecin' });
+    expect(onSave.mock.calls[0][0].filters.near).toBeNull();
   });
 });

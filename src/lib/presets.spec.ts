@@ -278,3 +278,46 @@ describe('duplicatePreset', () => {
     expect(duplicatePreset(full, 'p0', 'x', 'Kopia', 'now')).toHaveLength(MAX_PRESETS);
   });
 });
+
+describe('the proximity filter in presets', () => {
+  const near = { lat: 51.11, lng: 17.032, radius: 1500, label: 'Rynek' };
+
+  it('is captured from the filters on screen, as a copy', () => {
+    const current = { ...getDefaultFilters(), near };
+    const saved = presetFiltersFromEventFilters(current);
+    expect(saved.near).toEqual(near);
+    expect(saved.near).not.toBe(near);
+  });
+
+  it('opens as the same point, radius and name', () => {
+    const href = presetHref(makePreset({ filters: { ...emptyPresetFilters(), near } }), MONDAY);
+    const params = new URL(href, 'https://x.test').searchParams;
+    expect(params.get('near')).toBe('51.11,17.032');
+    expect(params.get('radius')).toBe('1500');
+    expect(params.get('nearLabel')).toBe('Rynek');
+  });
+
+  it('round-trips through storage', () => {
+    const presets = [makePreset({ filters: { ...emptyPresetFilters(), near } })];
+    expect(parsePresets(serializePresets(presets))[0].filters.near).toEqual(near);
+  });
+
+  it('repairs a stored point the way the URL does, and drops one that is unusable', () => {
+    const stored = (value: unknown) =>
+      parsePresets(
+        JSON.stringify([{ ...makePreset(), filters: { ...emptyPresetFilters(), near: value } }])
+      )[0].filters.near;
+    expect(stored({ lat: 51.11, lng: 17.032, radius: 99_999, label: 'Rynek' })?.radius).toBe(5000);
+    expect(stored({ lat: 51.11, lng: 17.032 })).toEqual({ lat: 51.11, lng: 17.032, radius: 1000, label: null });
+    expect(stored({ lat: 'x', lng: 17.032, radius: 1000 })).toBeNull();
+    expect(stored({ lat: 95, lng: 17.032, radius: 1000 })).toBeNull();
+    expect(stored('51.11,17.032')).toBeNull();
+  });
+
+  it('is copied, not shared, when a preset is duplicated', () => {
+    const presets = [makePreset({ filters: { ...emptyPresetFilters(), near } })];
+    const [original, copy] = duplicatePreset(presets, 'p1', 'p2', 'Copy', '2026-07-28T10:00:00.000Z');
+    expect(copy.filters.near).toEqual(original.filters.near);
+    expect(copy.filters.near).not.toBe(original.filters.near);
+  });
+});
