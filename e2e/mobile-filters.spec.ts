@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { CITY, TEXT, openFilters, skipFirstVisitPrompts, waitForList } from './support/helpers';
 
 // The phone layout: the search box on the page, a labelled trigger, a sheet
@@ -27,6 +27,25 @@ async function swipeDown(page: Page, from: { x: number; y: number }, distance: n
   }
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await cdp.detach();
+}
+
+/**
+ * Where an element ends up once it stops moving: two samples in a row at the
+ * same height. The sheet slides in, and a box taken mid-slide is lower than
+ * where the element comes to rest.
+ */
+async function settledBox(locator: Locator) {
+  let last: Awaited<ReturnType<Locator['boundingBox']>> = null;
+  await expect
+    .poll(async () => {
+      const box = await locator.boundingBox();
+      const settled = box !== null && last !== null && box.y === last.y;
+      last = box;
+      return settled;
+    })
+    .toBe(true);
+  if (!last) throw new Error('The element has no box');
+  return last;
 }
 
 test.describe('Filters on a phone', () => {
@@ -58,8 +77,7 @@ test.describe('Filters on a phone', () => {
     await openFilters(page);
 
     const handle = page.locator('.MuiDrawer-paper [class*="dragHandle"]');
-    const box = await handle.boundingBox();
-    if (!box) throw new Error('The drawer has no drag handle');
+    const box = await settledBox(handle);
     // Drawn, not collapsed: in the drawer's flex column an empty handle used to
     // shrink to 0 px as soon as the filters overflowed.
     expect(box.height).toBeGreaterThanOrEqual(4);

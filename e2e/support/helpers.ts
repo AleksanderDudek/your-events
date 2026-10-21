@@ -29,6 +29,8 @@ export const CITY_OTHER = 'szczecin';
 // preference is only applied after hydration.
 export const TEXT = {
   searchPlaceholder: 'Szukaj wydarzenia lub miejsca...',
+  // The search box's own clear button (shown while it holds a term).
+  searchClear: 'Wyczyść wyszukiwanie',
   resultsCount: /Znaleziono \d+ wydarzeń/,
   emptyTitle: 'Nie znaleziono wydarzeń',
   back: 'Wróć',
@@ -212,15 +214,26 @@ export async function applyFirstCategory(page: Page): Promise<string> {
 }
 
 /**
- * Click the "clear filters" control. On mobile it renders twice (drawer header
- * + footer); .last() targets the FOOTER button, which both clears and closes
- * the drawer in one handler — avoiding a fragile Escape-to-dismiss afterwards.
- * On desktop there is a single (sidebar) clear button, so .last() === .first().
- * Only present when at least one filter is active.
+ * Clear every filter, the search term included.
+ *
+ * Desktop: the sidebar's single "clear filters" button, which clears the search
+ * too (only present while a filter is active).
+ *
+ * Mobile: the drawer renders it twice (header + footer); .last() targets the
+ * FOOTER button, which both clears and closes the drawer in one handler —
+ * avoiding a fragile Escape-to-dismiss afterwards. It leaves the search alone,
+ * though: the box sits on the page, outside the drawer. So the box's own clear
+ * button empties it as well, when there is a term to clear.
  */
 export async function clearAllFilters(page: Page): Promise<void> {
   await openFilters(page);
   await page.getByRole('button', { name: TEXT.filterClear }).last().click();
+  if ((page.viewportSize()?.width ?? 0) >= 900) return;
+  // Until the drawer has animated out, MUI keeps the rest of the page
+  // aria-hidden, and role queries cannot see the box's clear button.
+  await expect(page.locator('.MuiDrawer-paper')).toBeHidden();
+  const searchClear = page.getByRole('button', { name: TEXT.searchClear });
+  if (await searchClear.isVisible()) await searchClear.click();
 }
 
 /** Locate an active-filter chip (in the results header) by its visible label. */
