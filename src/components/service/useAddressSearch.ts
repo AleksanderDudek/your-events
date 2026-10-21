@@ -16,8 +16,8 @@ const DEBOUNCE_MS = 400;
  *
  * Photon is a free service on fair use, so this is deliberately frugal:
  * nothing under three characters, nothing until typing pauses, a cached answer
- * for a repeated query, and a cancelled request for one already typed past
- * (React Query passes its AbortSignal through).
+ * for a repeated query, no retries, and a cancelled request for one already
+ * typed past (React Query passes its AbortSignal through).
  */
 export function useAddressSearch(input: string) {
   const { city } = useCity();
@@ -36,7 +36,9 @@ export function useAddressSearch(input: string) {
     queryFn: ({ signal }) => searchAddresses(query, city.coordinates, locale, signal),
     enabled,
     staleTime: 10 * 60_000,
-    retry: 1,
+    // No retries: a fair-use service that is failing or throttling is not
+    // helped by being asked again, and the next keystroke asks anyway.
+    retry: false,
   });
 
   const tooShort = typed.length < ADDRESS_MIN_CHARS;
