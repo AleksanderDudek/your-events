@@ -131,21 +131,21 @@ describe('date formatting follows the locale', () => {
 
 describe('formatDistance', () => {
   it('says metres under a kilometre, rounded to tens', () => {
-    expect(formatDistance(847)).toBe('850 m');
-    expect(formatDistance(4)).toBe('0 m');
+    expect(formatDistance(847)).toBe('850\u00a0m');
+    expect(formatDistance(4)).toBe('0\u00a0m');
   });
 
   it('switches to kilometres with one decimal, in the interface language', () => {
-    expect(formatDistance(1500, 'pl')).toBe('1,5 km');
-    expect(formatDistance(1500, 'en')).toBe('1.5 km');
+    expect(formatDistance(1500, 'pl')).toBe('1,5\u00a0km');
+    expect(formatDistance(1500, 'en')).toBe('1.5\u00a0km');
   });
 
   it('drops a trailing zero, so a whole radius reads "2 km"', () => {
-    expect(formatDistance(2000)).toBe('2 km');
+    expect(formatDistance(2000)).toBe('2\u00a0km');
   });
 
   it('rounds 995 m up into kilometres rather than printing "1000 m"', () => {
-    expect(formatDistance(995)).toBe('1 km');
+    expect(formatDistance(995)).toBe('1\u00a0km');
   });
 });
 
@@ -154,7 +154,7 @@ describe('formatEventDistance', () => {
     ({ location: { name: 'X', city: 'Wrocław', lat, lng } }) as Event;
 
   it('formats the distance from the origin to the venue', () => {
-    expect(formatEventDistance(at(51.1176, 17.032), { lat: 51.11, lng: 17.032 })).toBe('850 m');
+    expect(formatEventDistance(at(51.1176, 17.032), { lat: 51.11, lng: 17.032 })).toBe('850\u00a0m');
   });
 
   it('is undefined without an origin or without coordinates', () => {

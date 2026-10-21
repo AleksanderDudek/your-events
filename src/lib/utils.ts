@@ -127,11 +127,11 @@ function addMinutes(hhmm: string, minutes: number): string | null {
  */
 export function formatDistance(meters: number, locale: string = 'pl'): string {
   const rounded = Math.round(meters / 10) * 10;
-  if (rounded < 1000) return `${rounded} m`;
+  if (rounded < 1000) return `${rounded}\u00a0m`;
   const km = new Intl.NumberFormat(intlLocale(locale), { maximumFractionDigits: 1 }).format(
     meters / 1000
   );
-  return `${km} km`;
+  return `${km}\u00a0km`;
 }
 
 /** How far an event's venue is from `origin`, formatted — undefined when either end is unknown. */

@@ -8,7 +8,7 @@ describe('RadiusSlider', () => {
     render(<RadiusSlider value={1500} onChange={vi.fn()} />);
     expect(screen.getByRole('slider', { name: 'Promień' })).toHaveAttribute(
       'aria-valuetext',
-      '1,5 km'
+      '1,5\u00a0km'
     );
   });
 

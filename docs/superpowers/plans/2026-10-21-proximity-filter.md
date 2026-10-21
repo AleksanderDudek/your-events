@@ -305,21 +305,21 @@ git commit -m "feat(geo): distances, bounding boxes and radius limits for proxim
 ```ts
 describe('formatDistance', () => {
   it('says metres under a kilometre, rounded to tens', () => {
-    expect(formatDistance(847)).toBe('850 m');
-    expect(formatDistance(4)).toBe('0 m');
+    expect(formatDistance(847)).toBe('850\u00a0m');
+    expect(formatDistance(4)).toBe('0\u00a0m');
   });
 
   it('switches to kilometres with one decimal, in the interface language', () => {
-    expect(formatDistance(1500, 'pl')).toBe('1,5 km');
-    expect(formatDistance(1500, 'en')).toBe('1.5 km');
+    expect(formatDistance(1500, 'pl')).toBe('1,5\u00a0km');
+    expect(formatDistance(1500, 'en')).toBe('1.5\u00a0km');
   });
 
   it('drops a trailing zero, so a whole radius reads "2 km"', () => {
-    expect(formatDistance(2000)).toBe('2 km');
+    expect(formatDistance(2000)).toBe('2\u00a0km');
   });
 
   it('rounds 995 m up into kilometres rather than printing "1000 m"', () => {
-    expect(formatDistance(995)).toBe('1 km');
+    expect(formatDistance(995)).toBe('1\u00a0km');
   });
 });
 
@@ -328,7 +328,7 @@ describe('formatEventDistance', () => {
     ({ location: { name: 'X', city: 'Wrocław', lat, lng } }) as Event;
 
   it('formats the distance from the origin to the venue', () => {
-    expect(formatEventDistance(at(51.1176, 17.032), { lat: 51.11, lng: 17.032 })).toBe('850 m');
+    expect(formatEventDistance(at(51.1176, 17.032), { lat: 51.11, lng: 17.032 })).toBe('850\u00a0m');
   });
 
   it('is undefined without an origin or without coordinates', () => {
@@ -361,11 +361,11 @@ and after `formatEventTime`:
  */
 export function formatDistance(meters: number, locale: string = 'pl'): string {
   const rounded = Math.round(meters / 10) * 10;
-  if (rounded < 1000) return `${rounded} m`;
+  if (rounded < 1000) return `${rounded}\u00a0m`;
   const km = new Intl.NumberFormat(intlLocale(locale), { maximumFractionDigits: 1 }).format(
     meters / 1000
   );
-  return `${km} km`;
+  return `${km}\u00a0km`;
 }
 
 /** How far an event's venue is from `origin`, formatted — undefined when either end is unknown. */
@@ -1933,7 +1933,7 @@ describe('RadiusSlider', () => {
     render(<RadiusSlider value={1500} onChange={vi.fn()} />);
     expect(screen.getByRole('slider', { name: 'Promień' })).toHaveAttribute(
       'aria-valuetext',
-      '1,5 km'
+      '1,5\u00a0km'
     );
   });
 
@@ -3007,8 +3007,8 @@ git commit -m "feat(filters): the nearby section in the filter panel"
   it('says how far the venue is from the chosen point', () => {
     const origin = { lat: (event.location.lat as number) + 0.0076, lng: event.location.lng as number };
     render(<EventCard event={event} distanceFrom={origin} />);
-    expect(screen.getByText('850 m')).toBeInTheDocument();
-    expect(screen.getByRole('article')).toHaveAccessibleName(/850 m od wybranego punktu/);
+    expect(screen.getByText('850\u00a0m')).toBeInTheDocument();
+    expect(screen.getByRole('article')).toHaveAccessibleName(/850\u00a0m od wybranego punktu/);
   });
 ```
 
@@ -3044,7 +3044,7 @@ with `beforeEach(() => { mocks.filters = { ...baseFilters }; });`, and add:
   it('shows the proximity filter as a chip naming the radius and the place', () => {
     mocks.filters = { ...baseFilters, near: { lat: 51.11, lng: 17.032, radius: 1500, label: 'Rynek' } };
     render(<EventsListView />);
-    expect(screen.getByText('W promieniu 1,5 km: Rynek')).toBeInTheDocument();
+    expect(screen.getByText('W promieniu 1,5\u00a0km: Rynek')).toBeInTheDocument();
   });
 ```
 
