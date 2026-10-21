@@ -251,7 +251,8 @@ export const TOUR_STEPS: readonly TourStep[] = [
  *
  * On a phone this is also what quietly reshapes the story: nothing is dropped,
  * because every anchor the script uses exists in both layouts — the filter
- * panel is a Fab there rather than a sidebar, and the tooltip flips to fit.
+ * panel is a button at the bottom of the screen there rather than a sidebar,
+ * and the tooltip flips to fit.
  */
 export function visibleSteps(root: Pick<Document, 'querySelector'>): TourStep[] {
   return TOUR_STEPS.filter(

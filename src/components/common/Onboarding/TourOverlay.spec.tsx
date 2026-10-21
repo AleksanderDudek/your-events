@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeAll } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, onTestFinished, vi, beforeAll } from 'vitest';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LocaleProvider } from '@/i18n';
 import { TOUR_STEPS, type TourStep, type TourStepId } from '@/lib/tourSteps';
@@ -9,6 +9,10 @@ beforeAll(() => {
   // jsdom lays nothing out and ships no scrollIntoView; the overlay calls it to
   // bring each anchor on screen before measuring.
   Element.prototype.scrollIntoView = vi.fn();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 function stepsFor(ids: TourStepId[]): TourStep[] {
@@ -102,6 +106,9 @@ describe('TourOverlay', () => {
     const late = document.createElement('button');
     late.setAttribute('data-tour', 'filters');
     document.body.appendChild(late);
+    // Outside the render container, so cleanup would leave it for every later
+    // test's tour to find first.
+    onTestFinished(() => late.remove());
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
@@ -109,6 +116,38 @@ describe('TourOverlay', () => {
   it('gives up on an anchor that never arrives and moves on', async () => {
     const { onFinish } = renderTour(['results'], []);
     await waitFor(() => expect(onFinish).toHaveBeenCalledOnce(), { timeout: 5000 });
+  });
+
+  // On a phone the filters button grows a count as the story ticks filters, and
+  // being centred it moves sideways too — with no scroll or resize event.
+  it('follows its anchor when the anchor changes size', async () => {
+    let observed: { el: Element; resize: () => void } | undefined;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(private readonly callback: () => void) {}
+        observe(el: Element) {
+          observed = { el, resize: this.callback };
+        }
+        disconnect() {}
+      }
+    );
+    const { container } = renderTour(['categories'], ['filters']);
+    await screen.findByRole('dialog');
+
+    const anchor = container.querySelector('[data-tour="filters"]');
+    if (!observed || observed.el !== anchor) throw new Error('The anchor is not observed');
+    const { resize } = observed;
+    vi.spyOn(anchor, 'getBoundingClientRect').mockReturnValue({
+      top: 700,
+      left: 150,
+      width: 140,
+      height: 56,
+    } as DOMRect);
+    act(() => resize());
+
+    // 8 px of padding around the control.
+    expect(container.querySelector<HTMLElement>('.hole')?.style.left).toBe('142px');
   });
 
   it('moves focus into the tooltip so the keyboard follows the story', async () => {
