@@ -1,0 +1,26 @@
+// Short enough that the radius slider and the actions below it still fit on a
+// 720 px laptop screen without scrolling the dialog.
+.mapSlot {
+  height: clamp(240px, 45vh, 420px);
+  margin: 12px 0 8px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+// A div-icon: its SVG must not be boxed by Leaflet's default tile.
+.originIcon {
+  background: none !important;
+  border: none !important;
+}

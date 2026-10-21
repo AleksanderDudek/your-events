@@ -1,3 +1,6 @@
+import type { Event } from '@/types/event.types';
+import { distanceMeters, type LatLng } from './geo';
+
 class AppError extends Error {
   constructor(
     message: string,
@@ -114,6 +117,32 @@ function addMinutes(hhmm: string, minutes: number): string | null {
   const h = Math.floor(wrapped / 60);
   const m = wrapped % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/**
+ * A distance in the interface language: metres under a kilometre, rounded to
+ * tens ("850 m" reads as walking distance; "0,85 km" makes you do sums), then
+ * kilometres with at most one decimal ("1,5 km", "2 km"). Number and unit are
+ * joined by a no-break space so a line never splits between them.
+ */
+export function formatDistance(meters: number, locale: string = 'pl'): string {
+  const rounded = Math.round(meters / 10) * 10;
+  if (rounded < 1000) return `${rounded}\u00a0m`;
+  const km = new Intl.NumberFormat(intlLocale(locale), { maximumFractionDigits: 1 }).format(
+    meters / 1000
+  );
+  return `${km}\u00a0km`;
+}
+
+/** How far an event's venue is from `origin`, formatted — undefined when either end is unknown. */
+export function formatEventDistance(
+  event: Event,
+  origin: LatLng | null | undefined,
+  locale: string = 'pl'
+): string | undefined {
+  const { lat, lng } = event.location;
+  if (!origin || lat === null || lng === null) return undefined;
+  return formatDistance(distanceMeters(origin, { lat, lng }), locale);
 }
 
 export function totalPages(total: number, pageSize: number): number {

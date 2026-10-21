@@ -63,6 +63,21 @@ describe('SortSelect', () => {
     expect(onDirChange).toHaveBeenCalledWith('desc');
   });
 
+  it('does not offer distance without a point to measure from', async () => {
+    const user = userEvent.setup();
+    renderControl();
+    await user.click(screen.getByRole('combobox', { name: 'Sortuj' }));
+    expect(screen.queryByRole('option', { name: 'Odległość' })).not.toBeInTheDocument();
+  });
+
+  it('offers distance with one', async () => {
+    const user = userEvent.setup();
+    const { onSortChange } = renderControl({ withDistance: true });
+    await user.click(screen.getByRole('combobox', { name: 'Sortuj' }));
+    await user.click(screen.getByRole('option', { name: 'Odległość' }));
+    expect(onSortChange).toHaveBeenCalledWith('distance');
+  });
+
   it('passes accessibility check', async () => {
     const { container } = renderControl({ sort: 'date' });
     const results = await axe(container);

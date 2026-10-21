@@ -13,6 +13,7 @@ import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import { EventDateBadge, EventTimeLabel, EventVenue } from '@/components/ui/EventMeta/EventMeta';
 import {
   formatDateShort,
+  formatEventDistance,
   formatEventTime,
   categoryFallbackImage,
   categoryColorSolidVar,
@@ -21,6 +22,7 @@ import { useCity } from '@/config/CityProvider';
 import { eventPath } from '@/lib/slug';
 import { useTranslated } from '@/i18n/translation';
 import { useTranslation } from '@/i18n';
+import type { LatLng } from '@/lib/geo';
 import styles from './EventCard.module.scss';
 
 interface EventCardProps {
@@ -36,9 +38,11 @@ interface EventCardProps {
    * Server-rendered callers hold the real category map and should pass it.
    */
   href?: string;
+  /** The proximity filter's point, when one is set: the card then says how far away the venue is. */
+  distanceFrom?: LatLng | null;
 }
 
-export default function EventCard({ event, href: hrefOverride }: EventCardProps) {
+export default function EventCard({ event, href: hrefOverride, distanceFrom }: EventCardProps) {
   const { city } = useCity();
   const { displayNameToSlug } = useCategories();
   const href = hrefOverride ?? eventPath(city.id, event, displayNameToSlug);
@@ -57,14 +61,21 @@ export default function EventCard({ event, href: hrefOverride }: EventCardProps)
   const translatedName = useTranslated(event.name);
   // The accessible name is read aloud, so its date has to be in the language
   // the rest of the label is in.
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
+  const distance = formatEventDistance(event, distanceFrom, locale);
 
   return (
     <Link href={href as Route} className={styles.link}>
       <Card
         component="article"
         role="article"
-        aria-label={[translatedName, formatDateShort(event.date, locale), time, event.location.name]
+        aria-label={[
+          translatedName,
+          formatDateShort(event.date, locale),
+          time,
+          event.location.name,
+          distance && t.EVENT_DISTANCE(distance),
+        ]
           .filter(Boolean)
           .join(', ')}
         className={styles.card}
@@ -87,7 +98,7 @@ export default function EventCard({ event, href: hrefOverride }: EventCardProps)
           </div>
 
           <div className={styles.locationSlot}>
-            <EventVenue name={event.location.name} />
+            <EventVenue name={event.location.name} distance={distance} />
           </div>
 
           {/* Always rendered (even when empty) so the chip row reserves its

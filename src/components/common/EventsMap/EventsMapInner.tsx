@@ -6,12 +6,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet.markercluster';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { Circle, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import type { Event } from '@/types/event.types';
 import { useCategories } from '@/components/service/useCategories';
 import { useTranslated } from '@/i18n/translation';
 import {
+  AREA_PATH_OPTIONS,
   FALLBACK_COLOR,
+  ORIGIN_ANCHOR,
+  ORIGIN_SIZE,
+  originMarkup,
   PIN_ANCHOR,
   PIN_POPUP_ANCHOR,
   PIN_SIZE,
@@ -25,6 +29,13 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import styles from './EventsMap.module.scss';
+
+/** A proximity filter's circle: centre and radius in metres. */
+export interface MapArea {
+  lat: number;
+  lng: number;
+  radius: number;
+}
 
 export interface EventsMapInnerProps {
   events: Event[];
@@ -43,6 +54,10 @@ export interface EventsMapInnerProps {
   // popup's own href is built from `event.name` (it feeds the URL slug), so
   // the translated string cannot simply replace it on the event object.
   renderPopup?: (event: Event, translatedName: string) => string;
+  // A proximity filter's circle. Drawn with its centre, and — with fitToEvents
+  // — framed instead of the pins: every pin is inside it anyway, and the circle
+  // also shows the area that came up empty.
+  area?: MapArea | null;
 }
 
 // Category of the events under a marker, stashed on the Leaflet marker so a
@@ -95,6 +110,7 @@ interface MarkersLayerProps {
   // cannot be called per event, so the translated names arrive precomputed.
   translatedNames: Map<string, string>;
   fitToEvents: boolean;
+  area: MapArea | null;
 }
 
 function MarkersLayer({
@@ -104,9 +120,15 @@ function MarkersLayer({
   renderPopup,
   translatedNames,
   fitToEvents,
+  area,
 }: MarkersLayerProps) {
   const map = useMap();
   const layerRef = useRef<L.LayerGroup | null>(null);
+  // Primitives, not the object: the filters are re-parsed on every render, so
+  // depending on `area` itself would rebuild every marker on every render.
+  const areaLat = area?.lat;
+  const areaLng = area?.lng;
+  const areaRadius = area?.radius;
 
   useEffect(() => {
     // Tear down whatever was there from the previous render before adding the
@@ -158,9 +180,10 @@ function MarkersLayer({
     layerRef.current = group;
 
     if (fitToEvents && usable.length > 0) {
-      const bounds = L.latLngBounds(
-        usable.map((e) => [e.location.lat as number, e.location.lng as number])
-      );
+      const bounds =
+        areaLat !== undefined && areaLng !== undefined && areaRadius !== undefined
+          ? L.latLng(areaLat, areaLng).toBounds(areaRadius * 2)
+          : L.latLngBounds(usable.map((e) => [e.location.lat as number, e.location.lng as number]));
       // padding keeps pins off the edges where popups would clip.
       map.fitBounds(bounds, { padding: [32, 32], maxZoom: 15 });
     }
@@ -171,9 +194,52 @@ function MarkersLayer({
         layerRef.current = null;
       }
     };
-  }, [map, events, colorFor, disableClustering, renderPopup, translatedNames, fitToEvents]);
+  }, [
+    map,
+    events,
+    colorFor,
+    disableClustering,
+    renderPopup,
+    translatedNames,
+    fitToEvents,
+    areaLat,
+    areaLng,
+    areaRadius,
+  ]);
 
   return null;
+}
+
+// The circle and its centre. Neither takes clicks: they would otherwise sit on
+// top of the very pins they surround.
+function AreaLayer({ area }: { area: MapArea }) {
+  const icon = useMemo(
+    () =>
+      L.divIcon({
+        html: originMarkup(),
+        className: styles.originIcon,
+        iconSize: ORIGIN_SIZE,
+        iconAnchor: ORIGIN_ANCHOR,
+      }),
+    []
+  );
+  return (
+    <>
+      <Circle
+        center={[area.lat, area.lng]}
+        radius={area.radius}
+        pathOptions={AREA_PATH_OPTIONS}
+        interactive={false}
+      />
+      <Marker
+        position={[area.lat, area.lng]}
+        icon={icon}
+        interactive={false}
+        keyboard={false}
+        zIndexOffset={-1000}
+      />
+    </>
+  );
 }
 
 // Leaflet popups (and the marker's native title tooltip) are raw strings
@@ -206,6 +272,7 @@ export default function EventsMapInner({
   disableClustering = false,
   interactive = true,
   renderPopup,
+  area = null,
 }: EventsMapInnerProps) {
   const { byDisplayName } = useCategories();
   const [translatedNames, setTranslatedNames] = useState<Map<string, string>>(new Map());
@@ -246,6 +313,7 @@ export default function EventsMapInner({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {area && <AreaLayer area={area} />}
         <MarkersLayer
           events={events}
           colorFor={colorFor}
@@ -253,6 +321,7 @@ export default function EventsMapInner({
           renderPopup={renderPopup}
           translatedNames={translatedNames}
           fitToEvents={fitToEvents}
+          area={area}
         />
       </MapContainer>
     </div>

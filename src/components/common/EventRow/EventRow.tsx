@@ -10,17 +10,21 @@ import { useCategories } from '@/components/service/useCategories';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import { EventDateBadge, EventTimeLabel, EventVenue } from '@/components/ui/EventMeta/EventMeta';
-import { formatEventTime } from '@/lib/utils';
+import { formatEventDistance, formatEventTime } from '@/lib/utils';
 import { useCity } from '@/config/CityProvider';
 import { eventPath } from '@/lib/slug';
 import { useTranslated } from '@/i18n/translation';
+import { useTranslation } from '@/i18n';
+import type { LatLng } from '@/lib/geo';
 import styles from './EventRow.module.scss';
 
 interface EventRowProps {
   event: Event;
+  /** The proximity filter's point, when one is set: the row then says how far away the venue is. */
+  distanceFrom?: LatLng | null;
 }
 
-export default function EventRow({ event }: EventRowProps) {
+export default function EventRow({ event, distanceFrom }: EventRowProps) {
   const { city } = useCity();
   const { byDisplayName, displayNameToSlug } = useCategories();
   const href = eventPath(city.id, event, displayNameToSlug);
@@ -37,13 +41,22 @@ export default function EventRow({ event }: EventRowProps) {
   // Hook, not <Translated/>, because it also feeds the aria-label below, which
   // needs a plain string. The venue name stays Polish — a proper noun.
   const translatedName = useTranslated(event.name);
+  const { t, locale } = useTranslation();
+  const distance = formatEventDistance(event, distanceFrom, locale);
 
   return (
     <Link href={href as Route} className={styles.link}>
       <Box
         component="article"
         role="article"
-        aria-label={`${translatedName}, ${event.date}, ${event.location.name}`}
+        aria-label={[
+          translatedName,
+          event.date,
+          event.location.name,
+          distance && t.EVENT_DISTANCE(distance),
+        ]
+          .filter(Boolean)
+          .join(', ')}
         className={styles.row}
       >
         <Box className={styles.dateCol}>
@@ -65,7 +78,7 @@ export default function EventRow({ event }: EventRowProps) {
 
           <Box className={styles.metaLine}>
             <Box className={styles.venue}>
-              <EventVenue name={event.location.name} />
+              <EventVenue name={event.location.name} distance={distance} />
             </Box>
             {visibleCategories.length > 0 && (
               <Box className={styles.chips}>

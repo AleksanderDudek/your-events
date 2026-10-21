@@ -1,4 +1,5 @@
 import { env } from './env';
+import { distanceMeters } from '@/lib/geo';
 
 // Per-city configuration. Each Polish voivodeship capital city has its own
 // Supabase project (events live in city-specific databases). The Supabase
@@ -265,22 +266,13 @@ export function isCityId(value: unknown): value is CityId {
   return typeof value === 'string' && CITY_INDEX.has(value);
 }
 
-// Haversine — kilometres. Good enough for nearest-city snapping.
+// Nearest by great-circle distance — good enough for snapping to a city.
 export function findNearestAvailableCity(lat: number, lng: number): CityConfig {
-  const R = 6371;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
   const pool = AVAILABLE_CITIES.length > 0 ? AVAILABLE_CITIES : CITIES;
   let nearest = pool[0];
   let best = Infinity;
   for (const city of pool) {
-    const dLat = toRad(city.coordinates.lat - lat);
-    const dLng = toRad(city.coordinates.lng - lng);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat)) *
-        Math.cos(toRad(city.coordinates.lat)) *
-        Math.sin(dLng / 2) ** 2;
-    const distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = distanceMeters({ lat, lng }, city.coordinates);
     if (distance < best) {
       best = distance;
       nearest = city;

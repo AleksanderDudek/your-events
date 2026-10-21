@@ -6,6 +6,7 @@ import {
   clusterRadiusForZoom,
   clusterSize,
   glyphMarkup,
+  originMarkup,
   pinMarkup,
   uniformValue,
 } from './markerVisuals';
@@ -111,5 +112,14 @@ describe('clusterMarkup', () => {
 
   it('sizes the bubble from the count', () => {
     expect(clusterMarkup(200, null, null)).toContain(`--cluster-size:${clusterSize(200)}px`);
+  });
+});
+
+describe('originMarkup', () => {
+  // The point a radius is measured from must never be mistaken for an event.
+  it('is a ringed dot, not a teardrop pin', () => {
+    const markup = originMarkup();
+    expect(markup).toContain('<circle');
+    expect(markup).not.toContain('<path');
   });
 });

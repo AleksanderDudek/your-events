@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi } from 'vitest';
 import FilterPanel from './FilterPanel';
@@ -48,5 +50,20 @@ describe('FilterPanel', () => {
   it('shows search input', () => {
     render(<FilterPanel />);
     expect(screen.getByPlaceholderText('Szukaj wydarzenia lub miejsca...')).toBeInTheDocument();
+  });
+
+  it('offers a nearby section with the three ways to set a point', async () => {
+    const user = userEvent.setup();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <FilterPanel />
+      </QueryClientProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'W pobliżu' }));
+
+    expect(await screen.findByRole('button', { name: 'Użyj mojej lokalizacji' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Adres lub miejsce' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wskaż na mapie' })).toBeInTheDocument();
   });
 });

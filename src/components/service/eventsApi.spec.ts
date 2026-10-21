@@ -119,6 +119,7 @@ function makeFilters(overrides: Partial<EventFilters> = {}): EventFilters {
     hourFrom: null,
     hourTo: null,
     freeOnly: false,
+    near: null,
     page: 1,
     pageSize: 15,
     viewMode: 'grid',
@@ -131,12 +132,16 @@ function makeFilters(overrides: Partial<EventFilters> = {}): EventFilters {
 function setup() {
   const results = {
     events: { data: [], count: 0, error: null } as ListResult,
+    // Answers for successive events queries, in order — a client-filtered list
+    // makes two (the scan, then the page). Falls back to `events` once empty.
+    eventsQueue: [] as ListResult[],
     single: { data: null, error: null } as SingleResult,
     categories: { data: [], count: null, error: null } as ListResult,
   };
 
   let eventsBuilder!: Builder;
   let categoriesBuilder!: Builder;
+  const eventsBuilders: Builder[] = [];
 
   const client = {
     from: vi.fn((table: string) => {
@@ -144,7 +149,9 @@ function setup() {
         categoriesBuilder = makeBuilder(() => results.categories, () => ({ data: null, error: null }));
         return categoriesBuilder;
       }
-      eventsBuilder = makeBuilder(() => results.events, () => results.single);
+      const queued = results.eventsQueue.shift();
+      eventsBuilder = makeBuilder(() => queued ?? results.events, () => results.single);
+      eventsBuilders.push(eventsBuilder);
       return eventsBuilder;
     }),
   };
@@ -155,6 +162,10 @@ function setup() {
     results,
     get eventsBuilder() {
       return eventsBuilder;
+    },
+    /** Every events query made, in order. */
+    get eventsBuilders() {
+      return eventsBuilders;
     },
     get categoriesBuilder() {
       return categoriesBuilder;
@@ -744,13 +755,191 @@ describe('eventsApi', () => {
         expect(total).toBe(2);
       });
 
-      it('does not push pagination to the db when free-only filtering', async () => {
+      // The database cannot page what the browser filters, so it is never asked
+      // for the list page: it is scanned in its own fixed-size pages, and the
+      // list page is cut from the ids the scan kept.
+      it('scans in fixed-size pages rather than asking the db for the list page', async () => {
         const s = setup();
         s.results.events = { data: [makeRow({ is_free: true, price: null })], count: 1, error: null };
 
-        await fetchEvents('szczecin', makeFilters({ freeOnly: true }));
+        await fetchEvents('szczecin', makeFilters({ freeOnly: true, page: 2 }));
 
-        expect(s.eventsBuilder.range).not.toHaveBeenCalled();
+        expect(s.eventsBuilders[0].range).toHaveBeenCalledWith(0, 999);
+        expect(s.eventsBuilders[0].range).not.toHaveBeenCalledWith(15, 29);
+      });
+    });
+
+    describe('proximity', () => {
+      // Wrocław's Rynek; 0.009° of latitude is ~1 km.
+      const NEAR = { lat: 51.11, lng: 17.032, radius: 1000, label: null };
+      const at = (id: number, dLat: number, dLng: number) =>
+        makeRow({ id, lat: 51.11 + dLat, lng: 17.032 + dLng });
+
+      it('narrows the database to the box around the circle', async () => {
+        const s = setup();
+
+        await fetchMapEvents('wroclaw', makeFilters({ near: NEAR }));
+
+        expect(s.eventsBuilder.gte).toHaveBeenCalledWith('lat', expect.closeTo(51.101, 3));
+        expect(s.eventsBuilder.lte).toHaveBeenCalledWith('lat', expect.closeTo(51.119, 3));
+        expect(s.eventsBuilder.gte).toHaveBeenCalledWith('lng', expect.closeTo(17.0177, 3));
+        expect(s.eventsBuilder.lte).toHaveBeenCalledWith('lng', expect.closeTo(17.0463, 3));
+      });
+
+      it('keeps only the map rows inside the circle, not merely inside the box', async () => {
+        const s = setup();
+        // 945 m due north: inside. ~1093 m north-east: in the box's corner,
+        // outside the circle.
+        s.results.events = {
+          data: [at(1, 0, 0), at(2, 0.0085, 0), at(3, 0.007, 0.011)],
+          count: 3,
+          error: null,
+        };
+
+        const { events, total } = await fetchMapEvents('wroclaw', makeFilters({ near: NEAR }));
+
+        expect(events.map((e) => e.id)).toEqual(['1', '2']);
+        expect(total).toBe(2);
+      });
+
+      it('scans slim rows, then fetches only the requested page in full', async () => {
+        const s = setup();
+        const rows = Array.from({ length: 16 }, (_, i) => at(i + 1, i * 0.0001, 0));
+        s.results.eventsQueue = [
+          { data: rows, count: null, error: null },
+          { data: [...rows].reverse(), count: null, error: null },
+        ];
+
+        const { events, total } = await fetchEvents('wroclaw', makeFilters({ near: NEAR, page: 2 }));
+
+        const [scan, hydrate] = s.eventsBuilders;
+        expect(scan.select).toHaveBeenCalledWith('id,lat,lng,is_free,price,price_label', undefined);
+        expect(scan.range).toHaveBeenCalledWith(0, 999);
+        expect(hydrate.in).toHaveBeenCalledWith('id', [16]);
+        expect(hydrate.range).not.toHaveBeenCalled();
+        expect(events.map((e) => e.id)).toEqual(['16']);
+        expect(total).toBe(16);
+      });
+
+      it('returns the page in the order the scan found it, whatever order the rows arrive in', async () => {
+        const s = setup();
+        const rows = [at(1, 0, 0), at(2, 0.001, 0), at(3, 0.002, 0)];
+        s.results.eventsQueue = [
+          { data: rows, count: null, error: null },
+          { data: [rows[2], rows[0], rows[1]], count: null, error: null },
+        ];
+
+        const { events } = await fetchEvents('wroclaw', makeFilters({ near: NEAR }));
+
+        expect(events.map((e) => e.id)).toEqual(['1', '2', '3']);
+      });
+
+      it('keeps scanning while pages come back full', async () => {
+        const s = setup();
+        s.results.eventsQueue = [
+          { data: Array.from({ length: 1000 }, (_, i) => at(i + 1, 0, 0)), count: null, error: null },
+          { data: [at(1001, 0, 0)], count: null, error: null },
+          { data: [], count: null, error: null },
+        ];
+
+        const { total } = await fetchEvents('wroclaw', makeFilters({ near: NEAR }));
+
+        expect(total).toBe(1001);
+        expect(s.eventsBuilders[0].range).toHaveBeenCalledWith(0, 999);
+        expect(s.eventsBuilders[1].range).toHaveBeenCalledWith(1000, 1999);
+      });
+
+      // Rows sharing a date and a start time could otherwise trade places
+      // between two pages of the scan and be counted twice, or not at all.
+      it('breaks ordering ties by id so the scan pages are stable', async () => {
+        const s = setup();
+        s.results.eventsQueue = [{ data: [], count: null, error: null }];
+
+        await fetchEvents('wroclaw', makeFilters({ near: NEAR }));
+
+        expect(s.eventsBuilders[0].order).toHaveBeenLastCalledWith('id', { ascending: true });
+      });
+
+      it('skips the page request when the page is empty', async () => {
+        const s = setup();
+        s.results.eventsQueue = [{ data: [at(1, 0.007, 0.011)], count: null, error: null }];
+
+        const { events, total } = await fetchEvents('wroclaw', makeFilters({ near: NEAR }));
+
+        expect(events).toEqual([]);
+        expect(total).toBe(0);
+        expect(s.eventsBuilders).toHaveLength(1);
+      });
+
+      it('orders by distance in the scan, nearest first', async () => {
+        const s = setup();
+        // The database's (date) order: far, near, middle.
+        const rows = [at(1, 0.006, 0), at(2, 0.001, 0), at(3, 0.003, 0)];
+        s.results.eventsQueue = [
+          { data: rows, count: null, error: null },
+          { data: rows, count: null, error: null },
+        ];
+
+        const { events } = await fetchEvents('wroclaw', makeFilters({ near: NEAR, sort: 'distance' }));
+
+        expect(events.map((e) => e.id)).toEqual(['2', '3', '1']);
+      });
+
+      it('orders by distance farthest first for dir: desc, ties keeping date order', async () => {
+        const s = setup();
+        const rows = [at(1, 0.001, 0), at(2, 0.006, 0), at(3, 0.001, 0)];
+        s.results.eventsQueue = [
+          { data: rows, count: null, error: null },
+          { data: rows, count: null, error: null },
+        ];
+
+        const { events } = await fetchEvents(
+          'wroclaw',
+          makeFilters({ near: NEAR, sort: 'distance', dir: 'desc' })
+        );
+
+        expect(events.map((e) => e.id)).toEqual(['2', '1', '3']);
+      });
+
+      it('asks the database for ascending date order under a distance sort, either direction', async () => {
+        const s = setup();
+        s.results.eventsQueue = [{ data: [], count: null, error: null }];
+
+        await fetchEvents('wroclaw', makeFilters({ near: NEAR, sort: 'distance', dir: 'desc' }));
+
+        const scan = s.eventsBuilders[0];
+        expect(scan.order).toHaveBeenNthCalledWith(1, 'date', { ascending: true });
+        expect(scan.order).toHaveBeenNthCalledWith(2, 'time_start', { ascending: true });
+      });
+
+      it('applies free-only and the circle together', async () => {
+        const s = setup();
+        const rows = [
+          makeRow({ id: 1, lat: 51.11, lng: 17.032, is_free: true, price: null, price_label: '' }),
+          makeRow({ id: 2, lat: 51.11, lng: 17.032, is_free: false, price: 50, price_label: '50 zł' }),
+          makeRow({ id: 3, lat: 51.13, lng: 17.032, is_free: true, price: null, price_label: '' }),
+        ];
+        s.results.eventsQueue = [
+          { data: rows, count: null, error: null },
+          { data: rows, count: null, error: null },
+        ];
+
+        const { events, total } = await fetchEvents(
+          'wroclaw',
+          makeFilters({ near: NEAR, freeOnly: true })
+        );
+
+        expect(events.map((e) => e.id)).toEqual(['1']);
+        expect(total).toBe(1);
+      });
+
+      it('throws ServerError when the scan fails', async () => {
+        const s = setup();
+        s.results.eventsQueue = [{ data: null, count: null, error: { message: 'boom' } }];
+
+        await expect(fetchEvents('wroclaw', makeFilters({ near: NEAR }))).rejects.toBeInstanceOf(
+          ServerError
+        );
       });
     });
 

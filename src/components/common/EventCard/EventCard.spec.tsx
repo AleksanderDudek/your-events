@@ -93,4 +93,22 @@ describe('EventCard', () => {
       );
     });
   });
+
+  describe('distance from the chosen point', () => {
+    const placed: Event = { ...mockEvent, location: { ...mockEvent.location, lat: 51.11, lng: 17.032 } };
+    // 0.0076° of latitude north of the venue: ~845 m.
+    const origin = { lat: 51.1176, lng: 17.032 };
+
+    it('says how far away the venue is, to the eye and to a screen reader', () => {
+      render(<EventCard event={placed} distanceFrom={origin} />);
+      // \s: Testing Library collapses the no-break space to a plain one.
+      expect(screen.getByText(/^850\sm$/)).toBeInTheDocument();
+      expect(screen.getByRole('article')).toHaveAccessibleName(/850\sm od wybranego punktu/);
+    });
+
+    it('says nothing when the venue has no coordinates', () => {
+      render(<EventCard event={mockEvent} distanceFrom={origin} />);
+      expect(screen.getByRole('article')).not.toHaveAccessibleName(/od wybranego punktu/);
+    });
+  });
 });

@@ -34,6 +34,7 @@ function preset(overrides: Partial<FilterPreset> = {}): FilterPreset {
       hourFrom: null,
       hourTo: null,
       freeOnly: true,
+      near: null,
       viewMode: 'grid',
       pageSize: 15,
     },
@@ -76,6 +77,27 @@ describe('MyFiltersView', () => {
     expect(
       screen.getByText('Taniec · Najbliższy weekend · tylko bezpłatne')
     ).toBeInTheDocument();
+  });
+
+  it('names the point and the radius of a nearby preset', () => {
+    seed([
+      preset({
+        filters: { ...preset().filters, near: { lat: 51.11, lng: 17.032, radius: 1500, label: 'Rynek' } },
+      }),
+    ]);
+    render(<MyFiltersView />);
+    expect(screen.getByText(/W promieniu 1,5\skm: Rynek$/)).toBeInTheDocument();
+  });
+
+  // A saved point is fixed; it is never "your location", which may have moved.
+  it('calls an unnamed saved point "selected point"', () => {
+    seed([
+      preset({
+        filters: { ...preset().filters, near: { lat: 51.11, lng: 17.032, radius: 1000, label: null } },
+      }),
+    ]);
+    render(<MyFiltersView />);
+    expect(screen.getByText(/W promieniu 1\skm: Wybrany punkt$/)).toBeInTheDocument();
   });
 
   it('says "all events" for a preset that filters nothing', () => {

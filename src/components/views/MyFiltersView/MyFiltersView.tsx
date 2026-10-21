@@ -24,6 +24,7 @@ import {
   presetHref,
 } from '@/lib/presets';
 import { getCity } from '@/config/cities';
+import { formatDistance } from '@/lib/utils';
 import type { FilterPreset } from '@/types/preset.types';
 import styles from './MyFiltersView.module.scss';
 import PresetEditorDialog from './PresetEditorDialog';
@@ -76,6 +77,16 @@ export default function MyFiltersView() {
       parts.push(t.PRESETS_SUMMARY_HOURS(preset.filters.hourFrom, preset.filters.hourTo));
     }
     if (preset.filters.freeOnly) parts.push(t.PRESETS_SUMMARY_FREE);
+    if (preset.filters.near) {
+      parts.push(
+        t.NEAR_CHIP(
+          formatDistance(preset.filters.near.radius, locale),
+          // A saved point is fixed, so it is never "your location": that may
+          // have moved since.
+          preset.filters.near.label ?? t.NEAR_PICKED_POINT
+        )
+      );
+    }
 
     return parts.length ? parts.join(' · ') : t.PRESETS_SUMMARY_ANY;
   };

@@ -1,4 +1,4 @@
-import { PageSize, ViewMode, Weekday } from './filter.types';
+import { NearFilter, PageSize, ViewMode, Weekday } from './filter.types';
 
 /**
  * When a preset's date filter should point, resolved at the moment the user
@@ -26,6 +26,10 @@ export interface PresetFilters {
   hourFrom: string | null;
   hourTo: string | null;
   freeOnly: boolean;
+  // A fixed point: "near the office" means the office every time it is opened.
+  // (A "near me, wherever I am" preset would be the location twin of the
+  // relative date windows; nobody has asked for it yet.)
+  near: NearFilter | null;
   viewMode: ViewMode;
   pageSize: PageSize;
 }

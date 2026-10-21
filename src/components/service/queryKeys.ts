@@ -1,5 +1,11 @@
-import { EventFilters } from '@/types/filter.types';
+import { EventFilters, NearFilter } from '@/types/filter.types';
 import { CityId } from '@/config/cities';
+
+// The label names the point without moving it: two names for one point ask the
+// same question, so only the geometry identifies the answer.
+function nearShape(near: NearFilter | null): string | null {
+  return near ? `${near.lat},${near.lng},${near.radius}` : null;
+}
 
 // Only the dimensions fetchEvents actually queries on. viewMode is deliberately
 // excluded: grid/list/map render the very same rows, so keying on it would
@@ -16,6 +22,7 @@ function queryShape(filters: EventFilters) {
     hourFrom: filters.hourFrom,
     hourTo: filters.hourTo,
     freeOnly: filters.freeOnly,
+    near: nearShape(filters.near),
     page: filters.page,
     pageSize: filters.pageSize,
     // The ordering identifies the answer as much as the filters do. Leaving it

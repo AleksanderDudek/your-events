@@ -33,6 +33,13 @@ describe('PrivacyView', () => {
     ).toBeInTheDocument();
   });
 
+  it('explains what happens to a location and to a typed address', () => {
+    render(<PrivacyView />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Lokalizacja' })).toBeInTheDocument();
+    expect(screen.getByText(/zaokrąglamy ją do ok\. 100 m/)).toBeInTheDocument();
+    expect(screen.getByText(/Komoot GmbH/)).toBeInTheDocument();
+  });
+
   it('passes accessibility check', async () => {
     const { container } = render(<PrivacyView />);
     const results = await axe(container);

@@ -40,6 +40,13 @@
   border: none !important;
 }
 
+// The proximity filter's centre marker — a div-icon like the pins, so its SVG
+// must not be boxed by Leaflet's default tile either.
+.originIcon {
+  background: none !important;
+  border: none !important;
+}
+
 // Cluster bubbles. markercluster ships its own blue-gradient artwork via
 // MarkerCluster.Default.css; these rules replace it with the category colour
 // the bubble was built with, so a cluster reads like the pins underneath it
