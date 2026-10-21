@@ -50,6 +50,17 @@ function reconcile(currentQuery: string): void {
   forgetPending(); // someone else moved us (back/forward, a Link, a city switch)
 }
 
+/**
+ * What "clear filters" leaves alone: how the list is shown — layout, page size,
+ * ordering — as opposed to what is in it. countActiveFilters skips these too.
+ */
+function displayPreferences(
+  filters: EventFilters
+): Pick<EventFilters, 'viewMode' | 'pageSize' | 'sort' | 'dir'> {
+  const { viewMode, pageSize, sort, dir } = filters;
+  return { viewMode, pageSize, sort, dir };
+}
+
 function liveQuery(fallback: string): string {
   if (typeof window === 'undefined') return fallback;
   return new URLSearchParams(window.location.search).toString();
@@ -126,16 +137,12 @@ export function useFilterNavigation() {
 
   /**
    * Reset every filter (search, categories, date, hour, freeOnly, near, page) to its
-   * default. viewMode and pageSize are display preferences, not filters, so the
-   * user keeps whatever they picked.
+   * default. viewMode, pageSize and the ordering are display preferences, not
+   * filters, so the user keeps whatever they picked. (A distance ordering goes
+   * with the point it measured from — see filtersToSearchParams.)
    */
   const clearFilters = useCallback(() => {
-    const current = readCurrentFilters();
-    applyFilters({
-      ...getDefaultFilters(),
-      viewMode: current.viewMode,
-      pageSize: current.pageSize,
-    });
+    applyFilters({ ...getDefaultFilters(), ...displayPreferences(readCurrentFilters()) });
   }, [applyFilters, readCurrentFilters]);
 
   /**
@@ -145,12 +152,7 @@ export function useFilterNavigation() {
    */
   const clearFiltersExceptSearch = useCallback(() => {
     const current = readCurrentFilters();
-    applyFilters({
-      ...getDefaultFilters(),
-      viewMode: current.viewMode,
-      pageSize: current.pageSize,
-      search: current.search,
-    });
+    applyFilters({ ...getDefaultFilters(), ...displayPreferences(current), search: current.search });
   }, [applyFilters, readCurrentFilters]);
 
   return {

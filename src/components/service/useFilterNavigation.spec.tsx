@@ -73,6 +73,21 @@ describe('useFilterNavigation', () => {
     expect(window.location.search).toBe('?search=jazz&viewMode=row');
   });
 
+  // Ordering is a display preference too — the active-filter count leaves it
+  // out, so a clear that reset it would undo something the count never showed.
+  it.each(['clearFilters', 'clearFiltersExceptSearch'] as const)(
+    '%s keeps the ordering',
+    async (clear) => {
+      const useFilterNavigation = await loadHook();
+      settleUrl('categories=muzyka&sort=price&dir=desc');
+      const { result } = renderHook(() => useFilterNavigation());
+
+      act(() => result.current[clear]());
+
+      expect(window.location.search).toBe('?sort=price&dir=desc');
+    }
+  );
+
   // The exported build's router dedupes ANY same-route push against the URL the
   // page was cold-loaded with: it replaces the requested query with the loaded
   // one, which flipped the view back and pinned the list on page 1. Every
