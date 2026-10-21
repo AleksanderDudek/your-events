@@ -14,6 +14,7 @@ const EventsMapInner = dynamic(() => import('./EventsMapInner'), {
 });
 
 export type EventsMapProps = EventsMapInnerProps;
+export type { MapArea } from './EventsMapInner';
 
 export default function EventsMap(props: EventsMapProps) {
   return <EventsMapInner {...props} />;

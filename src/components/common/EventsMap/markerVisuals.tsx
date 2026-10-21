@@ -116,3 +116,30 @@ export function clusterMarkup(count: number, category: string | null, color: str
     '</div>',
   ].join('');
 }
+
+// The point a proximity filter measures from: a ringed dot rather than a
+// teardrop, so it can never be read as an event.
+const ORIGIN_DIAMETER = 26;
+
+export function originMarkup(): string {
+  const r = ORIGIN_DIAMETER / 2;
+  return [
+    `<svg width="${ORIGIN_DIAMETER}" height="${ORIGIN_DIAMETER}" viewBox="0 0 ${ORIGIN_DIAMETER} ${ORIGIN_DIAMETER}"`,
+    ' xmlns="http://www.w3.org/2000/svg" aria-hidden="true">',
+    `<circle cx="${r}" cy="${r}" r="${r - 2}" fill="${FALLBACK_COLOR}" stroke="#ffffff" stroke-width="3"/>`,
+    `<circle cx="${r}" cy="${r}" r="3.5" fill="#ffffff"/>`,
+    '</svg>',
+  ].join('');
+}
+
+export const ORIGIN_SIZE: [number, number] = [ORIGIN_DIAMETER, ORIGIN_DIAMETER];
+export const ORIGIN_ANCHOR: [number, number] = [ORIGIN_DIAMETER / 2, ORIGIN_DIAMETER / 2];
+
+/** Leaflet path options for a proximity filter's circle. */
+export const AREA_PATH_OPTIONS = {
+  color: FALLBACK_COLOR,
+  weight: 2,
+  opacity: 0.9,
+  fillColor: FALLBACK_COLOR,
+  fillOpacity: 0.08,
+} as const;
