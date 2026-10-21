@@ -86,4 +86,22 @@ describe('EventRow', () => {
       expect(screen.getByText(/35/)).toBeInTheDocument();
     });
   });
+
+  describe('distance from the chosen point', () => {
+    const placed: Event = { ...mockEvent, location: { ...mockEvent.location, lat: 51.11, lng: 17.032 } };
+    // 0.0076° of latitude north of the venue: ~845 m.
+    const origin = { lat: 51.1176, lng: 17.032 };
+
+    it('says how far away the venue is, to the eye and to a screen reader', () => {
+      render(<EventRow event={placed} distanceFrom={origin} />);
+      // \s: Testing Library collapses the no-break space to a plain one.
+      expect(screen.getByText(/^850\sm$/)).toBeInTheDocument();
+      expect(screen.getByRole('article')).toHaveAccessibleName(/850\sm od wybranego punktu/);
+    });
+
+    it('says nothing without a point to measure from', () => {
+      render(<EventRow event={placed} />);
+      expect(screen.getByRole('article')).not.toHaveAccessibleName(/od wybranego punktu/);
+    });
+  });
 });

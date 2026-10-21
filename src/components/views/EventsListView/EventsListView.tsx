@@ -23,9 +23,11 @@ import ErrorState from '@/components/ui/ErrorState/ErrorState';
 import SortSelect from '@/components/ui/SortSelect/SortSelect';
 import { useCity } from '@/config/CityProvider';
 import { useFilterNavigation } from '@/components/service/useFilterNavigation';
+import { nearPlaceName } from '@/components/common/NearbyFilter/nearPlaceName';
 import { countActiveFilters } from '@/lib/filterUtils';
 import { PAGE_SIZE_OPTIONS, withBasePath } from '@/lib/constants';
 import { eventPath } from '@/lib/slug';
+import { formatDistance } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import { PageSize, ViewMode, SortKey, SortDir, EventFilters } from '@/types/filter.types';
 import { Event } from '@/types/event.types';
@@ -105,6 +107,7 @@ function renderBody({
         zoom={12}
         height={620}
         fitToEvents
+        area={filters.near}
         renderPopup={(ev, translatedName) => {
           const safeName = translatedName.replace(/</g, '&lt;');
           // Venue name is a proper noun, left untranslated.
@@ -127,7 +130,11 @@ function renderBody({
       />
     );
   }
-  return filters.viewMode === 'grid' ? <EventGrid events={events} /> : <EventList events={events} />;
+  return filters.viewMode === 'grid' ? (
+    <EventGrid events={events} origin={filters.near} />
+  ) : (
+    <EventList events={events} origin={filters.near} />
+  );
 }
 
 export default function EventsListView() {
@@ -143,7 +150,7 @@ export default function EventsListView() {
   } = useMapEvents(isMapView);
   const { bySlug, displayNameToSlug } = useCategories();
   const { city } = useCity();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const {
     readCurrentFilters,
     updateFilters: updateFilter,
@@ -163,6 +170,12 @@ export default function EventsListView() {
   });
   if (filters.freeOnly) {
     activeChips.push({ key: 'freeOnly', label: t.FILTER_FREE_ONLY });
+  }
+  if (filters.near) {
+    activeChips.push({
+      key: 'near',
+      label: t.NEAR_CHIP(formatDistance(filters.near.radius, locale), nearPlaceName(filters.near, t)),
+    });
   }
 
 
@@ -225,6 +238,7 @@ export default function EventsListView() {
               dir={filters.dir}
               onSortChange={(sort: SortKey) => updateFilter({ sort })}
               onDirChange={(dir: SortDir) => updateFilter({ dir })}
+              withDistance={filters.near !== null}
             />
             <ViewToggle
               value={filters.viewMode}
@@ -259,6 +273,7 @@ export default function EventsListView() {
                 onDelete={() => {
                   if (chip.key === 'search') updateFilter({ search: '' });
                   else if (chip.key === 'freeOnly') updateFilter({ freeOnly: false });
+                  else if (chip.key === 'near') updateFilter({ near: null });
                   else if (chip.key.startsWith('wd-')) {
                     const day = Number(chip.key.slice(3));
                     updateFilter({

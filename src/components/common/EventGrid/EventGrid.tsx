@@ -3,6 +3,7 @@
 import Box from '@mui/material/Box';
 import { Event } from '@/types/event.types';
 import EventCard from '@/components/common/EventCard/EventCard';
+import type { LatLng } from '@/lib/geo';
 import styles from './EventGrid.module.scss';
 
 interface EventGridProps {
@@ -16,13 +17,15 @@ interface EventGridProps {
    * never generated. See EventCard's `href` prop.
    */
   hrefFor?: (event: Event) => string;
+  /** The proximity filter's point: each card then states its distance from it. */
+  origin?: LatLng | null;
 }
 
-export default function EventGrid({ events, hrefFor }: EventGridProps) {
+export default function EventGrid({ events, hrefFor, origin }: EventGridProps) {
   return (
     <Box className={styles.grid}>
       {events.map((event) => (
-        <EventCard key={event.id} event={event} href={hrefFor?.(event)} />
+        <EventCard key={event.id} event={event} href={hrefFor?.(event)} distanceFrom={origin} />
       ))}
     </Box>
   );

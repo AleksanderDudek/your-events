@@ -15,6 +15,8 @@ interface SortSelectProps {
   dir: SortDir;
   onSortChange: (sort: SortKey) => void;
   onDirChange: (dir: SortDir) => void;
+  /** Offer ordering by distance — only meaningful while there is a point to measure from. */
+  withDistance?: boolean;
 }
 
 const SORT_KEYS: SortKey[] = ['date', 'name', 'venue', 'price'];
@@ -22,7 +24,13 @@ const SORT_KEYS: SortKey[] = ['date', 'name', 'venue', 'price'];
 // Controlled, like the page-size Select beside it: the caller (EventsListView)
 // owns the state and writes through updateFilters, which already resets to
 // page 1 — this component holds none of its own.
-export default function SortSelect({ sort, dir, onSortChange, onDirChange }: SortSelectProps) {
+export default function SortSelect({
+  sort,
+  dir,
+  onSortChange,
+  onDirChange,
+  withDistance = false,
+}: SortSelectProps) {
   const { t } = useTranslation();
 
   const labels: Record<SortKey, string> = {
@@ -32,6 +40,7 @@ export default function SortSelect({ sort, dir, onSortChange, onDirChange }: Sor
     price: t.SORT_PRICE,
     distance: t.SORT_DISTANCE,
   };
+  const keys: SortKey[] = withDistance ? [...SORT_KEYS, 'distance'] : SORT_KEYS;
 
   const nextDir: SortDir = dir === 'asc' ? 'desc' : 'asc';
 
@@ -44,7 +53,7 @@ export default function SortSelect({ sort, dir, onSortChange, onDirChange }: Sor
           sx={{ fontSize: '0.8125rem' }}
           SelectDisplayProps={{ 'aria-label': t.SORT_LABEL }}
         >
-          {SORT_KEYS.map((key) => (
+          {keys.map((key) => (
             <MenuItem key={key} value={key}>
               {labels[key]}
             </MenuItem>

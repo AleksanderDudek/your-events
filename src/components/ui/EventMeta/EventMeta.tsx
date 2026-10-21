@@ -57,9 +57,11 @@ export function EventTimeLabel({ time, variant = 'inline', reserveSpace = false 
 
 interface EventVenueProps {
   name: string;
+  /** How far the venue is from the proximity filter's point, preformatted. */
+  distance?: string;
 }
 
-export function EventVenue({ name }: EventVenueProps) {
+export function EventVenue({ name, distance }: EventVenueProps) {
   return (
     <span className={styles.venue}>
       {/* sx, not a CSS Module class: MUI's emotion styles are injected at the
@@ -69,6 +71,9 @@ export function EventVenue({ name }: EventVenueProps) {
       {/* Venue names are proper nouns, not translated — translate="no" also
           keeps the page-level Google fallback widget from rewriting them. */}
       <span className={styles.venueText} translate="no">{name}</span>
+      {/* Outside the ellipsis: a long venue name may be cut short, the distance
+          never is — it is the reason the list is in the order it is. */}
+      {distance && <span className={styles.venueDistance}>{distance}</span>}
     </span>
   );
 }
