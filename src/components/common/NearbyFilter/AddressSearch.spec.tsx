@@ -59,6 +59,24 @@ describe('AddressSearch', () => {
     );
   });
 
+  // One street name in two districts: the label alone is not a unique key.
+  it('lists look-alike addresses side by side', async () => {
+    searchAddressesMock.mockResolvedValue([
+      { id: 'W1', label: 'Kościuszki', detail: 'Stare Miasto, Wrocław', lat: 51.1, lng: 17.03 },
+      { id: 'W2', label: 'Kościuszki', detail: 'Siechnice', lat: 51.04, lng: 17.15 },
+    ]);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    const { box } = renderSearch();
+
+    await user.type(box, 'Kościuszki');
+
+    expect(await screen.findAllByRole('option', { name: /Kościuszki/ })).toHaveLength(2);
+    const duplicateKey = consoleError.mock.calls.some((args) => String(args[0]).includes('same key'));
+    consoleError.mockRestore();
+    expect(duplicateKey).toBe(false);
+  });
+
   it('says so when the geocoder is down', async () => {
     searchAddressesMock.mockRejectedValue(new Error('503'));
     const user = userEvent.setup();

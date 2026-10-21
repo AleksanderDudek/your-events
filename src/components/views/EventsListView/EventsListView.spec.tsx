@@ -44,7 +44,10 @@ const baseFilters = {
 };
 
 // Swappable per test: the mock below reads whatever is here at render time.
-const mocks = vi.hoisted(() => ({ filters: {} as Record<string, unknown> }));
+const mocks = vi.hoisted(() => ({
+  filters: {} as Record<string, unknown>,
+  map: {} as Record<string, unknown>,
+}));
 
 vi.mock('@/components/service/useEvents', () => ({
   useEvents: () => ({
@@ -58,19 +61,23 @@ vi.mock('@/components/service/useEvents', () => ({
   }),
   // The map runs a separate query — it shows every match rather than the page
   // the list is on — so it has to be stubbed alongside useEvents.
-  useMapEvents: () => ({
-    events: [],
-    total: 0,
-    isLoading: false,
-    isError: false,
-    isFetching: false,
-  }),
+  useMapEvents: () => mocks.map,
 }));
 
 import EventsListView from './EventsListView';
 
+const baseMap = {
+  events: [],
+  total: 0,
+  isLoading: false,
+  isError: false,
+  isFetching: false,
+  refetch: vi.fn(),
+};
+
 beforeEach(() => {
   mocks.filters = { ...baseFilters };
+  mocks.map = { ...baseMap };
 });
 
 describe('EventsListView', () => {
@@ -104,5 +111,15 @@ describe('EventsListView', () => {
     render(<EventsListView />);
     // \s: Testing Library collapses the no-break space to a plain one.
     expect(screen.getByText(/^W promieniu 1,5\skm: Rynek$/)).toBeInTheDocument();
+  });
+
+  // With a point set, an empty map reads as "nothing nearby": a failed map
+  // query must not pass for one.
+  it('shows the error state when the map query itself fails', () => {
+    mocks.filters = { ...baseFilters, viewMode: 'map' };
+    mocks.map = { ...baseMap, isError: true };
+    render(<EventsListView />);
+    expect(screen.getByText('Coś poszło nie tak')).toBeInTheDocument();
+    expect(screen.queryByText(/reszta bez lokalizacji/)).not.toBeInTheDocument();
   });
 });

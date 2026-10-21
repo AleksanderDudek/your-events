@@ -82,7 +82,7 @@ export function useEvents() {
 export function useMapEvents(enabled: boolean) {
   const { filters, categoryFilter, city, ready } = useResolvedFilters();
 
-  const { data, isLoading, isError, isFetching } = useQuery({
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: eventsKeys.map(city.id, filters),
     queryFn: () => fetchMapEvents(city.id, filters, categoryFilter),
     staleTime: 60_000,
@@ -98,5 +98,6 @@ export function useMapEvents(enabled: boolean) {
     isLoading,
     isError,
     isFetching,
+    refetch,
   };
 }

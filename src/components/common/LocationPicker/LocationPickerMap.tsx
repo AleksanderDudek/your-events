@@ -28,15 +28,20 @@ export interface LocationPickerMapProps {
 function MapEvents({
   onPick,
   onCenterChange,
-}: Pick<LocationPickerMapProps, 'onPick' | 'onCenterChange'>) {
+}: Readonly<Pick<LocationPickerMapProps, 'onPick' | 'onCenterChange'>>) {
+  // wrap(): Leaflet reports a click on a repeated copy of the world with a
+  // longitude past ±180, which the URL rightly rejects — the pick would
+  // vanish without a word.
   const map = useMapEvents({
-    click: (event) => onPick({ lat: event.latlng.lat, lng: event.latlng.lng }),
-    moveend: () => {
-      const center = map.getCenter();
-      onCenterChange({ lat: center.lat, lng: center.lng });
-    },
+    click: (event) => onPick(toPoint(event.latlng)),
+    moveend: () => onCenterChange(toPoint(map.getCenter())),
   });
   return null;
+}
+
+function toPoint(latlng: L.LatLng): LatLng {
+  const { lat, lng } = latlng.wrap();
+  return { lat, lng };
 }
 
 export default function LocationPickerMap({
@@ -65,7 +70,14 @@ export default function LocationPickerMap({
   );
 
   return (
-    <MapContainer {...initialView} boundsOptions={{ padding: [16, 16] }} className={styles.map}>
+    <MapContainer
+      {...initialView}
+      boundsOptions={{ padding: [16, 16] }}
+      // A city-sized picker: zoomed out further than a region, the world starts
+      // repeating and a point stops meaning anything for a 5 km radius.
+      minZoom={10}
+      className={styles.map}
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -79,15 +91,16 @@ export default function LocationPickerMap({
             pathOptions={AREA_PATH_OPTIONS}
             interactive={false}
           />
+          {/* keyboard={false}: Leaflet would otherwise make the pin a nameless
+              tab stop with role="button" that a key press cannot move.
+              Keyboard users drop the pin with "Postaw na środku mapy". */}
           <Marker
             position={[point.lat, point.lng]}
             icon={icon}
+            keyboard={false}
             draggable
             eventHandlers={{
-              dragend: (event) => {
-                const next = (event.target as L.Marker).getLatLng();
-                onPick({ lat: next.lat, lng: next.lng });
-              },
+              dragend: (event) => onPick(toPoint((event.target as L.Marker).getLatLng())),
             }}
           />
         </>

@@ -138,7 +138,9 @@ describe('PresetEditorDialog and a saved point', () => {
     const user = userEvent.setup();
     const { onSave } = renderWithPoint();
 
-    await user.click(screen.getByTestId('CancelIcon'));
+    // A deletable chip is a button that Delete removes.
+    screen.getByRole('button', { name: /W promieniu 1,5\skm: Rynek/ }).focus();
+    await user.keyboard('{Delete}');
     await user.click(screen.getByRole('button', { name: 'Zapisz' }));
 
     expect(onSave.mock.calls[0][0].filters.near).toBeNull();

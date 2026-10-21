@@ -147,6 +147,8 @@ export default function EventsListView() {
     total: mapTotal,
     isLoading: mapLoading,
     isFetching: mapFetching,
+    isError: mapIsError,
+    refetch: refetchMap,
   } = useMapEvents(isMapView);
   const { bySlug, displayNameToSlug } = useCategories();
   const { city } = useCity();
@@ -179,12 +181,16 @@ export default function EventsListView() {
   }
 
 
-  if (isError) {
+  // The map runs its own query. Left unchecked, its failure read as an empty
+  // map — "0 of 37, the rest have no location" over a clear-the-filters empty
+  // state — which, with a point set, looks just like "nothing nearby".
+  const mapFailed = isMapView && mapIsError;
+  if (isError || mapFailed) {
     return (
       <Box className={styles.layout}>
         <FilterPanel />
         <Box className={styles.results}>
-          <ErrorState onRetry={() => refetch()} />
+          <ErrorState onRetry={() => (isError ? refetch() : refetchMap())} />
         </Box>
       </Box>
     );

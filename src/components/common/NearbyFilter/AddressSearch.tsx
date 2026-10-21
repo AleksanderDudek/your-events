@@ -42,6 +42,9 @@ export default function AddressSearch({ onSelect }: Readonly<AddressSearchProps>
         // text would hide "Świdnicka 12" from whoever typed "swidnicka 12".
         filterOptions={(options) => options}
         getOptionLabel={(option) => option.label}
+        // MUI keys options by label unless told otherwise, and one street name
+        // can sit in two districts.
+        getOptionKey={(option) => option.id}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         loading={isSearching}
         loadingText={t.NEAR_ADDRESS_LOADING}

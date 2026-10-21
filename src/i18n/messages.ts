@@ -296,7 +296,7 @@ const pl = {
     'Nagrania sesji (ruch kursora, kliknięcia, przewijanie), adresy odwiedzanych podstron oraz informacje o urządzeniu i przeglądarce.',
   PRIVACY_LOCATION_HEADING: 'Lokalizacja',
   PRIVACY_LOCATION_BODY:
-    'Twoją lokalizację pobieramy tylko wtedy, gdy klikniesz „Użyj mojej lokalizacji”, i od razu zaokrąglamy ją do ok. 100 m. Trafia wyłącznie do adresu strony — żeby filtr działał i dało się go udostępnić — oraz, jako obszar wyszukiwania, do zapytania o wydarzenia; nigdzie jej nie zapisujemy. Gdy Clarity ma Twoją zgodę, adres strony, a z nim zaokrąglona lokalizacja, trafia też do nagrania sesji. Adres wpisany w wyszukiwarkę wysyłamy do usługi Photon (komoot), która zamienia go na współrzędne.',
+    'Filtr „W pobliżu” pyta o Twoją lokalizację dopiero wtedy, gdy klikniesz „Użyj mojej lokalizacji”, i od razu zaokrągla ją do ok. 100 m. Trafia ona do adresu strony — żeby filtr działał i dało się go udostępnić — oraz, jako obszar wyszukiwania, do zapytania o wydarzenia. Nie przechowujemy jej na serwerze: zostaje w Twojej przeglądarce na czas otwartej karty, a dłużej tylko wtedy, gdy zapiszesz filtr. Gdy Clarity ma Twoją zgodę, adres strony — a z nim zaokrąglona lokalizacja — trafia też do nagrania sesji. Na stronach bez wybranego miasta przeglądarka może zapytać o lokalizację, żeby podpowiedzieć najbliższe miasto; tej lokalizacji nie wysyłamy ani nie zapisujemy. Adres wpisany w wyszukiwarkę wysyłamy do usługi Photon (komoot), która zamienia go na współrzędne.',
   PRIVACY_COOKIES_HEADING: 'Cookies',
   PRIVACY_COOKIES_BODY:
     '_clck — identyfikator użytkownika, ważny przez rok. _clsk — identyfikator sesji, ważny przez dobę. Oba ustawiane są dopiero po Twojej zgodzie.',
@@ -645,7 +645,7 @@ const en: Messages = {
     'Session recordings (cursor movement, clicks, scrolling), the addresses of the pages you visit, and information about your device and browser.',
   PRIVACY_LOCATION_HEADING: 'Location',
   PRIVACY_LOCATION_BODY:
-    'We get your location only when you click "Use my location", and round it to about 100 m straight away. It goes only into the page address — so the filter works and can be shared — and, as a search area, into the query for events; we do not store it anywhere. When Clarity has your consent, the page address, and the rounded location with it, is also part of the session recording. An address you type into the search box is sent to the Photon service (komoot), which turns it into coordinates.',
+    'The Nearby filter asks for your location only when you click "Use my location", and rounds it to about 100 m straight away. It then goes into the page address — so the filter works and can be shared — and, as a search area, into the query for events. We do not keep it on a server: it stays in your browser while the tab is open, and longer only if you save the filter. When Clarity has your consent, the page address — and the rounded location with it — is also part of the session recording. On pages without a chosen city, your browser may ask for your location so we can suggest the nearest city; that location is neither sent nor stored. An address you type into the search box is sent to the Photon service (komoot), which turns it into coordinates.',
   PRIVACY_COOKIES_HEADING: 'Cookies',
   PRIVACY_COOKIES_BODY:
     '_clck — user identifier, valid one year. _clsk — session identifier, valid one day. Both are set only after you consent.',

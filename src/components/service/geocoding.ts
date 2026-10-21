@@ -10,6 +10,10 @@ export const PHOTON_URL = 'https://photon.komoot.io/api/';
 
 const SUGGESTION_LIMIT = 5;
 
+// Photon usually answers within two seconds. Past this it is down or swamped,
+// and the box should say so instead of "Searching…" for as long as it is open.
+export const SEARCH_TIMEOUT_MS = 8000;
+
 // Photon speaks default/de/en/fr. `default` is each place's own name — Polish,
 // for Polish places — which is what a Polish interface wants anyway.
 const PHOTON_LANG: Record<Locale, string> = { pl: 'default', en: 'en' };
@@ -100,21 +104,47 @@ export async function searchAddresses(
   locale: Locale,
   signal?: AbortSignal
 ): Promise<AddressSuggestion[]> {
-  const response = await fetch(photonUrl(query, center, locale), { signal });
-  if (!response.ok) throw new GeocodingError(`Photon answered ${response.status}`);
-  const body = (await response.json()) as { features?: PhotonFeature[] };
+  // One controller for both ways a request ends early: the caller moved on (a
+  // newer search superseded this one), or the clock ran out (Photon is not
+  // answering). Only the second is a failure worth showing.
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(new GeocodingError(`Photon did not answer in ${SEARCH_TIMEOUT_MS} ms`)),
+    SEARCH_TIMEOUT_MS
+  );
+  const forwardAbort = () => controller.abort(signal?.reason);
+  if (signal?.aborted) forwardAbort();
+  else signal?.addEventListener('abort', forwardAbort, { once: true });
 
-  // OpenStreetMap often maps one place twice (a node and a building outline),
-  // and Photon returns both under one name.
-  const seen = new Set<string>();
-  const suggestions: AddressSuggestion[] = [];
-  for (const feature of body.features ?? []) {
-    const suggestion = toSuggestion(feature);
-    if (!suggestion) continue;
-    const key = `${suggestion.label}|${suggestion.detail}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    suggestions.push(suggestion);
+  try {
+    const response = await fetch(photonUrl(query, center, locale), { signal: controller.signal });
+    if (!response.ok) throw new GeocodingError(`Photon answered ${response.status}`);
+    const body = (await response.json()) as { features?: unknown } | null;
+    // Something answered, but not Photon (a captive portal, a changed API): a
+    // failed search, which must not read as "no such address".
+    if (!Array.isArray(body?.features)) {
+      throw new GeocodingError('Photon answered without a feature list');
+    }
+
+    // OpenStreetMap often maps one place twice (a node and a building
+    // outline), and Photon returns both under one name.
+    const seen = new Set<string>();
+    const suggestions: AddressSuggestion[] = [];
+    for (const feature of body.features as PhotonFeature[]) {
+      const suggestion = toSuggestion(feature);
+      if (!suggestion) continue;
+      const key = `${suggestion.label}|${suggestion.detail}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      suggestions.push(suggestion);
+    }
+    return suggestions;
+  } catch (error) {
+    // A timeout surfaces as the reason the request was aborted with.
+    if (controller.signal.reason instanceof GeocodingError) throw controller.signal.reason;
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', forwardAbort);
   }
-  return suggestions;
 }

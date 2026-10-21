@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { CONSENT_STORAGE_KEY } from '../src/lib/consent';
 import { ONBOARDING_STORAGE_KEY, ONBOARDING_VERSION } from '../src/lib/onboarding';
 import { CITY, TEXT, activeChip, closeFilters, openFilters, waitForList } from './support/helpers';
@@ -109,6 +110,27 @@ test.describe('Events near a point', () => {
 
     const distances = await cardDistances(page);
     expect(distances).toEqual([...distances].sort((a, b) => a - b));
+  });
+
+  // The picker is a dialog full of Leaflet, which the unit tests replace with a
+  // stand-in — only a real browser shows what lands in it. Same gate as
+  // a11y.spec: serious and critical only, minus the two design-owned rules.
+  test('the map picker has no serious accessibility violations', async ({ page }) => {
+    await page.goto(`/${CITY}/wydarzenia?near=${RYNEK.lat},${RYNEK.lng}&radius=1500`);
+    await waitForList(page);
+    await openNearby(page);
+    await page.getByRole('button', { name: TEXT.nearPickOnMap }).click();
+    // The pin is drawn once the lazily loaded map has mounted.
+    await expect(page.locator('.MuiDialog-root .leaflet-marker-icon').first()).toBeAttached({
+      timeout: 20000,
+    });
+
+    const { violations } = await new AxeBuilder({ page })
+      .include('.MuiDialog-root')
+      .disableRules(['color-contrast', 'region'])
+      .analyze();
+    const serious = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+    expect(serious.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
   });
 
   test('the map draws the circle', async ({ page }) => {
