@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -50,13 +50,33 @@ export default function NearbyFilter({ value, onChange }: Readonly<NearbyFilterP
   const choosePoint = (point: LatLng, label: string | null, nextRadius = radius) =>
     onChange({ lat: point.lat, lng: point.lng, radius: nextRadius, label });
 
+  // A fix arrives seconds after the press. By then the radius may have moved,
+  // onChange may belong to a newer render, and this section may be gone — so
+  // the handler reads all three as they are when the fix lands.
+  const latest = useRef({ radius, onChange, mounted: false });
+  useEffect(() => {
+    latest.current.radius = radius;
+    latest.current.onChange = onChange;
+  });
+  useEffect(() => {
+    const current = latest.current;
+    current.mounted = true;
+    return () => {
+      current.mounted = false;
+    };
+  }, []);
+
   // Never `disabled`, even while locating: disabling the button that has focus
   // drops focus on <body>, and the drawer's focus trap then throws it to the
   // top of the panel. A press while waiting simply asks again (useGeolocation
   // keeps only the newest answer).
   const handleMyLocation = async () => {
     const fix = await locate();
-    if (fix) choosePoint(fix, null);
+    const { mounted, radius: currentRadius, onChange: apply } = latest.current;
+    // Section gone (the accordion closed, or the visitor left the list):
+    // applying the point now would pull them back to the list.
+    if (!fix || !mounted) return;
+    apply({ lat: fix.lat, lng: fix.lng, radius: currentRadius, label: null });
   };
 
   const handleRadius = (next: number) => {
@@ -124,7 +144,9 @@ export default function NearbyFilter({ value, onChange }: Readonly<NearbyFilterP
           onConfirm={(point, pickedRadius) => {
             setPickerOpen(false);
             setPendingRadius(pickedRadius);
-            choosePoint(point, null, pickedRadius);
+            // Only the radius changed: the point keeps its name.
+            const unmoved = value !== null && point.lat === value.lat && point.lng === value.lng;
+            choosePoint(point, unmoved ? value.label : null, pickedRadius);
           }}
         />
       )}
