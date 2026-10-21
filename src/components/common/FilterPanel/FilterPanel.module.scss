@@ -41,16 +41,42 @@
   padding: 8px 0;
 }
 
-.fab {
-  min-width: 44px;
-  min-height: 44px;
+// The search box above the results, phones only. From md up the search sits in
+// the sidebar; this hides the phone copy a server render shows desktop before
+// hydration knows the breakpoint.
+.pageSearch {
+  @include md {
+    display: none;
+  }
 }
 
+// White pill on the accent button: how many filters the drawer holds.
+.fabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--radius-pill);
+  background-color: #ffffff;
+  color: var(--color-accent-primary);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+// The sheet closes with a downward swipe, and this bar is what says so: it
+// needs to read as a handle, not vanish into the white like a hairline border.
+// flex-shrink: 0 — the drawer paper is a flex column, and once the filters
+// overflow it, an empty item like this one shrinks to nothing.
 .dragHandle {
+  flex-shrink: 0;
   width: 40px;
-  height: 4px;
-  background-color: var(--color-border);
-  border-radius: 2px;
+  height: 5px;
+  background-color: var(--color-text-muted);
+  opacity: 0.6;
+  border-radius: var(--radius-pill);
   margin: 12px auto;
 }
 

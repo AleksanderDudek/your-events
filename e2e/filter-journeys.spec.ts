@@ -11,9 +11,16 @@ import {
   clearAllFilters,
   activeChip,
   waitForList,
+  skipFirstVisitPrompts,
 } from './support/helpers';
 
 const PERMALINK = new RegExp(`/${CITY}/[a-z0-9-]+/[a-z0-9-]+-[0-9a-f]{8}/?$`);
+
+// On a phone the unanswered cookie banner covers the filters button and the
+// bottom of the map; the prompts themselves are cookie-consent.spec's subject.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // Multi-step, stateful journeys — the gap the single-action tests leave open.
 // Filters must *compose* (coexist in one URL), *survive navigation* (a detour

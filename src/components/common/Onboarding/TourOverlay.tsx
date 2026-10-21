@@ -141,6 +141,11 @@ export default function TourOverlay({ steps, onStepEnter, onFinish }: TourOverla
 
   // The page keeps scrolling under the tour — locking it would strand anyone
   // who wants to see the control in context — so the hole follows its anchor.
+  //
+  // It follows the anchor's own size too. On a phone the filters button gains
+  // a count as the story ticks filters, and being centred, its left edge moves
+  // with it; no scroll or resize event says so. That observer only measures:
+  // giving up on an anchor that has gone stays with the events above.
   useEffect(() => {
     if (!anchor) return;
     const update = () => {
@@ -150,9 +155,14 @@ export default function TourOverlay({ steps, onStepEnter, onFinish }: TourOverla
       }
       setHole(holeFrom(anchor));
     };
+    const resized = new ResizeObserver(() => {
+      if (anchor.isConnected) setHole(holeFrom(anchor));
+    });
+    resized.observe(anchor);
     window.addEventListener('scroll', update, true);
     window.addEventListener('resize', update);
     return () => {
+      resized.disconnect();
       window.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
     };
@@ -233,10 +243,11 @@ export default function TourOverlay({ steps, onStepEnter, onFinish }: TourOverla
           placement={step.placement}
           className={styles.tooltip}
           // The placement on a step is a preference, not a promise. The filters
-          // step anchors to a sidebar on desktop and to a bottom-right Fab on a
-          // phone, where "to the right of it" is off the screen entirely — so the
-          // tooltip is allowed to flip to any side and, failing that, to slide
-          // along the cross axis until it fits.
+          // step anchors to a sidebar on desktop and, on a phone, to a button
+          // centred at the bottom of the screen, where "to the right of it" is
+          // a strip far narrower than the tooltip — so the tooltip is allowed to
+          // flip to any side and, failing that, to slide along the cross axis
+          // until it fits.
           modifiers={[
             { name: 'offset', options: { offset: [0, 16] } },
             {

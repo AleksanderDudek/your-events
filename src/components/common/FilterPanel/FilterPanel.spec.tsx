@@ -1,18 +1,27 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { axe } from 'jest-axe';
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import FilterPanel from './FilterPanel';
+
+// Which layout and which query the panel sees; reset after every test.
+const view = vi.hoisted(() => ({ isMdUp: true, query: '' }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(view.query),
 }));
 
 vi.mock('@mui/material/useMediaQuery', () => ({
-  default: () => true,
+  default: () => view.isMdUp,
 }));
+
+afterEach(() => {
+  view.isMdUp = true;
+  view.query = '';
+  window.history.replaceState(null, '', '/');
+});
 
 vi.mock('@/components/service/useCategories', () => ({
   useCategories: () => ({
@@ -65,5 +74,82 @@ describe('FilterPanel', () => {
     expect(await screen.findByRole('button', { name: 'Użyj mojej lokalizacji' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Adres lub miejsce' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wskaż na mapie' })).toBeInTheDocument();
+  });
+});
+
+describe('FilterPanel on a phone', () => {
+  beforeEach(() => {
+    view.isMdUp = false;
+  });
+
+  it('puts the search box on the page, not in the drawer', async () => {
+    const user = userEvent.setup();
+    render(<FilterPanel />);
+
+    expect(screen.getByPlaceholderText('Szukaj wydarzenia lub miejsca...')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^Filtry/ }));
+
+    const drawer = await screen.findByRole('dialog');
+    expect(within(drawer).getByText('Kategorie')).toBeInTheDocument();
+    expect(within(drawer).queryByPlaceholderText('Szukaj wydarzenia lub miejsca...')).not.toBeInTheDocument();
+  });
+
+  // A bare icon in a corner was easy to miss; the count leaves the search out
+  // because the drawer no longer shows it.
+  it('labels the trigger and counts what the drawer holds, not the search', () => {
+    view.query = 'search=jazz&freeOnly=true&weekdays=1';
+    render(<FilterPanel />);
+
+    const trigger = screen.getByRole('button', { name: 'Filtry (2)' });
+    expect(trigger).toHaveTextContent(/^Filtry2$/);
+  });
+
+  it('passes accessibility check', async () => {
+    view.query = 'freeOnly=true';
+    const { container } = render(<FilterPanel />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  // The drawer is portalled out of the container, so it gets its own check.
+  it('passes accessibility check with the drawer open', async () => {
+    view.query = 'freeOnly=true';
+    const user = userEvent.setup();
+    render(<FilterPanel />);
+
+    await user.click(screen.getByRole('button', { name: /^Filtry/ }));
+    const drawer = await screen.findByRole('dialog', { name: 'Filtry' });
+    expect(await axe(drawer)).toHaveNoViolations();
+  });
+
+  // Rotating a tablet across the breakpoint swaps the drawer for the sidebar.
+  // Rotating back must not bring it up again on its own.
+  it('forgets an open drawer once the layout turns into the sidebar', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<FilterPanel />);
+    await user.click(screen.getByRole('button', { name: /^Filtry/ }));
+    await screen.findByRole('dialog');
+
+    view.isMdUp = true;
+    rerender(<FilterPanel />);
+    view.isMdUp = false;
+    rerender(<FilterPanel />);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it("clears what the drawer holds but leaves the page's search alone", async () => {
+    view.query = 'search=jazz&freeOnly=true';
+    window.history.replaceState(null, '', `/?${view.query}`);
+    const user = userEvent.setup();
+    render(<FilterPanel />);
+
+    await user.click(screen.getByRole('button', { name: /^Filtry/ }));
+    const drawer = await screen.findByRole('dialog');
+    const clears = within(drawer).getAllByRole('button', { name: 'Wyczyść filtry' });
+    await user.click(clears[clears.length - 1]);
+
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('search')).toBe('jazz');
+    expect(params.has('freeOnly')).toBe(false);
   });
 });

@@ -1,4 +1,6 @@
 import { expect, type Page } from '@playwright/test';
+import { CONSENT_STORAGE_KEY } from '../../src/lib/consent';
+import { ONBOARDING_STORAGE_KEY, ONBOARDING_VERSION } from '../../src/lib/onboarding';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // These e2e tests run the real app against the real (multi-city) Supabase
@@ -27,6 +29,8 @@ export const CITY_OTHER = 'szczecin';
 // preference is only applied after hydration.
 export const TEXT = {
   searchPlaceholder: 'Szukaj wydarzenia lub miejsca...',
+  // The search box's own clear button (shown while it holds a term).
+  searchClear: 'Wyczyść wyszukiwanie',
   resultsCount: /Znaleziono \d+ wydarzeń/,
   emptyTitle: 'Nie znaleziono wydarzeń',
   back: 'Wróć',
@@ -147,25 +151,27 @@ export async function waitForList(page: Page): Promise<void> {
 }
 
 /**
- * On mobile the FilterPanel lives behind a bottom-drawer Fab; on desktop it is
- * an always-visible sidebar. Open the drawer on mobile so the search box and
- * category checkboxes are reachable. No-op on desktop.
+ * On mobile the filters live in a bottom drawer behind the "Filtry" button; on
+ * desktop they are an always-visible sidebar. Open the drawer on mobile so the
+ * category checkboxes and the other sections are reachable. No-op on desktop.
+ * (The search box is not in the drawer on mobile — see `search`.)
  *
  * Decide by viewport width (md = 900px, matching the panel's own
- * `breakpoints.up('md')`) rather than the Fab's visibility: during SSR
- * `useMediaQuery` returns false, so a transient mobile Fab briefly renders on
- * desktop and then detaches at hydration — clicking it there races the detach.
+ * `breakpoints.up('md')`) rather than the button's visibility: during SSR
+ * `useMediaQuery` returns false, so a transient mobile button briefly renders
+ * on desktop and then detaches at hydration — clicking it there races the
+ * detach.
  */
 export async function openFilters(page: Page): Promise<void> {
   const width = page.viewportSize()?.width ?? 0;
   if (width >= 900) return; // desktop: sidebar is always visible, nothing to open
-  // Idempotent: if the drawer is already open (its search box is showing), the
-  // Fab is obscured behind the backdrop — clicking it would hang. Selecting a
-  // category leaves the drawer open, so callers can legitimately re-open.
-  const searchBox = page.getByPlaceholder(TEXT.searchPlaceholder);
-  if (await searchBox.isVisible().catch(() => false)) return;
+  // Idempotent: an open drawer puts its backdrop over the button, and clicking
+  // it there would hang. Selecting a category leaves the drawer open, so
+  // callers can legitimately re-open.
+  const drawer = page.locator('.MuiDrawer-paper');
+  if (await drawer.isVisible().catch(() => false)) return;
   await page.getByRole('button', { name: FILTER_FAB }).click();
-  await expect(searchBox).toBeVisible();
+  await expect(drawer).toBeVisible();
 }
 
 /**
@@ -181,11 +187,12 @@ export async function closeFilters(page: Page): Promise<void> {
 }
 
 /**
- * Type a search term into the (viewport-aware) search box and wait for the
- * debounced (1500ms) navigation to write it into the URL.
+ * Type a search term into the search box — the sidebar's on desktop, the one
+ * above the results on mobile, where it is not in the drawer — and wait for
+ * the debounced (1500ms) navigation to write it into the URL.
  */
 export async function search(page: Page, term: string): Promise<void> {
-  await openFilters(page);
+  await closeFilters(page);
   await page.getByPlaceholder(TEXT.searchPlaceholder).fill(term);
   await page.waitForURL(/[?&]search=/, { timeout: 10000 });
 }
@@ -207,18 +214,46 @@ export async function applyFirstCategory(page: Page): Promise<string> {
 }
 
 /**
- * Click the "clear filters" control. On mobile it renders twice (drawer header
- * + footer); .last() targets the FOOTER button, which both clears and closes
- * the drawer in one handler — avoiding a fragile Escape-to-dismiss afterwards.
- * On desktop there is a single (sidebar) clear button, so .last() === .first().
- * Only present when at least one filter is active.
+ * Clear every filter, the search term included.
+ *
+ * Desktop: the sidebar's single "clear filters" button, which clears the search
+ * too (only present while a filter is active).
+ *
+ * Mobile: the drawer renders it twice (header + footer); .last() targets the
+ * FOOTER button, which both clears and closes the drawer in one handler —
+ * avoiding a fragile Escape-to-dismiss afterwards. It leaves the search alone,
+ * though: the box sits on the page, outside the drawer. So the box's own clear
+ * button empties it as well, when there is a term to clear.
  */
 export async function clearAllFilters(page: Page): Promise<void> {
   await openFilters(page);
   await page.getByRole('button', { name: TEXT.filterClear }).last().click();
+  if ((page.viewportSize()?.width ?? 0) >= 900) return;
+  // Until the drawer has animated out, MUI keeps the rest of the page
+  // aria-hidden, and role queries cannot see the box's clear button.
+  await expect(page.locator('.MuiDrawer-paper')).toBeHidden();
+  const searchClear = page.getByRole('button', { name: TEXT.searchClear });
+  if (await searchClear.isVisible()) await searchClear.click();
 }
 
 /** Locate an active-filter chip (in the results header) by its visible label. */
 export function activeChip(page: Page, label: string | RegExp) {
   return page.locator('.MuiChip-root').filter({ hasText: label });
+}
+
+/**
+ * Answer both first-visit prompts before the page loads, for tests about
+ * something else. On a phone the cookie banner covers the bottom of the
+ * screen — the filters button, map pins — and the onboarding sheet opens the
+ * moment the banner is answered. cookie-consent.spec and onboarding.spec are
+ * the ones that test the prompts themselves, and do not call this.
+ */
+export async function skipFirstVisitPrompts(page: Page): Promise<void> {
+  await page.addInitScript(
+    ([consentKey, onboardingKey, version]) => {
+      window.localStorage.setItem(consentKey, 'rejected');
+      window.localStorage.setItem(onboardingKey, version);
+    },
+    [CONSENT_STORAGE_KEY, ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION)] as const
+  );
 }
