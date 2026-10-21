@@ -29,6 +29,7 @@ import DateRangePicker, { DatePatch } from '@/components/ui/DateRangePicker/Date
 import HourRangePicker from '@/components/ui/HourRangePicker/HourRangePicker';
 import WeekdayPicker from '@/components/ui/WeekdayPicker/WeekdayPicker';
 import CategoryIcon from '@/components/ui/CategoryIcon/CategoryIcon';
+import NearbyFilter from '@/components/common/NearbyFilter/NearbyFilter';
 import { categoryColorVar } from '@/lib/utils';
 import styles from './FilterPanel.module.scss';
 
@@ -182,6 +183,27 @@ export default function FilterPanel() {
             onHourFromChange={(hourFrom) => updateFilters({ hourFrom })}
             onHourToChange={(hourTo) => updateFilters({ hourTo })}
           />
+        </AccordionDetails>
+      </Accordion>
+
+      <Divider sx={{ borderColor: 'var(--color-border)' }} />
+
+      {/* Nearby. Mounted only while open: it holds a geocoder query and a
+          slider nobody needs until they ask for a place. */}
+      <Accordion disableGutters slotProps={{ transition: { unmountOnExit: true } }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'var(--color-text-muted)' }} />}>
+          <Badge
+            badgeContent={filters.near ? 1 : undefined}
+            color="primary"
+            sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem' } }}
+          >
+            <Typography variant="subtitle2" component="span" sx={{ fontWeight: 600 }}>
+              {t.FILTER_NEAR}
+            </Typography>
+          </Badge>
+        </AccordionSummary>
+        <AccordionDetails>
+          <NearbyFilter value={filters.near} onChange={(near) => updateFilters({ near })} />
         </AccordionDetails>
       </Accordion>
 
