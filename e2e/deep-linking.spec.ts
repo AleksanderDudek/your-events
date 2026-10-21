@@ -31,8 +31,8 @@ test.describe('Deep-linking filters (URL → UI)', () => {
     const term = 'jazz';
     await page.goto(`/${CITY}/wydarzenia?search=${term}`);
     await waitForList(page);
-    await openFilters(page);
     // The search input is a controlled field driven by filters.search (the URL).
+    // No drawer to open: on mobile the box sits above the results.
     await expect(page.getByPlaceholder(TEXT.searchPlaceholder)).toHaveValue(term);
   });
 

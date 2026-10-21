@@ -147,25 +147,27 @@ export async function waitForList(page: Page): Promise<void> {
 }
 
 /**
- * On mobile the FilterPanel lives behind a bottom-drawer Fab; on desktop it is
- * an always-visible sidebar. Open the drawer on mobile so the search box and
- * category checkboxes are reachable. No-op on desktop.
+ * On mobile the filters live in a bottom drawer behind the "Filtry" button; on
+ * desktop they are an always-visible sidebar. Open the drawer on mobile so the
+ * category checkboxes and the other sections are reachable. No-op on desktop.
+ * (The search box is not in the drawer on mobile — see `search`.)
  *
  * Decide by viewport width (md = 900px, matching the panel's own
- * `breakpoints.up('md')`) rather than the Fab's visibility: during SSR
- * `useMediaQuery` returns false, so a transient mobile Fab briefly renders on
- * desktop and then detaches at hydration — clicking it there races the detach.
+ * `breakpoints.up('md')`) rather than the button's visibility: during SSR
+ * `useMediaQuery` returns false, so a transient mobile button briefly renders
+ * on desktop and then detaches at hydration — clicking it there races the
+ * detach.
  */
 export async function openFilters(page: Page): Promise<void> {
   const width = page.viewportSize()?.width ?? 0;
   if (width >= 900) return; // desktop: sidebar is always visible, nothing to open
-  // Idempotent: if the drawer is already open (its search box is showing), the
-  // Fab is obscured behind the backdrop — clicking it would hang. Selecting a
-  // category leaves the drawer open, so callers can legitimately re-open.
-  const searchBox = page.getByPlaceholder(TEXT.searchPlaceholder);
-  if (await searchBox.isVisible().catch(() => false)) return;
+  // Idempotent: an open drawer puts its backdrop over the button, and clicking
+  // it there would hang. Selecting a category leaves the drawer open, so
+  // callers can legitimately re-open.
+  const drawer = page.locator('.MuiDrawer-paper');
+  if (await drawer.isVisible().catch(() => false)) return;
   await page.getByRole('button', { name: FILTER_FAB }).click();
-  await expect(searchBox).toBeVisible();
+  await expect(drawer).toBeVisible();
 }
 
 /**
@@ -181,11 +183,12 @@ export async function closeFilters(page: Page): Promise<void> {
 }
 
 /**
- * Type a search term into the (viewport-aware) search box and wait for the
- * debounced (1500ms) navigation to write it into the URL.
+ * Type a search term into the search box — the sidebar's on desktop, the one
+ * above the results on mobile, where it is not in the drawer — and wait for
+ * the debounced (1500ms) navigation to write it into the URL.
  */
 export async function search(page: Page, term: string): Promise<void> {
-  await openFilters(page);
+  await closeFilters(page);
   await page.getByPlaceholder(TEXT.searchPlaceholder).fill(term);
   await page.waitForURL(/[?&]search=/, { timeout: 10000 });
 }
