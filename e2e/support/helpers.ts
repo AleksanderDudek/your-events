@@ -114,6 +114,7 @@ export const TEXT = {
   nearSection: 'W pobliżu',
   nearUseMyLocation: 'Użyj mojej lokalizacji',
   nearAddress: 'Adres lub miejsce',
+  nearPickOnMap: 'Wskaż na mapie',
   nearMyLocation: 'Twoja lokalizacja',
 } as const;
 
