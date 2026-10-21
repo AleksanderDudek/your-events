@@ -50,11 +50,11 @@ export default function NearbyFilter({ value, onChange }: Readonly<NearbyFilterP
   const choosePoint = (point: LatLng, label: string | null, nextRadius = radius) =>
     onChange({ lat: point.lat, lng: point.lng, radius: nextRadius, label });
 
+  // Never `disabled`, even while locating: disabling the button that has focus
+  // drops focus on <body>, and the drawer's focus trap then throws it to the
+  // top of the panel. A press while waiting simply asks again (useGeolocation
+  // keeps only the newest answer).
   const handleMyLocation = async () => {
-    // A guard rather than `disabled`: disabling the button that has focus
-    // drops focus on <body>, and the drawer's focus trap then throws it to the
-    // top of the panel.
-    if (isLocating) return;
     const fix = await locate();
     if (fix) choosePoint(fix, null);
   };

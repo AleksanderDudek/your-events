@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -38,6 +38,7 @@ const fixAt =
     ok({ coords: { latitude, longitude } } as unknown as GeolocationPosition);
 
 afterEach(() => {
+  vi.useRealTimers();
   delete (navigator as { geolocation?: unknown }).geolocation;
   window.sessionStorage.clear();
 });
@@ -86,19 +87,45 @@ describe('NearbyFilter', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  // Busy rather than disabled: disabling the focused button would drop focus.
-  it('asks the device once, however often the button is pressed while it answers', async () => {
-    const getCurrentPosition = vi.fn(); // never answers
-    Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition } });
+  // A permission prompt dismissed without an answer calls neither callback, and
+  // the browser's own timeout does not run while a prompt is open.
+  it('gives up on a device that never answers, and says so', async () => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: vi.fn() },
+    });
     render(<NearbyFilter value={null} onChange={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Użyj mojej lokalizacji' }));
+    expect(screen.getByRole('button', { name: 'Ustalam lokalizację…' })).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(60_000));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Ustalanie lokalizacji trwało zbyt długo');
+    expect(screen.getByRole('button', { name: 'Użyj mojej lokalizacji' })).toBeInTheDocument();
+  });
+
+  // Busy rather than disabled — disabling the focused button would drop focus —
+  // and pressing it again asks again, so a dismissed prompt is not a dead end.
+  it('asks again when pressed while waiting, and only the newest answer counts', async () => {
+    const getCurrentPosition = vi.fn();
+    Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition } });
+    const onChange = vi.fn();
+    render(<NearbyFilter value={null} onChange={onChange} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Użyj mojej lokalizacji' }));
     const busy = screen.getByRole('button', { name: 'Ustalam lokalizację…' });
-    await userEvent.click(busy);
-
-    expect(getCurrentPosition).toHaveBeenCalledTimes(1);
     expect(busy).toHaveAttribute('aria-busy', 'true');
     expect(busy).toBeEnabled();
+    await userEvent.click(busy);
+    expect(getCurrentPosition).toHaveBeenCalledTimes(2);
+
+    const answer = (call: number, latitude: number, longitude: number) =>
+      act(async () => getCurrentPosition.mock.calls[call][0]({ coords: { latitude, longitude } }));
+    await answer(0, 50.06, 19.94);
+    expect(onChange).not.toHaveBeenCalled();
+    await answer(1, 51.11, 17.032);
+    expect(onChange).toHaveBeenCalledWith({ lat: 51.11, lng: 17.032, radius: 1000, label: null });
   });
 
   it('says so when the browser has no geolocation at all', async () => {
