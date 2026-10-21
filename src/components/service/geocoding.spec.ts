@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { GeocodingError, PHOTON_URL, photonUrl, searchAddresses, toSuggestion } from './geocoding';
+import {
+  GeocodingError,
+  PHOTON_URL,
+  SEARCH_TIMEOUT_MS,
+  photonUrl,
+  searchAddresses,
+  toSuggestion,
+} from './geocoding';
 
 const WROCLAW = { lat: 51.1079, lng: 17.0385 };
 
@@ -13,8 +20,18 @@ const answer = (body: unknown, status = 200) => ({
   json: async () => body,
 });
 
+// A fetch that settles only by being aborted: Photon hanging.
+const hangingFetch = () =>
+  vi.fn(
+    (_url: string, init: { signal: AbortSignal }) =>
+      new Promise<never>((_resolve, reject) => {
+        init.signal.addEventListener('abort', () => reject(init.signal.reason), { once: true });
+      })
+  );
+
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe('photonUrl', () => {
@@ -112,21 +129,48 @@ describe('searchAddresses', () => {
     const suggestions = await searchAddresses('rynek', WROCLAW, 'pl');
 
     expect(suggestions.map((s) => s.label)).toEqual(['Rynek', 'Świdnicka 12']);
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('q=rynek'), { signal: undefined });
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('q=rynek'), {
+      signal: expect.any(AbortSignal),
+    });
   });
 
-  it('passes the abort signal through, so a superseded search is cancelled', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(answer({ features: [] }));
+  it('cancels the request when the caller does, so a superseded search stops', async () => {
+    const fetchMock = hangingFetch();
     vi.stubGlobal('fetch', fetchMock);
-    const controller = new AbortController();
+    const caller = new AbortController();
 
-    await searchAddresses('rynek', WROCLAW, 'pl', controller.signal);
+    const search = searchAddresses('rynek', WROCLAW, 'pl', caller.signal);
+    caller.abort();
+    const error = await search.catch((e: unknown) => e);
 
-    expect(fetchMock.mock.calls[0][1]).toEqual({ signal: controller.signal });
+    expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
+    // A cancellation, not a failure: React Query drops it without an error state.
+    expect(error).not.toBeInstanceOf(GeocodingError);
+  });
+
+  // The spec's "down or slow": a Photon that never answers must end in the
+  // error message, not in "Searching…" for as long as the tab is open.
+  it('gives up on a Photon that does not answer, as a failure', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', hangingFetch());
+
+    const outcome = expect(searchAddresses('rynek', WROCLAW, 'pl')).rejects.toBeInstanceOf(
+      GeocodingError
+    );
+    await vi.advanceTimersByTimeAsync(SEARCH_TIMEOUT_MS);
+    await outcome;
   });
 
   it('throws GeocodingError when Photon fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(answer('nope', 503)));
+
+    await expect(searchAddresses('rynek', WROCLAW, 'pl')).rejects.toBeInstanceOf(GeocodingError);
+  });
+
+  // A captive portal or a changed API answering 200 must not read as "no such
+  // address": the search failed, it did not come back empty.
+  it('treats an answer with no feature list as a failure', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(answer({ message: 'Sign in to the Wi-Fi' })));
 
     await expect(searchAddresses('rynek', WROCLAW, 'pl')).rejects.toBeInstanceOf(GeocodingError);
   });
