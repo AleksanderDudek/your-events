@@ -4,7 +4,7 @@
 
 **Goal:** On phones, put the search box on the page, make the filters trigger a large labelled button, and let the filter sheet close with a downward swipe.
 
-**Architecture:** All three live in `FilterPanel`'s phone branch (below MUI's `md`, 900 px). The search box renders above the results (and is hidden from `md` up by CSS, because the static export prerenders the phone branch). The round `Fab` becomes an extended, centred "Filtry" button whose count leaves the search out. `Drawer` becomes MUI's `SwipeableDrawer` with swipe-to-open off. The drawer's "clear" keeps the search through a new `clearFiltersExceptSearch` in `useFilterNavigation`. Spec: `docs/superpowers/specs/2026-10-21-mobile-filter-ergonomics-design.md`.
+**Architecture:** All three live in `FilterPanel`'s phone branch (below MUI's `md`, 900 px). The search box renders above the results (and is hidden from `md` up by CSS, because a server render — `next dev` — cannot know the breakpoint and renders the phone branch; the static export renders the list on the client, behind its `Suspense` boundary). The round `Fab` becomes an extended, centred "Filtry" button whose count leaves the search out. `Drawer` becomes MUI's `SwipeableDrawer` with swipe-to-open off. The drawer's "clear" keeps the search through a new `clearFiltersExceptSearch` in `useFilterNavigation`. Spec: `docs/superpowers/specs/2026-10-21-mobile-filter-ergonomics-design.md`.
 
 **Tech Stack:** Next.js 16 static export, React 19, MUI 7 (`SwipeableDrawer`, `Fab`), Vitest + Testing Library, Playwright (Chrome DevTools Protocol for touch).
 
@@ -18,7 +18,7 @@
 | --- | --- |
 | `src/components/service/useFilterNavigation.ts` (+ spec) | `clearFiltersExceptSearch` |
 | `src/components/common/FilterPanel/FilterPanel.tsx` (+ spec, `.module.scss`) | page search, extended trigger, swipeable drawer, drawer clear keeps search |
-| `src/components/views/EventsListView/EventsListView.module.scss` | room under the results for the floating trigger |
+| `src/components/views/EventsListView/EventsListView.module.scss` | room under the results for the floating trigger (moved to the footer after review — see the end) |
 | `e2e/support/helpers.ts`, `e2e/deep-linking.spec.ts` | stop treating the search box as part of the drawer |
 | `e2e/mobile-filters.spec.ts` (new) | phone-only end-to-end checks, swipe included |
 
@@ -510,3 +510,17 @@ git commit -m "test(e2e): the phone filters — search on the page, the trigger,
 - [ ] `pnpm build` (the required static export check)
 - [ ] Screenshots on a phone viewport: the list with the search and the trigger; the open sheet.
 - [ ] Merge to `main` and push; watch CI and the dev deploy; smoke-test the dev site on a phone viewport.
+
+---
+
+## After review
+
+What changed after the branch was reviewed, beyond the tasks above:
+
+- **The footer, not the results, keeps room for the button.** At the end of the page the footer is what sits under the floating button, so padding under the results only added a gap above the footer. `AppFooter.module.scss` reserves the room while the button exists (`body:has([data-floating-filters])`), and `.results` is back to what it was.
+- **Clearing keeps the ordering.** `clearFilters` and `clearFiltersExceptSearch` both keep `sort`/`dir`, like the layout and the page size (`displayPreferences` in `useFilterNavigation`).
+- **The sheet is named "Filtry"**, and crossing to the sidebar layout resets `drawerOpen` during render, so turning a tablet back does not reopen it.
+- **`clearAllFilters` (e2e) clears the search on a phone too**, with the box's own clear button once the sheet has gone.
+- **Enter searches at once** (`enterKeyHint="search"`) and, on a touch screen, puts the keyboard away.
+- **The tour's spotlight follows its anchor's size** (a `ResizeObserver`): the centred button widens when its count appears.
+- The comments saying the static export prerenders the phone branch were wrong: the export renders the list on the client. The spec has the correct reason.

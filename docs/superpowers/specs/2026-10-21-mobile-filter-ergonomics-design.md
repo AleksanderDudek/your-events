@@ -42,11 +42,13 @@ It scrolls with the page rather than sticking under the header: a second
 sticky bar would take a permanent 60 px of a phone screen, and search is what
 people do first, at the top.
 
-The static export prerenders `FilterPanel` before the breakpoint is known
-(`useMediaQuery` reports `false` on the server), so an inline box rendered for
-"not desktop" would flash on desktop until hydration and shift the list. It is
-therefore rendered for "not desktop" *and* hidden at `md` and up by CSS: right
-in the static HTML on both, and never two live search boxes once hydrated.
+A server render cannot know the breakpoint (`useMediaQuery` reports `false`
+there), so wherever `FilterPanel` is server-rendered — `next dev` does — an
+inline box rendered for "not desktop" would show on desktop until hydration and
+then shift the list. It is therefore rendered for "not desktop" *and* hidden at
+`md` and up by CSS. (The static export does not hit this: the events list sits
+behind a `Suspense` boundary around `useSearchParams`, so the export renders it
+on the client, where the breakpoint is known from the first render.)
 
 Rejected: a sticky toolbar holding search and the filter button (the request
 is to make the filter *icon* more visible, not to replace it; and the space
@@ -64,9 +66,11 @@ list's primary action, e.g. Airbnb's "Map" pill).
 - The count is what is set *in the drawer*: the search is no longer there, so
   counting it would announce a filter the drawer does not show. The accessible
   name stays `Filtry (N)`, which contains the visible label (WCAG 2.5.3).
-- It respects the safe area (`env(safe-area-inset-bottom)`), and the results
-  get bottom padding on phones so the button never hides the last card or the
-  pagination.
+- It respects the safe area (`env(safe-area-inset-bottom)`), and while it
+  exists the footer — what sits under it at the end of the page — keeps that
+  much room below its last row (`body:has([data-floating-filters])`), so the
+  copyright line is never stuck beneath it. Anything above the footer can be
+  scrolled clear of the button anyway.
 - It keeps the `data-tour="filters"` anchor the onboarding tour points at.
 
 ### 3. Swipe down to close
@@ -87,6 +91,9 @@ Swipe-to-*open* from the bottom edge is off (`disableSwipeToOpen`): the button
 opens the sheet, and on iOS the bottom edge belongs to the home indicator.
 Escape, the backdrop and both footer buttons still close it.
 
+The sheet is a modal dialog, named "Filtry". Crossing to the sidebar layout
+(a tablet turned sideways) closes it, so turning back does not reopen it.
+
 Rejected: a hand-rolled pointer-drag on the handle only — it would reimplement
 velocity, thresholds and the scroll handoff that MUI ships and tests.
 
@@ -98,12 +105,19 @@ header and footer — resets what the drawer shows and leaves the search box
 alone. The header button appears when something in the drawer is set. The
 empty state's "clear filters" still clears everything, search included.
 
+No clear touches the ordering: like the layout and the page size it is a
+display preference, and the active-filter count does not include it either.
+
 ## Testing
 
 - Unit (`FilterPanel.spec`, phone layout via a switchable `useMediaQuery`
   mock): the search box is on the page, not in the drawer; the trigger reads
   "Filtry" and counts drawer filters but not the search; the drawer's clear
-  keeps the search. `useFilterNavigation.spec`: the keep-search reset.
+  keeps the search; the open sheet is named and passes axe; it stays shut
+  after a trip across the breakpoint. `useFilterNavigation.spec`: the
+  keep-search reset, and both clears keep the ordering. `SearchInput.spec`:
+  Enter searches at once (not during an IME composition) and blurs only on a
+  touch screen. `TourOverlay.spec`: the spotlight follows its anchor's size.
 - End to end (Mobile Chrome): searching without opening the drawer; the
   trigger is labelled and at least 48 px tall; a downward swipe on the sheet's
   handle closes it (real touch input through the Chrome DevTools Protocol).
