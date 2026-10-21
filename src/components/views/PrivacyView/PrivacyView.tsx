@@ -13,6 +13,7 @@ export default function PrivacyView() {
   // to step down to h3.
   const sections = [
     { key: 'what', heading: t.PRIVACY_WHAT_HEADING, body: t.PRIVACY_WHAT_BODY },
+    { key: 'location', heading: t.PRIVACY_LOCATION_HEADING, body: t.PRIVACY_LOCATION_BODY },
     { key: 'cookies', heading: t.PRIVACY_COOKIES_HEADING, body: t.PRIVACY_COOKIES_BODY },
     { key: 'processor', heading: t.PRIVACY_PROCESSOR_HEADING, body: t.PRIVACY_PROCESSOR_BODY },
     { key: 'withdraw', heading: t.PRIVACY_WITHDRAW_HEADING, body: t.PRIVACY_WITHDRAW_BODY },
