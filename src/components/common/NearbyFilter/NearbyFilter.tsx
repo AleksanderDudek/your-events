@@ -51,6 +51,10 @@ export default function NearbyFilter({ value, onChange }: Readonly<NearbyFilterP
     onChange({ lat: point.lat, lng: point.lng, radius: nextRadius, label });
 
   const handleMyLocation = async () => {
+    // A guard rather than `disabled`: disabling the button that has focus
+    // drops focus on <body>, and the drawer's focus trap then throws it to the
+    // top of the panel.
+    if (isLocating) return;
     const fix = await locate();
     if (fix) choosePoint(fix, null);
   };
@@ -87,7 +91,7 @@ export default function NearbyFilter({ value, onChange }: Readonly<NearbyFilterP
         size="small"
         fullWidth
         onClick={handleMyLocation}
-        disabled={isLocating}
+        aria-busy={isLocating}
         startIcon={isLocating ? <CircularProgress size={14} /> : <MyLocationIcon />}
       >
         {isLocating ? t.NEAR_LOCATING : t.NEAR_USE_MY_LOCATION}

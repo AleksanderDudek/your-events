@@ -86,6 +86,21 @@ describe('NearbyFilter', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  // Busy rather than disabled: disabling the focused button would drop focus.
+  it('asks the device once, however often the button is pressed while it answers', async () => {
+    const getCurrentPosition = vi.fn(); // never answers
+    Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition } });
+    render(<NearbyFilter value={null} onChange={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Użyj mojej lokalizacji' }));
+    const busy = screen.getByRole('button', { name: 'Ustalam lokalizację…' });
+    await userEvent.click(busy);
+
+    expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+    expect(busy).toHaveAttribute('aria-busy', 'true');
+    expect(busy).toBeEnabled();
+  });
+
   it('says so when the browser has no geolocation at all', async () => {
     render(<NearbyFilter value={null} onChange={vi.fn()} />);
 

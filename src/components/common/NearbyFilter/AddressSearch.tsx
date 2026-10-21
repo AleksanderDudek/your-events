@@ -47,7 +47,10 @@ export default function AddressSearch({ onSelect }: Readonly<AddressSearchProps>
         loadingText={t.NEAR_ADDRESS_LOADING}
         noOptionsText={noOptionsText}
         autoHighlight
-        blurOnSelect
+        // Blur only after a tap, to put the phone keyboard away. After a click
+        // or Enter, focus stays put: blurring there dropped it on <body> until
+        // the drawer's focus trap pulled it back to the top of the panel.
+        blurOnSelect="touch"
         size="small"
         renderOption={(props, option) => {
           const { key, ...rest } = props;

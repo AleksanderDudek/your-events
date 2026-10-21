@@ -109,6 +109,12 @@ export const TEXT = {
   storyPresetName: 'Po pracy',
   onboardingStepCount: /Krok \d+ z \d+/,
   onboardingFooterLink: 'Jak to działa?',
+  // The "W pobliżu" (nearby) filter section, its controls, and how its chip
+  // names a point.
+  nearSection: 'W pobliżu',
+  nearUseMyLocation: 'Użyj mojej lokalizacji',
+  nearAddress: 'Adres lub miejsce',
+  nearMyLocation: 'Twoja lokalizacja',
 } as const;
 
 // The mobile filter Fab is labelled "Filtry (N)"; the leading word is stable.
