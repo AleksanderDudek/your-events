@@ -28,7 +28,7 @@ export interface LocationPickerMapProps {
 function MapEvents({
   onPick,
   onCenterChange,
-}: Pick<LocationPickerMapProps, 'onPick' | 'onCenterChange'>) {
+}: Readonly<Pick<LocationPickerMapProps, 'onPick' | 'onCenterChange'>>) {
   // wrap(): Leaflet reports a click on a repeated copy of the world with a
   // longitude past ±180, which the URL rightly rejects — the pick would
   // vanish without a word.
@@ -91,9 +91,13 @@ export default function LocationPickerMap({
             pathOptions={AREA_PATH_OPTIONS}
             interactive={false}
           />
+          {/* keyboard={false}: Leaflet would otherwise make the pin a nameless
+              tab stop with role="button" that a key press cannot move.
+              Keyboard users drop the pin with "Postaw na środku mapy". */}
           <Marker
             position={[point.lat, point.lng]}
             icon={icon}
+            keyboard={false}
             draggable
             eventHandlers={{
               dragend: (event) => onPick(toPoint((event.target as L.Marker).getLatLng())),

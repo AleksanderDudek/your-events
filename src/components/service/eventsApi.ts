@@ -152,11 +152,6 @@ function quoteForOr(value: string): string {
 // instead of it looking like the city simply has no more events.
 export const MAP_EVENT_LIMIT = 1000;
 
-/**
- * The filter clauses shared by every events query, so the list and the map can
- * never disagree about what "matching" means. Paging and map-specific narrowing
- * are left to the caller — that is the only thing the two differ on.
- */
 // The column list is a type parameter, not a plain string: supabase-js parses
 // the literal to type the rows, and a widened `string` would type them as a
 // parse error instead.
@@ -167,6 +162,11 @@ interface QueryShape<Columns extends string> {
   withCount?: boolean;
 }
 
+/**
+ * The filter clauses shared by every events query, so the list and the map can
+ * never disagree about what "matching" means. Paging and map-specific narrowing
+ * are left to the caller — that is the only thing the two differ on.
+ */
 function buildFilteredQuery<Columns extends string = '*'>(
   supabase: ReturnType<typeof getSupabaseForCity>,
   filters: EventFilters,

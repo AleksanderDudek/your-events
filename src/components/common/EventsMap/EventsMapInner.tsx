@@ -212,7 +212,7 @@ function MarkersLayer({
 
 // The circle and its centre. Neither takes clicks: they would otherwise sit on
 // top of the very pins they surround.
-function AreaLayer({ area }: { area: MapArea }) {
+function AreaLayer({ area }: Readonly<{ area: MapArea }>) {
   const icon = useMemo(
     () =>
       L.divIcon({
