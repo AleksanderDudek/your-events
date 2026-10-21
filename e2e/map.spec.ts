@@ -1,7 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, CITY } from './support/helpers';
+import { TEXT, CITY, skipFirstVisitPrompts } from './support/helpers';
 
 const PERMALINK = new RegExp(`/${CITY}/[a-z0-9-]+/[a-z0-9-]+-[0-9a-f]{8}/?$`);
+
+// On a phone the unanswered cookie banner covers the filters button and the
+// bottom of the map; the prompts themselves are cookie-consent.spec's subject.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // Guards commit 3341414 (map pin-popup routing). The popup's CTA is raw HTML
 // injected into a Leaflet popup — it lives OUTSIDE React, so only a real

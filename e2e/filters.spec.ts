@@ -1,5 +1,19 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, firstCard, gotoEvents, openFilters, closeFilters, search } from './support/helpers';
+import {
+  TEXT,
+  firstCard,
+  gotoEvents,
+  openFilters,
+  closeFilters,
+  search,
+  skipFirstVisitPrompts,
+} from './support/helpers';
+
+// On a phone the unanswered cookie banner covers the filters button and the
+// bottom of the map; the prompts themselves are cookie-consent.spec's subject.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // Filtering is the primary reason to use the app. These exercise the debounced
 // search box, the category checkboxes, pagination and the empty state — all via

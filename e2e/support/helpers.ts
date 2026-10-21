@@ -1,4 +1,6 @@
 import { expect, type Page } from '@playwright/test';
+import { CONSENT_STORAGE_KEY } from '../../src/lib/consent';
+import { ONBOARDING_STORAGE_KEY, ONBOARDING_VERSION } from '../../src/lib/onboarding';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // These e2e tests run the real app against the real (multi-city) Supabase
@@ -224,4 +226,21 @@ export async function clearAllFilters(page: Page): Promise<void> {
 /** Locate an active-filter chip (in the results header) by its visible label. */
 export function activeChip(page: Page, label: string | RegExp) {
   return page.locator('.MuiChip-root').filter({ hasText: label });
+}
+
+/**
+ * Answer both first-visit prompts before the page loads, for tests about
+ * something else. On a phone the cookie banner covers the bottom of the
+ * screen — the filters button, map pins — and the onboarding sheet opens the
+ * moment the banner is answered. cookie-consent.spec and onboarding.spec are
+ * the ones that test the prompts themselves, and do not call this.
+ */
+export async function skipFirstVisitPrompts(page: Page): Promise<void> {
+  await page.addInitScript(
+    ([consentKey, onboardingKey, version]) => {
+      window.localStorage.setItem(consentKey, 'rejected');
+      window.localStorage.setItem(onboardingKey, version);
+    },
+    [CONSENT_STORAGE_KEY, ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION)] as const
+  );
 }

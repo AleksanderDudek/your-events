@@ -8,7 +8,14 @@ import {
   applyFirstCategory,
   activeChip,
   waitForList,
+  skipFirstVisitPrompts,
 } from './support/helpers';
+
+// On a phone the unanswered cookie banner covers the filters button and the
+// bottom of the map; the prompts themselves are cookie-consent.spec's subject.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // The REVERSE contract. The rest of the suite proves UI action → URL; these
 // prove URL → UI: load a filtered permalink cold and assert the app hydrates

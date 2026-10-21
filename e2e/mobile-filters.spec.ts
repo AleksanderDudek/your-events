@@ -1,21 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
-import { CONSENT_STORAGE_KEY } from '../src/lib/consent';
-import { ONBOARDING_STORAGE_KEY, ONBOARDING_VERSION } from '../src/lib/onboarding';
-import { CITY, TEXT, openFilters, waitForList } from './support/helpers';
+import { CITY, TEXT, openFilters, skipFirstVisitPrompts, waitForList } from './support/helpers';
 
 // The phone layout: the search box on the page, a labelled trigger, a sheet
 // that closes with a swipe. Desktop has none of it.
 test.beforeEach(async ({ page, isMobile }) => {
   test.skip(!isMobile, 'Phone layout only');
-  // Answer both first-visit prompts up front: the cookie banner sits over the
-  // trigger, and the onboarding sheet opens the moment it is answered.
-  await page.addInitScript(
-    ([consentKey, onboardingKey, version]) => {
-      window.localStorage.setItem(consentKey, 'rejected');
-      window.localStorage.setItem(onboardingKey, version);
-    },
-    [CONSENT_STORAGE_KEY, ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION)] as const
-  );
+  await skipFirstVisitPrompts(page);
 });
 
 /**

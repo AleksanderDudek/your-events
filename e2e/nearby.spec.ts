@@ -1,24 +1,22 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { CONSENT_STORAGE_KEY } from '../src/lib/consent';
-import { ONBOARDING_STORAGE_KEY, ONBOARDING_VERSION } from '../src/lib/onboarding';
-import { CITY, TEXT, activeChip, closeFilters, openFilters, waitForList } from './support/helpers';
+import {
+  CITY,
+  TEXT,
+  activeChip,
+  closeFilters,
+  openFilters,
+  skipFirstVisitPrompts,
+  waitForList,
+} from './support/helpers';
 
 // Wrocław's Rynek. As everywhere in this suite, nothing asserts what the
 // scrape put near it — only that the filter is applied and honoured.
 const RYNEK = { lat: 51.11, lng: 17.032 };
 
-// Answer both first-visit prompts before the page loads: the cookie banner
-// sits over the mobile filter button, and the onboarding sheet opens the
-// moment the banner is answered. Neither is what this suite is about.
+// The first-visit prompts are not what this suite is about.
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(
-    ([consentKey, onboardingKey, version]) => {
-      window.localStorage.setItem(consentKey, 'rejected');
-      window.localStorage.setItem(onboardingKey, version);
-    },
-    [CONSENT_STORAGE_KEY, ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION)] as const
-  );
+  await skipFirstVisitPrompts(page);
 });
 
 async function openNearby(page: Page): Promise<void> {
@@ -38,7 +36,10 @@ async function cardDistances(page: Page): Promise<number[]> {
 }
 
 test.describe('Events near a point', () => {
-  test('"use my location" filters around the device, coarsened to ~100 m', async ({ page, context }) => {
+  test('"use my location" filters around the device, coarsened to ~100 m', async ({
+    page,
+    context,
+  }) => {
     await context.grantPermissions(['geolocation']);
     await context.setGeolocation({ latitude: 51.109_87, longitude: 17.032_41 });
     await page.goto(`/${CITY}/wydarzenia`);
@@ -142,6 +143,8 @@ test.describe('Events near a point', () => {
     test.skip(!(await map.isVisible()), 'Nothing within 2 km of the Rynek in this data slice');
 
     // The circle is an SVG path in Leaflet's overlay pane.
-    await expect(page.locator('.leaflet-overlay-pane path').first()).toBeAttached({ timeout: 20000 });
+    await expect(page.locator('.leaflet-overlay-pane path').first()).toBeAttached({
+      timeout: 20000,
+    });
   });
 });
