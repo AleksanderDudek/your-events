@@ -836,10 +836,11 @@ describe('eventsApi', () => {
 
       it('keeps scanning while pages come back full', async () => {
         const s = setup();
+        const full = Array.from({ length: 1000 }, (_, i) => at(i + 1, 0, 0));
         s.results.eventsQueue = [
-          { data: Array.from({ length: 1000 }, (_, i) => at(i + 1, 0, 0)), count: null, error: null },
+          { data: full, count: null, error: null },
           { data: [at(1001, 0, 0)], count: null, error: null },
-          { data: [], count: null, error: null },
+          { data: full.slice(0, 15), count: null, error: null },
         ];
 
         const { total } = await fetchEvents('wroclaw', makeFilters({ near: NEAR }));
@@ -847,6 +848,75 @@ describe('eventsApi', () => {
         expect(total).toBe(1001);
         expect(s.eventsBuilders[0].range).toHaveBeenCalledWith(0, 999);
         expect(s.eventsBuilders[1].range).toHaveBeenCalledWith(1000, 1999);
+      });
+
+      // The page cap is a runaway guard; reaching it with pages still full
+      // means the count and the paging would be wrong, so it says so.
+      it('fails loudly rather than truncate a scan at its page cap', async () => {
+        const s = setup();
+        const full = Array.from({ length: 1000 }, (_, i) => at(i + 1, 0, 0));
+        s.results.eventsQueue = Array.from({ length: 20 }, () => ({ data: full, count: null, error: null }));
+
+        await expect(fetchEvents('wroclaw', makeFilters({ near: NEAR }))).rejects.toBeInstanceOf(
+          ServerError
+        );
+        expect(s.eventsBuilders).toHaveLength(20);
+      });
+
+      // Ids churn: the scraper rewrites rows under new ids. One rewrite landing
+      // between the scan and the page fetch would empty a page the count still
+      // calls full, so the whole read is tried once more.
+      it('scans again when the page comes back short, as when ids changed under it', async () => {
+        const s = setup();
+        const before = [at(1, 0, 0), at(2, 0.001, 0)];
+        const after = [at(11, 0, 0), at(12, 0.001, 0)];
+        s.results.eventsQueue = [
+          { data: before, count: null, error: null },
+          { data: [], count: null, error: null },
+          { data: after, count: null, error: null },
+          { data: after, count: null, error: null },
+        ];
+
+        const { events, total } = await fetchEvents('wroclaw', makeFilters({ near: NEAR }));
+
+        expect(events.map((e) => e.id)).toEqual(['11', '12']);
+        expect(total).toBe(2);
+        expect(s.eventsBuilders).toHaveLength(4);
+      });
+
+      it('settles for a short page once a fresh scan agrees a row is gone', async () => {
+        const s = setup();
+        const rows = [at(1, 0, 0), at(2, 0.001, 0)];
+        s.results.eventsQueue = [
+          { data: rows, count: null, error: null },
+          { data: [rows[0]], count: null, error: null },
+          { data: rows, count: null, error: null },
+          { data: [rows[0]], count: null, error: null },
+        ];
+
+        const { events } = await fetchEvents('wroclaw', makeFilters({ near: NEAR }));
+
+        expect(events.map((e) => e.id)).toEqual(['1']);
+        expect(s.eventsBuilders).toHaveLength(4);
+      });
+
+      // Cutting at MAP_EVENT_LIMIT before the circle would drop matches the
+      // list still counts, and the header would blame the gap on missing
+      // coordinates.
+      it('pages the map through every candidate when a client filter applies', async () => {
+        const s = setup();
+        s.results.eventsQueue = [
+          { data: Array.from({ length: 1000 }, (_, i) => at(i + 1, 0, 0)), count: null, error: null },
+          { data: [at(1001, 0, 0), at(1002, 0.007, 0.011)], count: null, error: null },
+        ];
+
+        const { events, total } = await fetchMapEvents('wroclaw', makeFilters({ near: NEAR }));
+
+        expect(events).toHaveLength(1001);
+        expect(total).toBe(1001);
+        expect(s.eventsBuilders[0].range).toHaveBeenCalledWith(0, 999);
+        expect(s.eventsBuilders[1].range).toHaveBeenCalledWith(1000, 1999);
+        expect(s.eventsBuilders[0].limit).not.toHaveBeenCalled();
       });
 
       // Rows sharing a date and a start time could otherwise trade places
