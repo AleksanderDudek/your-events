@@ -60,6 +60,21 @@ export default function SearchInput({ value, onChange }: SearchInputProps) {
     onChangeRef.current('');
   }, []);
 
+  // Enter — the phone keyboard's "search" key — searches now rather than after
+  // the pause, and on a touch screen puts the keyboard away: it would otherwise
+  // cover the results. (An Enter that confirms an IME composition is typing.)
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
+      if (typing) {
+        setTyping(false);
+        onChangeRef.current(localValue);
+      }
+      if (window.matchMedia?.('(pointer: coarse)').matches) e.currentTarget.blur();
+    },
+    [typing, localValue]
+  );
+
   return (
     <TextField
       fullWidth
@@ -68,6 +83,7 @@ export default function SearchInput({ value, onChange }: SearchInputProps) {
       onChange={(e) => handleType(e.target.value)}
       placeholder={t.SEARCH_PLACEHOLDER}
       aria-label={t.SEARCH_LABEL}
+      inputProps={{ enterKeyHint: 'search', onKeyDown: handleKeyDown }}
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">

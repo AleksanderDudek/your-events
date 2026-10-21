@@ -72,4 +72,70 @@ describe('SearchInput', () => {
       expect(screen.getByPlaceholderText(PLACEHOLDER)).toHaveValue('');
     });
   });
+
+  // Enter is the phone keyboard's "search" key: pressing it and then waiting
+  // out the pause reads as "nothing happened".
+  describe('Enter', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    });
+
+    it('labels the keyboard key as search', () => {
+      render(<SearchInput value="" onChange={vi.fn()} />);
+      expect(screen.getByPlaceholderText(PLACEHOLDER)).toHaveAttribute('enterkeyhint', 'search');
+    });
+
+    it('searches at once, and only once', () => {
+      vi.useFakeTimers();
+      const onChange = vi.fn();
+      render(<SearchInput value="" onChange={onChange} />);
+      const box = screen.getByPlaceholderText(PLACEHOLDER);
+
+      fireEvent.change(box, { target: { value: 'jazz' } });
+      fireEvent.keyDown(box, { key: 'Enter' });
+      expect(onChange).toHaveBeenCalledExactlyOnceWith('jazz');
+
+      act(() => void vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS * 2));
+      expect(onChange).toHaveBeenCalledOnce();
+    });
+
+    // Japanese or Chinese input confirms a composed word with Enter; that is
+    // still typing, not a search.
+    it('leaves an Enter that confirms a composition alone', () => {
+      const onChange = vi.fn();
+      render(<SearchInput value="" onChange={onChange} />);
+      const box = screen.getByPlaceholderText(PLACEHOLDER);
+
+      fireEvent.change(box, { target: { value: 'ジャズ' } });
+      fireEvent.keyDown(box, { key: 'Enter', isComposing: true });
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    // On a touch screen the keyboard covers the results it has just found.
+    it('puts the keyboard away on a touch screen', () => {
+      vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(pointer: coarse)' }));
+      render(<SearchInput value="" onChange={vi.fn()} />);
+      const box = screen.getByPlaceholderText(PLACEHOLDER);
+      box.focus();
+
+      fireEvent.change(box, { target: { value: 'jazz' } });
+      fireEvent.keyDown(box, { key: 'Enter' });
+
+      expect(box).not.toHaveFocus();
+    });
+
+    it('keeps the focus with a mouse', () => {
+      vi.stubGlobal('matchMedia', () => ({ matches: false }));
+      render(<SearchInput value="" onChange={vi.fn()} />);
+      const box = screen.getByPlaceholderText(PLACEHOLDER);
+      box.focus();
+
+      fireEvent.change(box, { target: { value: 'jazz' } });
+      fireEvent.keyDown(box, { key: 'Enter' });
+
+      expect(box).toHaveFocus();
+    });
+  });
 });
