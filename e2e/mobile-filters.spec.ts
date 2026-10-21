@@ -70,6 +70,9 @@ test.describe('Filters on a phone', () => {
     const handle = page.locator('.MuiDrawer-paper [class*="dragHandle"]');
     const box = await handle.boundingBox();
     if (!box) throw new Error('The drawer has no drag handle');
+    // Drawn, not collapsed: in the drawer's flex column an empty handle used to
+    // shrink to 0 px as soon as the filters overflowed.
+    expect(box.height).toBeGreaterThanOrEqual(4);
     await swipeDown(page, { x: box.x + box.width / 2, y: box.y + box.height / 2 }, 400);
 
     await expect(page.locator('.MuiDrawer-root .MuiBackdrop-root')).toBeHidden();

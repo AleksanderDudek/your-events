@@ -65,11 +65,17 @@
   line-height: 1;
 }
 
+// The sheet closes with a downward swipe, and this bar is what says so: it
+// needs to read as a handle, not vanish into the white like a hairline border.
+// flex-shrink: 0 — the drawer paper is a flex column, and once the filters
+// overflow it, an empty item like this one shrinks to nothing.
 .dragHandle {
+  flex-shrink: 0;
   width: 40px;
-  height: 4px;
-  background-color: var(--color-border);
-  border-radius: 2px;
+  height: 5px;
+  background-color: var(--color-text-muted);
+  opacity: 0.6;
+  border-radius: var(--radius-pill);
   margin: 12px auto;
 }
 
