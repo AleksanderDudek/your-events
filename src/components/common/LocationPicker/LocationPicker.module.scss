@@ -1,5 +1,7 @@
+// Short enough that the radius slider and the actions below it still fit on a
+// 720 px laptop screen without scrolling the dialog.
 .mapSlot {
-  height: min(60vh, 420px);
+  height: clamp(240px, 45vh, 420px);
   margin: 12px 0 8px;
   border-radius: var(--radius-lg);
   overflow: hidden;

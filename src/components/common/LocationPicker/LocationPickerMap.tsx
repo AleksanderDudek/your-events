@@ -2,7 +2,7 @@
 
 // Leaflet touches `window` at import time, so this module is only ever loaded
 // through the dynamic import in LocationPickerDialog (ssr: false).
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import L from 'leaflet';
 import { Circle, MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
 import type { LatLng } from '@/lib/geo';
@@ -16,7 +16,7 @@ import 'leaflet/dist/leaflet.css';
 import styles from './LocationPicker.module.scss';
 
 export interface LocationPickerMapProps {
-  /** Where the map opens. Read once, like every MapContainer prop. */
+  /** Where the map opens when there is no point yet. Read once, like every MapContainer prop. */
   initialCenter: LatLng;
   point: LatLng | null;
   radius: number;
@@ -56,9 +56,16 @@ export default function LocationPickerMap({
       }),
     []
   );
+  // Opened on an existing point, the map frames its whole circle; otherwise it
+  // shows the city centre at street level. Both are read only on mount.
+  const [initialView] = useState(() =>
+    point
+      ? { bounds: L.latLng(point.lat, point.lng).toBounds(radius * 2) }
+      : { center: L.latLng(initialCenter.lat, initialCenter.lng), zoom: 14 }
+  );
 
   return (
-    <MapContainer center={[initialCenter.lat, initialCenter.lng]} zoom={14} className={styles.map}>
+    <MapContainer {...initialView} boundsOptions={{ padding: [16, 16] }} className={styles.map}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
