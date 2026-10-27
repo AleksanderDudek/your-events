@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   MAX_NAME_LENGTH,
   MAX_PRESETS,
+  describeFixedRange,
   duplicatePreset,
   emptyPresetFilters,
   parsePresets,
@@ -62,11 +63,11 @@ describe('resolveDateWindow', () => {
     expect(resolveDateWindow(emptyPresetFilters(), MONDAY)).toBeNull();
   });
 
-  it('mirrors a half-open fixed range onto its missing end', () => {
+  it('keeps a half-open fixed range half-open — "from the 10th on", not "the 10th"', () => {
     const filters = { ...emptyPresetFilters(), dateWindow: 'fixed' as const, dateFrom: '2026-08-10', dateTo: null };
     expect(resolveDateWindow(filters, MONDAY)).toEqual({
       dateFrom: '2026-08-10',
-      dateTo: '2026-08-10',
+      dateTo: null,
     });
   });
 
@@ -99,7 +100,30 @@ describe('presetToEventFilters', () => {
       },
     });
     const filters = presetToEventFilters(preset, MONDAY);
-    expect(filters).toMatchObject({ dateMode: 'range', hourFrom: '18:00', hourTo: '22:00' });
+    expect(filters).toMatchObject({ dateMode: 'single', hourFrom: '18:00', hourTo: '22:00' });
+  });
+
+  it('opens "today" as a single day, as the list\'s own "Dziś" writes it', () => {
+    // On a Sunday the coming weekend is that one day too; writing today as a
+    // single day is what keeps the two apart when the dates are read back.
+    const preset = makePreset({ filters: { ...emptyPresetFilters(), dateWindow: 'today' } });
+    expect(presetToEventFilters(preset, MONDAY)).toMatchObject({
+      dateMode: 'single',
+      dateSingle: '2026-07-27',
+      dateFrom: null,
+      dateTo: null,
+    });
+  });
+
+  it('opens a half-open fixed range with its open end left open', () => {
+    const preset = makePreset({
+      filters: { ...emptyPresetFilters(), dateWindow: 'fixed', dateFrom: '2026-08-10' },
+    });
+    expect(presetToEventFilters(preset, MONDAY)).toMatchObject({
+      dateMode: 'range',
+      dateFrom: '2026-08-10',
+      dateTo: null,
+    });
   });
 });
 
@@ -122,7 +146,7 @@ describe('presetHref', () => {
     const href = presetHref(preset, MONDAY);
     expect(href).toContain('categories=taniec');
     expect(href).toContain('freeOnly=true');
-    expect(href).toContain('dateFrom=2026-07-27');
+    expect(href).toContain('dateSingle=2026-07-27');
   });
 
   it('produces a bare list URL when nothing is filtered', () => {
@@ -156,6 +180,29 @@ describe('presetFiltersFromEventFilters', () => {
       dateSingle: '2026-08-01',
     });
     expect(saved).toMatchObject({ dateWindow: 'fixed', dateFrom: '2026-08-01', dateTo: '2026-08-01' });
+  });
+
+  it('saves a relative window without the dates it happens to cover today', () => {
+    // "Today" saved on a Monday must not remember that Monday — the dates are
+    // worked out again when the preset is opened.
+    const saved = presetFiltersFromEventFilters(
+      { ...getDefaultFilters(), dateMode: 'single', dateSingle: '2026-07-27', hourFrom: '18:00' },
+      'today'
+    );
+    expect(saved).toMatchObject({ dateWindow: 'today', dateFrom: null, dateTo: null, hourFrom: '18:00' });
+  });
+
+  it('drops the dates when told to save none', () => {
+    const saved = presetFiltersFromEventFilters(
+      { ...getDefaultFilters(), dateMode: 'range', dateFrom: '2026-08-01', dateTo: '2026-08-03' },
+      'none'
+    );
+    expect(saved).toMatchObject({ dateWindow: 'none', dateFrom: null, dateTo: null });
+  });
+
+  it('cannot fix dates that are not there', () => {
+    const saved = presetFiltersFromEventFilters(getDefaultFilters(), 'fixed');
+    expect(saved).toMatchObject({ dateWindow: 'none', dateFrom: null, dateTo: null });
   });
 
   it('keeps the weekday selection, and copies rather than aliases it', () => {
@@ -319,5 +366,19 @@ describe('the proximity filter in presets', () => {
     const [original, copy] = duplicatePreset(presets, 'p1', 'p2', 'Copy', '2026-07-28T10:00:00.000Z');
     expect(copy.filters.near).toEqual(original.filters.near);
     expect(copy.filters.near).not.toBe(original.filters.near);
+  });
+});
+
+describe('describeFixedRange', () => {
+  const words = { from: (d: string) => `od ${d}`, to: (d: string) => `do ${d}` };
+
+  it('names one day once, and a range by both ends', () => {
+    expect(describeFixedRange('2026-08-10', '2026-08-10', words)).toBe('2026-08-10');
+    expect(describeFixedRange('2026-08-10', '2026-08-12', words)).toBe('2026-08-10 – 2026-08-12');
+  });
+
+  it('names a half-open range by the end it has', () => {
+    expect(describeFixedRange('2026-08-10', null, words)).toBe('od 2026-08-10');
+    expect(describeFixedRange(null, '2026-08-12', words)).toBe('do 2026-08-12');
   });
 });

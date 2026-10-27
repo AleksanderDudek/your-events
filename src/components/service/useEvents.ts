@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { fetchEvents, fetchMapEvents, ResolvedCategoryFilter } from './eventsApi';
 import { eventsKeys } from './queryKeys';
 import { parseFiltersFromParams } from '@/lib/filterUtils';
+import { withDefaultDateWindow } from '@/lib/dateWindows';
 import { useCategories } from './useCategories';
 import { useCity } from '@/config/CityProvider';
 
@@ -13,10 +14,16 @@ import { useCity } from '@/config/CityProvider';
  * The filters in the URL, with category slugs resolved to the display names the
  * events table stores. Shared by the list and map queries so the two can never
  * disagree about what the user asked for.
+ *
+ * `filters` is what the URL says, for the UI; `queryFilters` is what the
+ * database is asked, which with no date chosen is bounded to the default window
+ * (today to three months ahead). The dates are part of the query key, so a
+ * render after midnight asks about the new day rather than reusing the old one.
  */
 function useResolvedFilters() {
   const searchParams = useSearchParams();
   const filters = parseFiltersFromParams(searchParams);
+  const queryFilters = withDefaultDateWindow(filters, new Date());
   const { bySlug } = useCategories();
   const { city } = useCity();
 
@@ -40,15 +47,15 @@ function useResolvedFilters() {
   // and querying without it would briefly show unfiltered results.
   const ready = filters.categories.length === 0 || bySlug.size > 0;
 
-  return { filters, categoryFilter, city, ready };
+  return { filters, queryFilters, categoryFilter, city, ready };
 }
 
 export function useEvents() {
-  const { filters, categoryFilter, city, ready } = useResolvedFilters();
+  const { filters, queryFilters, categoryFilter, city, ready } = useResolvedFilters();
 
   const { data, isLoading, isError, isFetching, error, refetch } = useQuery({
-    queryKey: eventsKeys.list(city.id, filters),
-    queryFn: () => fetchEvents(city.id, filters, categoryFilter),
+    queryKey: eventsKeys.list(city.id, queryFilters),
+    queryFn: () => fetchEvents(city.id, queryFilters, categoryFilter),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
     retry: 2,
@@ -80,11 +87,11 @@ export function useEvents() {
  * whole city.
  */
 export function useMapEvents(enabled: boolean) {
-  const { filters, categoryFilter, city, ready } = useResolvedFilters();
+  const { queryFilters, categoryFilter, city, ready } = useResolvedFilters();
 
   const { data, isLoading, isError, isFetching, refetch } = useQuery({
-    queryKey: eventsKeys.map(city.id, filters),
-    queryFn: () => fetchMapEvents(city.id, filters, categoryFilter),
+    queryKey: eventsKeys.map(city.id, queryFilters),
+    queryFn: () => fetchMapEvents(city.id, queryFilters, categoryFilter),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
     retry: 2,
