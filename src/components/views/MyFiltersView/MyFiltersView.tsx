@@ -21,6 +21,7 @@ import {
   MAX_PRESETS,
   emptyPresetFilters,
   newPresetId,
+  describeFixedRange,
   presetHref,
 } from '@/lib/presets';
 import { getCity } from '@/config/cities';
@@ -65,7 +66,10 @@ export default function MyFiltersView() {
       today: t.PRESETS_DATE_TODAY,
       weekend: t.PRESETS_DATE_WEEKEND,
       next7: t.PRESETS_DATE_NEXT7,
-      fixed: [preset.filters.dateFrom, preset.filters.dateTo].filter(Boolean).join(' – '),
+      fixed: describeFixedRange(preset.filters.dateFrom, preset.filters.dateTo, {
+        from: t.PRESETS_RANGE_FROM,
+        to: t.PRESETS_RANGE_TO,
+      }),
     };
     const when = windowLabel[preset.filters.dateWindow];
     if (when) parts.push(when);

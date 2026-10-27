@@ -86,6 +86,9 @@ export const TEXT = {
   presetsSaveCurrent: 'Zapisz filtry',
   presetsNew: /Nowy filtr/,
   presetsName: 'Nazwa',
+  // The Date section of the filter panel, and the quick pick inside it.
+  filterDate: 'Data',
+  filterDateToday: 'Dziś',
   presetsSave: 'Zapisz',
   presetsWhen: 'Kiedy',
   presetsWeekend: 'Najbliższy weekend',

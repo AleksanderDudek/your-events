@@ -1,7 +1,7 @@
 import { EventFilters, NearFilter, PageSize, ViewMode, Weekday } from '@/types/filter.types';
 import { FilterPreset, PresetDateWindow, PresetFilters } from '@/types/preset.types';
 import { filtersToSearchParams, parseNear } from './filterUtils';
-import { getUpcomingWeekend } from './homeFilters';
+import { hasDateValue, relativeWindowFilters, resolveRelativeWindow } from './dateWindows';
 import { sortWeekdays } from './weekdays';
 import { DEFAULT_PAGE_SIZE } from './constants';
 
@@ -17,18 +17,6 @@ const VIEW_MODES: readonly ViewMode[] = ['grid', 'row', 'map'];
 const PAGE_SIZES: readonly PageSize[] = [15, 30, 60];
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_REGEX = /^\d{2}:\d{2}$/;
-
-const pad2 = (n: number) => String(n).padStart(2, '0');
-
-function toDateString(d: Date): string {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
-
-function addDays(d: Date, days: number): Date {
-  const out = new Date(d);
-  out.setDate(out.getDate() + days);
-  return out;
-}
 
 export function emptyPresetFilters(): PresetFilters {
   return {
@@ -50,20 +38,33 @@ export function emptyPresetFilters(): PresetFilters {
 /**
  * Turn the filters currently on screen into something savable. `page` is
  * dropped on purpose — reopening a preset on page 4 of results it has never
- * shown you is never what was meant — and an absolute date range becomes a
- * 'fixed' window so it round-trips unchanged.
+ * shown you is never what was meant.
+ *
+ * `dateWindow` says how the dates on screen should be kept: as the exact
+ * dates ('fixed', the default whenever there are any), as a relative window
+ * re-resolved on every open (the dates themselves are then not stored), or not
+ * at all. A fixed window with no dates to fix is no window.
  */
-export function presetFiltersFromEventFilters(filters: EventFilters): PresetFilters {
-  const hasRange = Boolean(filters.dateFrom || filters.dateTo || filters.dateSingle);
+export function presetFiltersFromEventFilters(
+  filters: EventFilters,
+  dateWindow?: PresetDateWindow
+): PresetFilters {
+  const hasRange = hasDateValue(filters);
+  const requested = dateWindow ?? (hasRange ? 'fixed' : 'none');
+  const window = requested === 'fixed' && !hasRange ? 'none' : requested;
+  const isFixed = window === 'fixed';
+  // The list only honours an hour range alongside a date, so one saved with no
+  // window would sit unseen in the preset and come back if a window were added.
+  const keepsHours = window !== 'none';
   return {
     search: filters.search,
     categories: [...filters.categories],
-    dateWindow: hasRange ? 'fixed' : 'none',
-    dateFrom: filters.dateSingle ?? filters.dateFrom,
-    dateTo: filters.dateSingle ?? filters.dateTo,
+    dateWindow: window,
+    dateFrom: isFixed ? (filters.dateSingle ?? filters.dateFrom) : null,
+    dateTo: isFixed ? (filters.dateSingle ?? filters.dateTo) : null,
     weekdays: [...filters.weekdays],
-    hourFrom: filters.hourFrom,
-    hourTo: filters.hourTo,
+    hourFrom: keepsHours ? filters.hourFrom : null,
+    hourTo: keepsHours ? filters.hourTo : null,
     freeOnly: filters.freeOnly,
     near: filters.near ? { ...filters.near } : null,
     viewMode: filters.viewMode,
@@ -71,30 +72,23 @@ export function presetFiltersFromEventFilters(filters: EventFilters): PresetFilt
   };
 }
 
-/** Resolve a relative window against `now`. Returns null when there is none. */
+/**
+ * Resolve a preset's window against `now`. Returns null when there is none. A
+ * fixed range may be half-open, and stays so: "from Friday on" is a range the
+ * list understands as it is.
+ */
 export function resolveDateWindow(
   filters: PresetFilters,
   now: Date
-): { dateFrom: string; dateTo: string } | null {
+): { dateFrom: string | null; dateTo: string | null } | null {
   switch (filters.dateWindow) {
-    case 'today': {
-      const today = toDateString(now);
-      return { dateFrom: today, dateTo: today };
-    }
-    case 'weekend': {
-      const { fromDate, toDate } = getUpcomingWeekend(now);
-      return { dateFrom: fromDate, dateTo: toDate };
-    }
+    case 'today':
+    case 'weekend':
     case 'next7':
-      return { dateFrom: toDateString(now), dateTo: toDateString(addDays(now, 7)) };
-    case 'fixed': {
+      return resolveRelativeWindow(filters.dateWindow, now);
+    case 'fixed':
       if (!filters.dateFrom && !filters.dateTo) return null;
-      // A half-open fixed range is legitimate ("from Friday on"); mirror the
-      // present end onto the missing one so the list gets a usable window.
-      const from = filters.dateFrom ?? filters.dateTo!;
-      const to = filters.dateTo ?? filters.dateFrom!;
-      return { dateFrom: from, dateTo: to };
-    }
+      return { dateFrom: filters.dateFrom, dateTo: filters.dateTo };
     default:
       return null;
   }
@@ -103,12 +97,21 @@ export function resolveDateWindow(
 /** The query a preset expands to, as the events list would parse it. */
 export function presetToEventFilters(preset: FilterPreset, now: Date): Partial<EventFilters> {
   const range = resolveDateWindow(preset.filters, now);
+  // Today goes out as a single day, the way the list's own "Dziś" writes it, so
+  // the dates read back as today and not as a Sunday's one-day weekend.
+  const dates =
+    preset.filters.dateWindow === 'today'
+      ? relativeWindowFilters('today', now)
+      : {
+          dateMode: range ? ('range' as const) : null,
+          dateSingle: null,
+          dateFrom: range?.dateFrom ?? null,
+          dateTo: range?.dateTo ?? null,
+        };
   return {
     search: preset.filters.search,
     categories: preset.filters.categories,
-    dateMode: range ? 'range' : null,
-    dateFrom: range?.dateFrom ?? null,
-    dateTo: range?.dateTo ?? null,
+    ...dates,
     // Unlike the hour range, this one does not need a date window to mean
     // something, so it is carried over as saved.
     weekdays: preset.filters.weekdays,
@@ -121,6 +124,21 @@ export function presetToEventFilters(preset: FilterPreset, now: Date): Partial<E
     viewMode: preset.filters.viewMode,
     pageSize: preset.filters.pageSize,
   };
+}
+
+/**
+ * A fixed range in words: one day, both ends, or the one end a half-open range
+ * has — which must not read as a single day.
+ */
+export function describeFixedRange(
+  from: string | null,
+  to: string | null,
+  words: { from: (date: string) => string; to: (date: string) => string }
+): string {
+  if (from && to) return from === to ? from : `${from} – ${to}`;
+  if (from) return words.from(from);
+  if (to) return words.to(to);
+  return '';
 }
 
 /** Where a preset tile points. Relative windows resolve against `now`. */

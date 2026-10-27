@@ -8,6 +8,14 @@ export type Locale = 'pl' | 'en';
 export const LOCALES: readonly Locale[] = ['pl', 'en'];
 export const DEFAULT_LOCALE: Locale = 'pl';
 
+// "3 miesiące", "5 miesięcy": Polish picks the form from the number's ending.
+function monthsPl(n: number): string {
+  if (n === 1) return '1 miesiąc';
+  const ones = n % 10;
+  const tens = n % 100;
+  return ones >= 2 && ones <= 4 && (tens < 12 || tens > 14) ? `${n} miesiące` : `${n} miesięcy`;
+}
+
 const pl = {
   APP_NAME: 'Idź na miasto',
   APP_TAGLINE: (cityLocative: string) => `Odkryj wydarzenia w ${cityLocative}`,
@@ -33,6 +41,12 @@ const pl = {
   FILTER_DATE_RANGE: 'Zakres dat',
   FILTER_DATE_FROM: 'Od',
   FILTER_DATE_TO: 'Do',
+  FILTER_DATE_QUICK: 'Szybki wybór daty',
+  FILTER_DATE_TODAY: 'Dziś',
+  FILTER_DATE_WEEKEND: 'Ten weekend',
+  FILTER_DATE_NEXT7: '7 dni',
+  FILTER_DATE_DEFAULT: (months: number) =>
+    `Bez wybranej daty: od dziś przez najbliższe ${monthsPl(months)}.`,
   FILTER_WEEKDAYS: 'Dni tygodnia',
   // Indexed by JS Date#getDay(), so Sunday leads even though the picker shows it
   // last — the index is the day number, not the display position.
@@ -258,11 +272,15 @@ const pl = {
   PRESETS_FULL: (max: number) => `Limit ${max} filtrów osiągnięty. Usuń któryś, żeby dodać nowy.`,
   PRESETS_COPY_SUFFIX: 'kopia',
   PRESETS_DATE_WINDOW: 'Kiedy',
-  PRESETS_DATE_NONE: 'Bez ograniczeń',
+  PRESETS_DATE_NONE: (months: number) => `Od dziś (najbliższe ${monthsPl(months)})`,
   PRESETS_DATE_TODAY: 'Dzisiaj',
   PRESETS_DATE_WEEKEND: 'Najbliższy weekend',
   PRESETS_DATE_NEXT7: 'Najbliższe 7 dni',
   PRESETS_DATE_FIXED: 'Konkretny zakres dat',
+  PRESETS_DATE_FIXED_THESE: (range: string) => `Dokładnie te daty: ${range}`,
+  PRESETS_RANGE_FROM: (date: string) => `od ${date}`,
+  PRESETS_RANGE_TO: (date: string) => `do ${date}`,
+  PRESETS_HOURS_NEED_DATE: 'Godziny działają tylko razem z terminem — wybierz go, żeby je zachować.',
   // The whole point of the relative windows — worth saying out loud in the form.
   PRESETS_DATE_HINT: 'Terminy względne przeliczają się przy każdym otwarciu, więc filtr się nie starzeje.',
   PRESETS_SAVE_CURRENT: 'Zapisz filtry',
@@ -396,6 +414,12 @@ const en: Messages = {
   FILTER_DATE_RANGE: 'Date range',
   FILTER_DATE_FROM: 'From',
   FILTER_DATE_TO: 'To',
+  FILTER_DATE_QUICK: 'Quick date pick',
+  FILTER_DATE_TODAY: 'Today',
+  FILTER_DATE_WEEKEND: 'This weekend',
+  FILTER_DATE_NEXT7: 'Next 7 days',
+  FILTER_DATE_DEFAULT: (months: number) =>
+    `No date picked: from today for the next ${months} ${months === 1 ? 'month' : 'months'}.`,
   FILTER_WEEKDAYS: 'Days of the week',
   WEEKDAY_SHORT: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
   WEEKDAY_LONG: [
@@ -608,11 +632,16 @@ const en: Messages = {
   PRESETS_FULL: (max: number) => `You have hit the limit of ${max} filters. Delete one to add another.`,
   PRESETS_COPY_SUFFIX: 'copy',
   PRESETS_DATE_WINDOW: 'When',
-  PRESETS_DATE_NONE: 'Any time',
+  PRESETS_DATE_NONE: (months: number) =>
+    `From today (next ${months} ${months === 1 ? 'month' : 'months'})`,
   PRESETS_DATE_TODAY: 'Today',
   PRESETS_DATE_WEEKEND: 'This coming weekend',
   PRESETS_DATE_NEXT7: 'Next 7 days',
   PRESETS_DATE_FIXED: 'A specific date range',
+  PRESETS_DATE_FIXED_THESE: (range: string) => `Exactly these dates: ${range}`,
+  PRESETS_RANGE_FROM: (date: string) => `from ${date}`,
+  PRESETS_RANGE_TO: (date: string) => `until ${date}`,
+  PRESETS_HOURS_NEED_DATE: 'Hours only apply together with a date — pick one to keep them.',
   PRESETS_DATE_HINT: 'Relative windows are worked out each time you open the filter, so it never goes stale.',
   PRESETS_SAVE_CURRENT: 'Save filters',
   PRESETS_SAVED_TOAST: 'Saved to "My filters"',

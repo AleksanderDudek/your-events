@@ -21,6 +21,7 @@ import { AVAILABLE_CITIES } from '@/config/cities';
 import WeekdayPicker from '@/components/ui/WeekdayPicker/WeekdayPicker';
 import { MAX_NAME_LENGTH, emptyPresetFilters } from '@/lib/presets';
 import { formatDistance } from '@/lib/utils';
+import { DEFAULT_WINDOW_MONTHS } from '@/lib/dateWindows';
 import type { FilterPreset, PresetDateWindow } from '@/types/preset.types';
 
 interface PresetEditorDialogProps {
@@ -79,7 +80,7 @@ export default function PresetEditorDialog({
     });
 
   const dateWindows: { value: PresetDateWindow; label: string }[] = [
-    { value: 'none', label: t.PRESETS_DATE_NONE },
+    { value: 'none', label: t.PRESETS_DATE_NONE(DEFAULT_WINDOW_MONTHS) },
     { value: 'today', label: t.PRESETS_DATE_TODAY },
     { value: 'weekend', label: t.PRESETS_DATE_WEEKEND },
     { value: 'next7', label: t.PRESETS_DATE_NEXT7 },

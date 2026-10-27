@@ -3,9 +3,17 @@
 import Box from '@mui/material/Box';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Typography from '@mui/material/Typography';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { format, parseISO, isValid } from 'date-fns';
 import { useTranslation } from '@/i18n';
+import {
+  DEFAULT_WINDOW_MONTHS,
+  RelativeDateWindow,
+  hasDateValue,
+  matchRelativeWindow,
+  relativeWindowFilters,
+} from '@/lib/dateWindows';
 import { DateMode, EventFilters } from '@/types/filter.types';
 
 export type DatePatch = Partial<
@@ -34,6 +42,21 @@ function fromDate(date: Date | null): string | null {
   return format(date, 'yyyy-MM-dd');
 }
 
+const toggleGroupSx = {
+  '& .MuiToggleButton-root': {
+    color: 'var(--color-text-secondary)',
+    borderColor: 'var(--color-border)',
+    fontSize: '0.75rem',
+    fontFamily: 'var(--font-body)',
+    textTransform: 'none',
+    '&.Mui-selected': {
+      backgroundColor: 'var(--color-accent-tint-strong)',
+      color: 'var(--color-accent-primary)',
+      borderColor: 'var(--color-accent-primary)',
+    },
+  },
+} as const;
+
 const pickerSlotProps = {
   textField: {
     size: 'small' as const,
@@ -55,6 +78,27 @@ export default function DateRangePicker({
   onChange,
 }: Readonly<DateRangePickerProps>) {
   const { t } = useTranslation();
+  const now = new Date();
+  // Pressed whenever the dates on screen are that window — picked here, by
+  // calendar, or by opening a saved filter today.
+  const quickPick = matchRelativeWindow({ dateSingle, dateFrom, dateTo }, now);
+  const quickPicks: { value: RelativeDateWindow; label: string }[] = [
+    { value: 'today', label: t.FILTER_DATE_TODAY },
+    { value: 'weekend', label: t.FILTER_DATE_WEEKEND },
+    { value: 'next7', label: t.FILTER_DATE_NEXT7 },
+  ];
+
+  // These are the windows a saved filter can keep as relative, so picking one
+  // here is what lets "today" be saved as today rather than as this date.
+  // Pressing the pressed one clears the date, like deselecting a mode.
+  const handleQuickPick = (_: React.MouseEvent<HTMLElement>, next: RelativeDateWindow | null) => {
+    onChange(
+      next === null
+        ? { dateMode: null, dateSingle: null, dateFrom: null, dateTo: null }
+        : relativeWindowFilters(next, now)
+    );
+  };
+
   // Switching mode drops the values belonging to the other mode, so a stale
   // dateSingle can never leak back in when the user returns to "single".
   const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: string | null) => {
@@ -69,26 +113,38 @@ export default function DateRangePicker({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      {/* The list is never unbounded: with no date it shows the default window
+          (see withDefaultDateWindow), and saying so is what makes "no date"
+          read as a choice rather than as nothing. */}
+      {!hasDateValue({ dateSingle, dateFrom, dateTo }) && (
+        <Typography variant="caption" sx={{ color: 'var(--color-text-muted)' }}>
+          {t.FILTER_DATE_DEFAULT(DEFAULT_WINDOW_MONTHS)}
+        </Typography>
+      )}
+
+      <ToggleButtonGroup
+        value={quickPick}
+        exclusive
+        onChange={handleQuickPick}
+        size="small"
+        fullWidth
+        aria-label={t.FILTER_DATE_QUICK}
+        sx={toggleGroupSx}
+      >
+        {quickPicks.map((pick) => (
+          <ToggleButton key={pick.value} value={pick.value}>
+            {pick.label}
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
+
       <ToggleButtonGroup
         value={dateMode}
         exclusive
         onChange={handleModeChange}
         size="small"
         fullWidth
-        sx={{
-          '& .MuiToggleButton-root': {
-            color: 'var(--color-text-secondary)',
-            borderColor: 'var(--color-border)',
-            fontSize: '0.75rem',
-            fontFamily: 'var(--font-body)',
-            textTransform: 'none',
-            '&.Mui-selected': {
-              backgroundColor: 'var(--color-accent-tint-strong)',
-              color: 'var(--color-accent-primary)',
-              borderColor: 'var(--color-accent-primary)',
-            },
-          },
-        }}
+        sx={toggleGroupSx}
       >
         <ToggleButton value="single">{t.FILTER_DATE_SINGLE}</ToggleButton>
         <ToggleButton value="range">{t.FILTER_DATE_RANGE}</ToggleButton>
