@@ -37,9 +37,10 @@ export default function FilterPanel() {
   const { filters, readCurrentFilters, updateFilters, clearFilters, clearFiltersExceptSearch } =
     useFilterNavigation();
   const activeCount = countActiveFilters(filters);
-  // The phone drawer has no search box — it sits on the page — so what the
-  // drawer counts (on its trigger, behind its clear button) leaves it out.
-  const drawerCount = activeCount - (filters.search ? 1 : 0);
+  // The phone drawer has no search box or seasonal toggle — both sit on the
+  // page — so what the drawer counts (on its trigger, behind its clear button)
+  // leaves them out.
+  const drawerCount = activeCount - (filters.search ? 1 : 0) - (filters.season ? 1 : 0);
   const { t } = useTranslation();
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));

@@ -2,6 +2,7 @@ import { DateMode, EventFilters, NearFilter, PageSize, SortDir, SortKey, ViewMod
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from './constants';
 import { clampRadius, isValidLatLng, roundCoord } from './geo';
 import { parseWeekdays, serializeWeekdays } from './weekdays';
+import { parseSeasonSlug } from './seasons';
 
 const VALID_PAGE_SIZES = new Set([15, 30, 60]);
 const VALID_VIEW_MODES = new Set(['grid', 'row', 'map']);
@@ -135,6 +136,7 @@ export function parseFiltersFromParams(
     hourTo: dateMode ? parseTime(get('hourTo')) : null,
     freeOnly: parseBoolean(get('freeOnly')),
     near,
+    season: parseSeasonSlug(get('season')),
     page: parsePage(get('page')),
     pageSize: parsePageSize(get('pageSize')),
     viewMode: parseViewMode(get('viewMode')),
@@ -168,6 +170,7 @@ export function filtersToSearchParams(filters: Partial<EventFilters>): URLSearch
     params.set('radius', String(clampRadius(filters.near.radius)));
     setIfTruthy(params, 'nearLabel', filters.near.label);
   }
+  setIfTruthy(params, 'season', filters.season);
   if (filters.page && filters.page !== DEFAULT_PAGE) params.set('page', String(filters.page));
   if (filters.pageSize && filters.pageSize !== DEFAULT_PAGE_SIZE) params.set('pageSize', String(filters.pageSize));
   if (filters.viewMode && filters.viewMode !== 'grid') params.set('viewMode', filters.viewMode);
@@ -188,6 +191,7 @@ export function countActiveFilters(filters: EventFilters): number {
   if (filters.hourFrom || filters.hourTo) count++;
   if (filters.freeOnly) count++;
   if (filters.near) count++;
+  if (filters.season) count++;
   return count;
 }
 
@@ -204,6 +208,7 @@ export function getDefaultFilters(): EventFilters {
     hourTo: null,
     freeOnly: false,
     near: null,
+    season: null,
     page: DEFAULT_PAGE,
     pageSize: DEFAULT_PAGE_SIZE,
     viewMode: 'grid',

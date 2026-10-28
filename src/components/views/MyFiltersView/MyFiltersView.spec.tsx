@@ -35,6 +35,7 @@ function preset(overrides: Partial<FilterPreset> = {}): FilterPreset {
       hourTo: null,
       freeOnly: true,
       near: null,
+      season: null,
       viewMode: 'grid',
       pageSize: 15,
     },

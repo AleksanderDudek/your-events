@@ -4,6 +4,7 @@ import {
   buildDanceUrl,
   buildFoodUrl,
   buildNowUrl,
+  buildSeasonUrl,
   buildSportNowUrl,
   buildTodayUrl,
   buildWeekendUrl,
@@ -117,6 +118,17 @@ describe('homeFilters', () => {
       expect(p.get('categories')).toBe('taniec');
       expect(p.get('dateMode')).toBe('range');
       expect(p.get('dateFrom')).toBe('2026-03-10');
+    });
+  });
+
+  describe('buildSeasonUrl', () => {
+    it('filters to the season and leaves the dates to the default window', () => {
+      const url = buildSeasonUrl('szczecin', 'halloween');
+      expect(url.startsWith('/szczecin/wydarzenia?')).toBe(true);
+      const p = paramsFrom(url);
+      expect(p.get('season')).toBe('halloween');
+      expect(p.get('dateMode')).toBeNull();
+      expect(p.get('dateFrom')).toBeNull();
     });
   });
 });

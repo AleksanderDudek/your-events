@@ -3,6 +3,7 @@ import { FilterPreset, PresetDateWindow, PresetFilters } from '@/types/preset.ty
 import { filtersToSearchParams, parseNear } from './filterUtils';
 import { hasDateValue, relativeWindowFilters, resolveRelativeWindow } from './dateWindows';
 import { sortWeekdays } from './weekdays';
+import { parseSeasonSlug } from './seasons';
 import { DEFAULT_PAGE_SIZE } from './constants';
 
 // Everything here is pure: the browser-storage side lives in
@@ -30,6 +31,7 @@ export function emptyPresetFilters(): PresetFilters {
     hourTo: null,
     freeOnly: false,
     near: null,
+    season: null,
     viewMode: 'grid',
     pageSize: DEFAULT_PAGE_SIZE,
   };
@@ -67,6 +69,7 @@ export function presetFiltersFromEventFilters(
     hourTo: keepsHours ? filters.hourTo : null,
     freeOnly: filters.freeOnly,
     near: filters.near ? { ...filters.near } : null,
+    season: filters.season,
     viewMode: filters.viewMode,
     pageSize: filters.pageSize,
   };
@@ -121,6 +124,7 @@ export function presetToEventFilters(preset: FilterPreset, now: Date): Partial<E
     hourTo: range ? preset.filters.hourTo : null,
     freeOnly: preset.filters.freeOnly,
     near: preset.filters.near,
+    season: preset.filters.season,
     viewMode: preset.filters.viewMode,
     pageSize: preset.filters.pageSize,
   };
@@ -200,6 +204,8 @@ function parsePresetFilters(raw: unknown): PresetFilters {
     hourTo: asPattern(value.hourTo, TIME_REGEX),
     freeOnly: value.freeOnly === true,
     near: asNear(value.near),
+    // Presets saved before seasons existed have none; junk is dropped.
+    season: parseSeasonSlug(typeof value.season === 'string' ? value.season : null),
     viewMode: VIEW_MODES.includes(value.viewMode as ViewMode) ? (value.viewMode as ViewMode) : 'grid',
     pageSize: PAGE_SIZES.includes(value.pageSize as PageSize)
       ? (value.pageSize as PageSize)

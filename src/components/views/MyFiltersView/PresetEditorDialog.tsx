@@ -21,6 +21,7 @@ import { AVAILABLE_CITIES } from '@/config/cities';
 import WeekdayPicker from '@/components/ui/WeekdayPicker/WeekdayPicker';
 import { MAX_NAME_LENGTH, emptyPresetFilters } from '@/lib/presets';
 import { formatDistance } from '@/lib/utils';
+import { seasonNameFromSlug } from '@/lib/seasons';
 import { DEFAULT_WINDOW_MONTHS } from '@/lib/dateWindows';
 import type { FilterPreset, PresetDateWindow } from '@/types/preset.types';
 
@@ -257,6 +258,21 @@ export default function PresetEditorDialog({
                 filters.near.label ?? t.NEAR_PICKED_POINT
               )}
               onDelete={() => setFilters({ near: null })}
+              size="small"
+            />
+          </Box>
+        )}
+
+        {/* Set from the events list's season bar; here it can only be kept or
+            dropped. */}
+        {filters.season && (
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              {t.SEASON_SECTION_LABEL}
+            </Typography>
+            <Chip
+              label={seasonNameFromSlug(filters.season)}
+              onDelete={() => setFilters({ season: null })}
               size="small"
             />
           </Box>

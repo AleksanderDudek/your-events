@@ -23,6 +23,7 @@ function queryShape(filters: EventFilters) {
     hourTo: filters.hourTo,
     freeOnly: filters.freeOnly,
     near: nearShape(filters.near),
+    season: filters.season,
     page: filters.page,
     pageSize: filters.pageSize,
     // The ordering identifies the answer as much as the filters do. Leaving it
@@ -59,4 +60,5 @@ export const eventsKeys = {
   map: (cityId: CityId | string, filters: EventFilters) =>
     ['events', cityId, 'map', mapQueryShape(filters)] as const,
   categories: () => ['categories'] as const,
+  seasons: (cityId: CityId | string, today: string) => ['seasons', cityId, today] as const,
 };

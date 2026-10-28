@@ -9,6 +9,7 @@ import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useEvents, useMapEvents } from '@/components/service/useEvents';
 import { useCategories } from '@/components/service/useCategories';
+import { useSeasons } from '@/components/service/useSeasons';
 import FilterPanel from '@/components/common/FilterPanel/FilterPanel';
 import EventGrid from '@/components/common/EventGrid/EventGrid';
 import EventGridSkeleton from '@/components/common/EventGrid/EventGridSkeleton';
@@ -16,6 +17,7 @@ import EventList from '@/components/common/EventList/EventList';
 import EventListSkeleton from '@/components/common/EventList/EventListSkeleton';
 import ViewToggle from '@/components/common/ViewToggle/ViewToggle';
 import SavePresetButton from '@/components/common/SavePresetButton/SavePresetButton';
+import SeasonBar from '@/components/common/SeasonBar/SeasonBar';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
 import AppPagination from '@/components/common/AppPagination/AppPagination';
 import EmptyState from '@/components/ui/EmptyState/EmptyState';
@@ -25,10 +27,12 @@ import { useCity } from '@/config/CityProvider';
 import { useFilterNavigation } from '@/components/service/useFilterNavigation';
 import { nearPlaceName } from '@/components/common/NearbyFilter/nearPlaceName';
 import { countActiveFilters } from '@/lib/filterUtils';
+import { seasonNameFromSlug } from '@/lib/seasons';
 import { PAGE_SIZE_OPTIONS, withBasePath } from '@/lib/constants';
 import { eventPath } from '@/lib/slug';
 import { formatDistance } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
+import { useTranslated } from '@/i18n/translation';
 import { PageSize, ViewMode, SortKey, SortDir, EventFilters } from '@/types/filter.types';
 import { Event } from '@/types/event.types';
 import styles from './EventsListView.module.scss';
@@ -151,6 +155,16 @@ export default function EventsListView() {
     refetch: refetchMap,
   } = useMapEvents(isMapView);
   const { bySlug, displayNameToSlug } = useCategories();
+  const { seasons } = useSeasons();
+  // A season named in the URL but not on offer today (last year's link, a saved
+  // filter opened after the season) still gets a chip, so it can be seen and
+  // removed — the season bar only shows what is on offer.
+  const activeSeason = filters.season
+    ? seasons.find((season) => season.slug === filters.season)
+    : undefined;
+  const seasonName = useTranslated(
+    activeSeason?.name ?? (filters.season ? seasonNameFromSlug(filters.season) : '')
+  );
   const { city } = useCity();
   const { t, locale } = useTranslation();
   const {
@@ -172,6 +186,12 @@ export default function EventsListView() {
   });
   if (filters.freeOnly) {
     activeChips.push({ key: 'freeOnly', label: t.FILTER_FREE_ONLY });
+  }
+  if (filters.season) {
+    activeChips.push({
+      key: 'season',
+      label: activeSeason?.emoji ? `${activeSeason.emoji} ${seasonName}` : seasonName,
+    });
   }
   if (filters.near) {
     activeChips.push({
@@ -201,6 +221,8 @@ export default function EventsListView() {
       <FilterPanel />
 
       <Box className={styles.results}>
+        <SeasonBar value={filters.season} onChange={(season) => updateFilter({ season })} />
+
         {/* data-tour marks the onboarding story's anchors — see lib/tourSteps. */}
         <Box className={styles.resultsHeader} data-tour="results">
           <Box className={styles.headerLeft}>
@@ -280,6 +302,7 @@ export default function EventsListView() {
                   if (chip.key === 'search') updateFilter({ search: '' });
                   else if (chip.key === 'freeOnly') updateFilter({ freeOnly: false });
                   else if (chip.key === 'near') updateFilter({ near: null });
+                  else if (chip.key === 'season') updateFilter({ season: null });
                   else if (chip.key.startsWith('wd-')) {
                     const day = Number(chip.key.slice(3));
                     updateFilter({

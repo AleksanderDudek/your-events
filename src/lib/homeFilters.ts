@@ -132,3 +132,10 @@ export function buildFoodUrl(citySlug: string, now: Date): string {
 export function buildDanceUrl(citySlug: string, now: Date): string {
   return buildInterestUrl(citySlug, now, [DANCE_CATEGORY_SLUG]);
 }
+
+// A seasonal section ("Halloween"). No date: the list's default window already
+// starts today, and the season's events are the ones it tags.
+export function buildSeasonUrl(citySlug: string, season: string): string {
+  const params = filtersToSearchParams({ season });
+  return `/${citySlug}/wydarzenia?${params.toString()}`;
+}

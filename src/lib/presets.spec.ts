@@ -213,6 +213,25 @@ describe('presetFiltersFromEventFilters', () => {
   });
 });
 
+describe('season', () => {
+  it('is saved from the list and opened as it was saved', () => {
+    const saved = presetFiltersFromEventFilters({ ...getDefaultFilters(), season: 'halloween' });
+    expect(saved.season).toBe('halloween');
+    const preset = makePreset({ filters: saved });
+    expect(presetToEventFilters(preset, MONDAY).season).toBe('halloween');
+    expect(presetHref(preset, MONDAY)).toBe('/wroclaw/wydarzenia?season=halloween');
+  });
+
+  it('reads as none for presets saved before seasons existed, and for junk', () => {
+    const raw = JSON.stringify([
+      { id: 'p1', cityId: 'wroclaw', name: 'Old', filters: { freeOnly: true } },
+      { id: 'p2', cityId: 'wroclaw', name: 'Junk', filters: { season: 'a,b}' } },
+      { id: 'p3', cityId: 'wroclaw', name: 'Ok', filters: { season: 'halloween' } },
+    ]);
+    expect(parsePresets(raw).map((p) => p.filters.season)).toEqual([null, null, 'halloween']);
+  });
+});
+
 describe('parsePresets', () => {
   it('round-trips what it serialised', () => {
     const presets = [makePreset(), makePreset({ id: 'p2', name: 'Taniec' })];

@@ -12,16 +12,22 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PaletteIcon from '@mui/icons-material/Palette';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import NightlifeIcon from '@mui/icons-material/Nightlife';
+import CelebrationIcon from '@mui/icons-material/Celebration';
 import { useTranslation } from '@/i18n';
+import { Translated } from '@/i18n/translation';
 import { useCity } from '@/config/CityProvider';
 import AnimatedLastWord from '@/components/common/AnimatedLastWord/AnimatedLastWord';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
 import { useEvents } from '@/components/service/useEvents';
+import { useSeasons } from '@/components/service/useSeasons';
+import { seasonTheme } from '@/lib/seasons';
+import { formatDateShort } from '@/lib/utils';
 import {
   buildArtUrl,
   buildDanceUrl,
   buildFoodUrl,
   buildNowUrl,
+  buildSeasonUrl,
   buildSportNowUrl,
   buildTodayUrl,
   buildWeekendUrl,
@@ -47,6 +53,10 @@ export default function HomeView() {
   // Preview map below the CTA tiles. useEvents reads from the URL — on the
   // homepage that's empty, so this resolves to default filters (~15 events).
   const { events: previewEvents } = useEvents();
+  // Usually empty. In season (Halloween, Święta) each one on offer gets a
+  // tile of its own at the head of the grid. It only exists in the browser —
+  // the static HTML is the same all year.
+  const { seasons } = useSeasons();
   // SSR renders the generic word so the static HTML stays stable. After
   // hydration we begin a two-state loop: the generic word ("miasto"/"town")
   // and the selected city's accusative form, alternating every HERO_CYCLE_MS.
@@ -190,6 +200,40 @@ export default function HomeView() {
       </div>
 
       <section className={styles.tiles} aria-label={t.HOME_HERO_HEADLINE}>
+        {seasons.map((season) => (
+          <Link
+            key={`season-${season.slug}`}
+            href={buildSeasonUrl(city.id, season.slug) as Route}
+            className={`${styles.tile} ${styles.tileSeason} ${styles[`season-${seasonTheme(season.slug)}`]}`}
+            data-season={season.slug}
+          >
+            {season.emoji && (
+              <span className={styles.seasonWatermark} aria-hidden="true">
+                {season.emoji}
+              </span>
+            )}
+            <span className={styles.seasonBadge}>
+              <span aria-hidden="true">{season.emoji || <CelebrationIcon fontSize="inherit" />}</span>
+              {t.SEASON_SECTION_LABEL}
+            </span>
+            <h2 className={styles.tileTitle}>
+              <Translated text={season.name} />
+            </h2>
+            {season.description && (
+              <p className={styles.tileSub}>
+                <Translated text={season.description} />
+              </p>
+            )}
+            <span className={styles.seasonMeta}>
+              {t.SEASON_EVENTS_COUNT(season.count)}
+              {season.upcoming && ` · ${t.SEASON_STARTS(formatDateShort(season.dateFrom, locale))}`}
+            </span>
+            <span className={styles.tileCta}>
+              <span>{t.SEASON_CTA}</span>
+              <ArrowForwardIcon fontSize="small" />
+            </span>
+          </Link>
+        ))}
         {tiles.map((tile) => (
           <Link key={tile.key} href={tile.href} className={`${styles.tile} ${tile.className}`}>
             <span className={styles.tileIcon} aria-hidden="true">

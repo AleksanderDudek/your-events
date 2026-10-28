@@ -73,6 +73,27 @@ describe('useFilterNavigation', () => {
     expect(window.location.search).toBe('?search=jazz&viewMode=row');
   });
 
+  // The seasonal toggle sits on the page too, above the results.
+  it('leaves the season alone when clearing every filter but the search term', async () => {
+    const useFilterNavigation = await loadHook();
+    settleUrl('categories=muzyka&season=halloween');
+    const { result } = renderHook(() => useFilterNavigation());
+
+    act(() => result.current.clearFiltersExceptSearch());
+
+    expect(window.location.search).toBe('?season=halloween');
+  });
+
+  it('clears the season with everything else on a full clear', async () => {
+    const useFilterNavigation = await loadHook();
+    settleUrl('categories=muzyka&season=halloween');
+    const { result } = renderHook(() => useFilterNavigation());
+
+    act(() => result.current.clearFilters());
+
+    expect(window.location.search).toBe('');
+  });
+
   // Ordering is a display preference too — the active-filter count leaves it
   // out, so a clear that reset it would undo something the count never showed.
   it.each(['clearFilters', 'clearFiltersExceptSearch'] as const)(

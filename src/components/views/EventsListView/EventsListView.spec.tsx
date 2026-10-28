@@ -24,6 +24,24 @@ vi.mock('@/components/service/useCategories', () => ({
   }),
 }));
 
+const HALLOWEEN = {
+  slug: 'halloween',
+  name: 'Halloween',
+  emoji: '🎃',
+  description: 'Bale przebierańców i warsztaty z dyniami.',
+  dateFrom: '2026-10-15',
+  dateTo: '2026-11-02',
+  showFrom: '2026-10-10',
+  sort: 10,
+  count: 63,
+  upcoming: false,
+};
+
+const seasonMocks = vi.hoisted(() => ({ seasons: [] as unknown[] }));
+vi.mock('@/components/service/useSeasons', () => ({
+  useSeasons: () => ({ seasons: seasonMocks.seasons, isLoading: false }),
+}));
+
 const baseFilters = {
   search: '',
   categories: [],
@@ -36,6 +54,7 @@ const baseFilters = {
   hourTo: null,
   freeOnly: false,
   near: null,
+  season: null,
   page: 1,
   pageSize: 15,
   viewMode: 'grid',
@@ -78,6 +97,7 @@ const baseMap = {
 beforeEach(() => {
   mocks.filters = { ...baseFilters };
   mocks.map = { ...baseMap };
+  seasonMocks.seasons = [];
 });
 
 describe('EventsListView', () => {
@@ -121,5 +141,36 @@ describe('EventsListView', () => {
     render(<EventsListView />);
     expect(screen.getByText('Coś poszło nie tak')).toBeInTheDocument();
     expect(screen.queryByText(/reszta bez lokalizacji/)).not.toBeInTheDocument();
+  });
+
+  it('offers no season bar outside a season', () => {
+    render(<EventsListView />);
+    expect(screen.queryByRole('group', { name: 'Sezonowe' })).not.toBeInTheDocument();
+  });
+
+  it('offers the season as a toggle above the results', () => {
+    seasonMocks.seasons = [HALLOWEEN];
+    render(<EventsListView />);
+    const toggle = screen.getByRole('button', { name: 'Halloween: 63 wydarzenia' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('shows the chosen season pressed, with its description and a chip', () => {
+    seasonMocks.seasons = [HALLOWEEN];
+    mocks.filters = { ...baseFilters, season: 'halloween' };
+    render(<EventsListView />);
+    expect(screen.getByRole('button', { name: 'Halloween: 63 wydarzenia' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(screen.getByText('Bale przebierańców i warsztaty z dyniami.')).toBeInTheDocument();
+    expect(screen.getByText('🎃 Halloween')).toBeInTheDocument();
+  });
+
+  it('still shows a chip for a season in the URL that is not on offer', () => {
+    mocks.filters = { ...baseFilters, season: 'swieta' };
+    render(<EventsListView />);
+    expect(screen.queryByRole('group', { name: 'Sezonowe' })).not.toBeInTheDocument();
+    expect(screen.getByText('Swieta')).toBeInTheDocument();
   });
 });

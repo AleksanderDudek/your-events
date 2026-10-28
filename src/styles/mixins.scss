@@ -71,3 +71,22 @@ $bp-xl: 1536px;
     @content;
   }
 }
+
+// Seasonal sections (lib/seasons → seasonTheme). The home tile and the list's
+// toggle share these so a season looks the same wherever it is offered. A new
+// season gets `default` until someone gives it colours of its own.
+@mixin season-gradient($theme) {
+  @if $theme == halloween {
+    background:
+      radial-gradient(circle at 85% 15%, rgba(251, 146, 60, 0.45) 0%, transparent 55%),
+      linear-gradient(135deg, #1e1033 0%, #4c1d95 45%, #ea580c 100%);
+  } @else if $theme == swieta {
+    background:
+      radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.28) 0%, transparent 55%),
+      linear-gradient(135deg, #7f1d1d 0%, #b91c1c 45%, #166534 100%);
+  } @else {
+    background:
+      radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.25) 0%, transparent 55%),
+      linear-gradient(135deg, var(--color-accent-primary) 0%, #8b5cf6 100%);
+  }
+}

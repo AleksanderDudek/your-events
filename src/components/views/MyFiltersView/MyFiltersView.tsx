@@ -26,6 +26,7 @@ import {
 } from '@/lib/presets';
 import { getCity } from '@/config/cities';
 import { formatDistance } from '@/lib/utils';
+import { seasonNameFromSlug } from '@/lib/seasons';
 import type { FilterPreset } from '@/types/preset.types';
 import styles from './MyFiltersView.module.scss';
 import PresetEditorDialog from './PresetEditorDialog';
@@ -81,6 +82,9 @@ export default function MyFiltersView() {
       parts.push(t.PRESETS_SUMMARY_HOURS(preset.filters.hourFrom, preset.filters.hourTo));
     }
     if (preset.filters.freeOnly) parts.push(t.PRESETS_SUMMARY_FREE);
+    if (preset.filters.season) {
+      parts.push(t.PRESETS_SUMMARY_SEASON(seasonNameFromSlug(preset.filters.season)));
+    }
     if (preset.filters.near) {
       parts.push(
         t.NEAR_CHIP(
