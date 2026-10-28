@@ -1,10 +1,12 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchOfferedSeasons } from './eventsApi';
 import { eventsKeys } from './queryKeys';
 import { useCity } from '@/config/CityProvider';
 import { toLocalDateString } from '@/lib/dateWindows';
+import { seasonNameFromSlug } from '@/lib/seasons';
 import { OfferedSeason } from '@/types/season.types';
 
 const NO_SEASONS: OfferedSeason[] = [];
@@ -29,4 +31,16 @@ export function useSeasons(): { seasons: OfferedSeason[]; isLoading: boolean } {
     retry: 1,
   });
   return { seasons: data ?? NO_SEASONS, isLoading };
+}
+
+/**
+ * A season's name for a slug: the table's own ("Święta") while it is on
+ * offer, otherwise one made from the slug — a saved filter outlives its season.
+ */
+export function useSeasonName(): (slug: string) => string {
+  const { seasons } = useSeasons();
+  return useCallback(
+    (slug: string) => seasons.find((season) => season.slug === slug)?.name ?? seasonNameFromSlug(slug),
+    [seasons]
+  );
 }

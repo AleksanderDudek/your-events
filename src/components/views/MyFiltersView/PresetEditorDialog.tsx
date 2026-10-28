@@ -21,7 +21,7 @@ import { AVAILABLE_CITIES } from '@/config/cities';
 import WeekdayPicker from '@/components/ui/WeekdayPicker/WeekdayPicker';
 import { MAX_NAME_LENGTH, emptyPresetFilters } from '@/lib/presets';
 import { formatDistance } from '@/lib/utils';
-import { seasonNameFromSlug } from '@/lib/seasons';
+import { useSeasonName } from '@/components/service/useSeasons';
 import { DEFAULT_WINDOW_MONTHS } from '@/lib/dateWindows';
 import type { FilterPreset, PresetDateWindow } from '@/types/preset.types';
 
@@ -41,6 +41,7 @@ export default function PresetEditorDialog({
 }: PresetEditorDialogProps) {
   const { t, locale } = useTranslation();
   const { topLevel } = useCategories();
+  const seasonName = useSeasonName();
   const [preset, setPreset] = useState<FilterPreset>(draft);
   const [nameTouched, setNameTouched] = useState(false);
   // Which required fields the last Save attempt found empty. Ids, not labels,
@@ -271,7 +272,7 @@ export default function PresetEditorDialog({
               {t.SEASON_SECTION_LABEL}
             </Typography>
             <Chip
-              label={seasonNameFromSlug(filters.season)}
+              label={seasonName(filters.season)}
               onDelete={() => setFilters({ season: null })}
               size="small"
             />

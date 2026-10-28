@@ -7,7 +7,7 @@ import { CityId, getCity, CATEGORIES_CITY_ID } from '@/config/cities';
 import { shortId } from '@/lib/slug';
 import { boundingBox, distanceMeters } from '@/lib/geo';
 import { defaultDateWindow } from '@/lib/dateWindows';
-import { isSeasonUpcoming, seasonsInWindow } from '@/lib/seasons';
+import { isSeasonUpcoming, parseSeasonSlug, seasonsInWindow } from '@/lib/seasons';
 import { OfferedSeason, Season } from '@/types/season.types';
 
 interface SupabaseEventRow {
@@ -572,7 +572,13 @@ export async function fetchOfferedSeasons(
     .order('sort');
   if (error) throw new ServerError(error.message);
 
-  const candidates = seasonsInWindow(((data as SupabaseSeasonRow[] | null) ?? []).map(mapSeason), now);
+  // Only slugs the URL can carry back are offered: one the parser would drop
+  // (`boze_narodzenie`, `Walentynki`) would open an unfiltered list from its
+  // tile and leave its toggle unable to show as pressed.
+  const rows = ((data as SupabaseSeasonRow[] | null) ?? []).filter(
+    (row) => parseSeasonSlug(row.slug) !== null
+  );
+  const candidates = seasonsInWindow(rows.map(mapSeason), now);
   if (candidates.length === 0) return [];
 
   const { dateFrom, dateTo } = defaultDateWindow(now);

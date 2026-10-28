@@ -96,7 +96,23 @@ the editor. Presets saved before this change read as `season: null`.
 The season's name and description are Polish in the database; in English they
 go through the same in-browser translator as event names (`<Translated/>`).
 
-## Rejected / deferred
+## After review
+
+An independent review found nothing serious; these were fixed:
+
+- **Slugs from the table were trusted.** One the URL parser rejects
+  (`boze_narodzenie`, `Walentynki`) would get a tile that opens an unfiltered
+  list and a toggle that can never show as pressed. Only slugs that pass
+  `parseSeasonSlug` are offered now.
+- **The tile's fade-in held `transform: none`** (fill mode `both`), so it was
+  the one tile that did not lift on hover. It now uses `backwards`.
+- **The description under a pressed toggle was not announced.** The toggle now
+  points at it with `aria-describedby`.
+- **Saved filters named a season from its slug** ("Swieta"). While the season
+  is on offer they now use the table's name ("Święta"); the slug is the
+  fallback once it is not.
+
+
 
 - **Capping the main list at today + 7 days** (the backend note's suggestion).
   Rejected for now: the default window was set to today → +3 months yesterday

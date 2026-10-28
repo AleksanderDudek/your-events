@@ -1171,6 +1171,21 @@ describe('eventsApi', () => {
       expect(seasons.map((season) => [season.slug, season.upcoming])).toEqual([['halloween', true]]);
     });
 
+    it('offers only slugs the URL can carry back', async () => {
+      const s = setup();
+      s.results.seasons = {
+        data: [row({ slug: 'boze_narodzenie' }), row({ slug: 'Walentynki' }), row({ slug: 'a,b' }), row()],
+        count: null,
+        error: null,
+      };
+      s.results.events = { data: null, count: 3, error: null };
+
+      const seasons = await fetchOfferedSeasons('wroclaw', NOW);
+
+      expect(seasons.map((season) => season.slug)).toEqual(['halloween']);
+      expect(s.eventsBuilders).toHaveLength(1);
+    });
+
     it('throws ServerError when the table cannot be read', async () => {
       const s = setup();
       s.results.seasons = { data: null, count: null, error: { message: 'relation does not exist' } };

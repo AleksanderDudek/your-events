@@ -11,6 +11,11 @@ import PresetEditorDialog from './PresetEditorDialog';
 // could see from down there — the only feedback was an error message scrolled
 // off the top. These tests pin the two things that fixed it.
 
+// Season names come from the city's seasons table; outside a season, from the slug.
+vi.mock('@/components/service/useSeasons', () => ({
+  useSeasonName: () => (slug: string) => (slug === 'swieta' ? 'Święta' : slug),
+}));
+
 vi.mock('@/components/service/useCategories', () => ({
   useCategories: () => ({
     topLevel: [{ slug: 'taniec', display_name: 'Taniec', color: '#ee4f86', parent_slug: null }],

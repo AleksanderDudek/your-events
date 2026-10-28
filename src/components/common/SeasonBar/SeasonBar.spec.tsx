@@ -56,6 +56,13 @@ describe('SeasonBar', () => {
     expect(screen.getByText(HALLOWEEN.description)).toBeInTheDocument();
   });
 
+  it('points the pressed toggle at the description, so it is heard as well as seen', () => {
+    render(<SeasonBar value="halloween" onChange={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Halloween: 63 wydarzenia' })).toHaveAccessibleDescription(
+      HALLOWEEN.description
+    );
+  });
+
   it('passes accessibility check, pressed and not', async () => {
     const { container, rerender } = render(<SeasonBar value={null} onChange={vi.fn()} />);
     expect(await axe(container)).toHaveNoViolations();

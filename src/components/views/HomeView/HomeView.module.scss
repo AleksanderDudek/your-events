@@ -268,7 +268,9 @@
   min-height: 0;
 
   @include motion-safe {
-    animation: seasonIn 400ms ease-out both;
+    // `backwards`, not `both`: a held final `transform` would outrank the
+    // hover lift every other tile has.
+    animation: seasonIn 400ms ease-out backwards;
   }
 
   @include md {

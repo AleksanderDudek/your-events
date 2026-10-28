@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import CheckIcon from '@mui/icons-material/Check';
 import { useTranslation } from '@/i18n';
 import { Translated, useTranslated } from '@/i18n/translation';
@@ -18,7 +19,13 @@ function SeasonToggle({
   season,
   pressed,
   onToggle,
-}: Readonly<{ season: OfferedSeason; pressed: boolean; onToggle: () => void }>) {
+  describedBy,
+}: Readonly<{
+  season: OfferedSeason;
+  pressed: boolean;
+  onToggle: () => void;
+  describedBy?: string;
+}>) {
   const { t } = useTranslation();
   const name = useTranslated(season.name);
   return (
@@ -26,6 +33,7 @@ function SeasonToggle({
       type="button"
       aria-pressed={pressed}
       aria-label={t.SEASON_TOGGLE_LABEL(name, season.count)}
+      aria-describedby={describedBy}
       onClick={onToggle}
       className={`${styles.toggle} ${styles[`season-${seasonTheme(season.slug)}`]}`}
       data-season={season.slug}
@@ -52,6 +60,7 @@ function SeasonToggle({
 export default function SeasonBar({ value, onChange }: Readonly<SeasonBarProps>) {
   const { t } = useTranslation();
   const { seasons } = useSeasons();
+  const descriptionId = useId();
   if (seasons.length === 0) return null;
   const selected = seasons.find((season) => season.slug === value);
 
@@ -66,12 +75,15 @@ export default function SeasonBar({ value, onChange }: Readonly<SeasonBarProps>)
               season={season}
               pressed={pressed}
               onToggle={() => onChange(pressed ? null : season.slug)}
+              // The description appears once pressed; this is what lets a
+              // screen reader hear it too.
+              describedBy={pressed && season.description ? descriptionId : undefined}
             />
           );
         })}
       </div>
       {selected?.description && (
-        <p className={styles.description}>
+        <p id={descriptionId} className={styles.description}>
           <Translated text={selected.description} />
         </p>
       )}

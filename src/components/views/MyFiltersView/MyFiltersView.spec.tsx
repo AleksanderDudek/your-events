@@ -7,6 +7,11 @@ import { serializePresets } from '@/lib/presets';
 import type { FilterPreset } from '@/types/preset.types';
 import MyFiltersView from './MyFiltersView';
 
+// Season names come from the city's seasons table; outside a season, from the slug.
+vi.mock('@/components/service/useSeasons', () => ({
+  useSeasonName: () => (slug: string) => (slug === 'swieta' ? 'Święta' : slug),
+}));
+
 vi.mock('@/components/service/useCategories', () => ({
   useCategories: () => ({
     topLevel: [
@@ -99,6 +104,12 @@ describe('MyFiltersView', () => {
     ]);
     render(<MyFiltersView />);
     expect(screen.getByText(/W promieniu 1\skm: Wybrany punkt$/)).toBeInTheDocument();
+  });
+
+  it('names the season a preset keeps', () => {
+    seed([preset({ filters: { ...preset().filters, season: 'swieta' } })]);
+    render(<MyFiltersView />);
+    expect(screen.getByText(/sezon: Święta/)).toBeInTheDocument();
   });
 
   it('says "all events" for a preset that filters nothing', () => {
