@@ -30,6 +30,9 @@ export interface PresetFilters {
   // (A "near me, wherever I am" preset would be the location twin of the
   // relative date windows; nobody has asked for it yet.)
   near: NearFilter | null;
+  // A seasonal section's slug. Kept as is: slugs return every year, so a
+  // "Halloween for the kids" preset comes back to life next October.
+  season: string | null;
   viewMode: ViewMode;
   pageSize: PageSize;
 }

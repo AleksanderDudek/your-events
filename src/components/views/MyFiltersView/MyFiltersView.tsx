@@ -14,6 +14,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
+import { useSeasonName } from '@/components/service/useSeasons';
 import { useCategories } from '@/components/service/useCategories';
 import { usePresets } from '@/components/service/usePresets';
 import CategoryIcon from '@/components/ui/CategoryIcon/CategoryIcon';
@@ -34,6 +35,7 @@ export default function MyFiltersView() {
   const { t, locale } = useTranslation();
   const { city } = useCity();
   const { byDisplayName, topLevel } = useCategories();
+  const seasonName = useSeasonName();
   const { presets, save, remove, duplicate } = usePresets();
   const [draft, setDraft] = useState<FilterPreset | null>(null);
 
@@ -81,6 +83,9 @@ export default function MyFiltersView() {
       parts.push(t.PRESETS_SUMMARY_HOURS(preset.filters.hourFrom, preset.filters.hourTo));
     }
     if (preset.filters.freeOnly) parts.push(t.PRESETS_SUMMARY_FREE);
+    if (preset.filters.season) {
+      parts.push(t.PRESETS_SUMMARY_SEASON(seasonName(preset.filters.season)));
+    }
     if (preset.filters.near) {
       parts.push(
         t.NEAR_CHIP(

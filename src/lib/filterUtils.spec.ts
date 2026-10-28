@@ -131,3 +131,27 @@ describe('sorting by distance', () => {
     expect(qs).not.toContain('sort=');
   });
 });
+
+describe('season', () => {
+  it('reads a seasonal section from the URL', () => {
+    expect(parse('season=halloween').season).toBe('halloween');
+  });
+
+  it('is off by default and for a slug that is not one', () => {
+    expect(getDefaultFilters().season).toBeNull();
+    expect(parse('').season).toBeNull();
+    expect(parse('season=a%2Cb').season).toBeNull();
+    expect(parse('season=%7Bx%7D').season).toBeNull();
+  });
+
+  it('round-trips through the query string, and is absent when off', () => {
+    const qs = filtersToSearchParams({ ...getDefaultFilters(), season: 'halloween' });
+    expect(qs.get('season')).toBe('halloween');
+    expect(parseFiltersFromParams(qs).season).toBe('halloween');
+    expect(filtersToSearchParams(getDefaultFilters()).has('season')).toBe(false);
+  });
+
+  it('counts as one active filter', () => {
+    expect(countActiveFilters({ ...getDefaultFilters(), season: 'halloween' })).toBe(1);
+  });
+});

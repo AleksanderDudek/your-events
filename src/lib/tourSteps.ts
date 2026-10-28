@@ -168,6 +168,7 @@ export function storyPresetFilters(availableCategories: readonly string[]): Pres
     hourTo: STORY_HOUR_TO,
     freeOnly: false,
     near: null,
+    season: null,
     viewMode: 'grid',
     pageSize: DEFAULT_PAGE_SIZE,
   };

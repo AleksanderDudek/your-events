@@ -35,6 +35,9 @@ export interface EventFilters {
   freeOnly: boolean;
   // Only events within a radius of a point. Composes with every other filter.
   near: NearFilter | null;
+  // Only events tagged with this seasonal section's slug ("halloween"). Null
+  // for none. Composes with every other filter.
+  season: string | null;
   page: number;
   pageSize: PageSize;
   viewMode: ViewMode;

@@ -1,0 +1,109 @@
+@use '../../../styles/mixins' as *;
+
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  @include sm {
+    margin-bottom: 18px;
+  }
+}
+
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+// Unpressed: the season's gradient as a 2px ring around a plain surface, so it
+// reads as an offer rather than as a filter already on. Pressed: the gradient
+// fills it, and a tick replaces the emoji.
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 14px 6px 10px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  background:
+    linear-gradient(var(--color-bg-surface), var(--color-bg-surface)) padding-box,
+    var(--season-ring) border-box;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  @include focus-visible;
+
+  @include motion-safe {
+    transition:
+      transform var(--transition-base),
+      box-shadow var(--transition-base);
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-card);
+    @include motion-safe {
+      transform: translateY(-1px);
+    }
+  }
+
+  &[aria-pressed='true'] {
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: var(--shadow-card);
+
+    .count {
+      background-color: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+    }
+  }
+}
+
+.season-halloween {
+  --season-ring: linear-gradient(135deg, #4c1d95, #ea580c);
+  &[aria-pressed='true'] {
+    @include season-gradient(halloween);
+  }
+}
+
+.season-swieta {
+  --season-ring: linear-gradient(135deg, #b91c1c, #166534);
+  &[aria-pressed='true'] {
+    @include season-gradient(swieta);
+  }
+}
+
+.season-default {
+  --season-ring: linear-gradient(135deg, var(--color-accent-primary), #8b5cf6);
+  &[aria-pressed='true'] {
+    @include season-gradient(default);
+  }
+}
+
+.emoji {
+  display: inline-flex;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.count {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent-tint);
+  color: var(--color-accent-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.description {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}

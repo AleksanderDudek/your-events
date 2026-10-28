@@ -16,6 +16,14 @@ function monthsPl(n: number): string {
   return ones >= 2 && ones <= 4 && (tens < 12 || tens > 14) ? `${n} miesiące` : `${n} miesięcy`;
 }
 
+// "1 wydarzenie", "3 wydarzenia", "5 wydarzeń" — the same rule as monthsPl.
+function eventsPl(n: number): string {
+  if (n === 1) return '1 wydarzenie';
+  const ones = n % 10;
+  const tens = n % 100;
+  return ones >= 2 && ones <= 4 && (tens < 12 || tens > 14) ? `${n} wydarzenia` : `${n} wydarzeń`;
+}
+
 const pl = {
   APP_NAME: 'Idź na miasto',
   APP_TAGLINE: (cityLocative: string) => `Odkryj wydarzenia w ${cityLocative}`,
@@ -210,6 +218,13 @@ const pl = {
   HOME_DANCE_TITLE: 'Dla tancerzy',
   HOME_DANCE_SUB: 'Zajęcia, warsztaty i wieczory taneczne',
   HOME_DANCE_CTA: 'Zatańcz na mieście',
+  // Seasonal sections (Halloween, Święta). The name and description come from
+  // the database, in Polish.
+  SEASON_SECTION_LABEL: 'Sezonowe',
+  SEASON_EVENTS_COUNT: (n: number) => eventsPl(n),
+  SEASON_STARTS: (date: string) => `Startuje ${date}`,
+  SEASON_CTA: 'Zobacz program',
+  SEASON_TOGGLE_LABEL: (name: string, n: number) => `${name}: ${eventsPl(n)}`,
   CITY_PICKER_TITLE: 'Wybierz swoje miasto',
   CITY_PICKER_SUBTITLE: 'Zobacz, co się dzieje w Twojej okolicy',
   CATEGORY_HUB_INTRO: (category: string) => `Nadchodzące wydarzenia z kategorii ${category}.`,
@@ -287,6 +302,7 @@ const pl = {
   PRESETS_SAVED_TOAST: 'Zapisano w „Moje filtry”',
   PRESETS_SUMMARY_ANY: 'Wszystkie wydarzenia',
   PRESETS_SUMMARY_FREE: 'tylko bezpłatne',
+  PRESETS_SUMMARY_SEASON: (name: string) => `sezon: ${name}`,
   PRESETS_SUMMARY_SEARCH: (term: string) => `„${term}”`,
   PRESETS_SUMMARY_HOURS: (from: string, to: string) => `${from}–${to}`,
   PRESETS_META_TITLE: 'Moje filtry',
@@ -574,6 +590,11 @@ const en: Messages = {
   HOME_DANCE_TITLE: 'For dancers',
   HOME_DANCE_SUB: 'Classes, workshops and dance nights',
   HOME_DANCE_CTA: 'Go dancing',
+  SEASON_SECTION_LABEL: 'Seasonal',
+  SEASON_EVENTS_COUNT: (n: number) => (n === 1 ? '1 event' : `${n} events`),
+  SEASON_STARTS: (date: string) => `Starts ${date}`,
+  SEASON_CTA: "See what's on",
+  SEASON_TOGGLE_LABEL: (name: string, n: number) => `${name}: ${n === 1 ? '1 event' : `${n} events`}`,
   CITY_PICKER_TITLE: 'Choose your city',
   CITY_PICKER_SUBTITLE: 'See what is happening near you',
   CATEGORY_HUB_INTRO: (category: string) => `Upcoming ${category} events.`,
@@ -647,6 +668,7 @@ const en: Messages = {
   PRESETS_SAVED_TOAST: 'Saved to "My filters"',
   PRESETS_SUMMARY_ANY: 'All events',
   PRESETS_SUMMARY_FREE: 'free only',
+  PRESETS_SUMMARY_SEASON: (name: string) => `season: ${name}`,
   PRESETS_SUMMARY_SEARCH: (term: string) => `"${term}"`,
   PRESETS_SUMMARY_HOURS: (from: string, to: string) => `${from}–${to}`,
   PRESETS_META_TITLE: 'My filters',

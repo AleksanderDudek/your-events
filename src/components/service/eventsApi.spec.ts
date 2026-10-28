@@ -5,6 +5,7 @@ import {
   fetchEvent,
   fetchCategories,
   fetchMapEvents,
+  fetchOfferedSeasons,
   MAP_EVENT_LIMIT,
 } from './eventsApi';
 import { getSupabaseForCity } from '@/lib/supabase';
@@ -34,6 +35,8 @@ const QUERY_METHODS = [
   // The map query narrows to rows that can become a pin, and caps the response.
   'not',
   'limit',
+  // Seasonal sections: `seasons=cs.{slug}`.
+  'contains',
 ] as const;
 type QueryMethod = (typeof QUERY_METHODS)[number];
 type Builder = Record<QueryMethod, ReturnType<typeof vi.fn>> & {
@@ -120,6 +123,7 @@ function makeFilters(overrides: Partial<EventFilters> = {}): EventFilters {
     hourTo: null,
     freeOnly: false,
     near: null,
+    season: null,
     page: 1,
     pageSize: 15,
     viewMode: 'grid',
@@ -137,10 +141,12 @@ function setup() {
     eventsQueue: [] as ListResult[],
     single: { data: null, error: null } as SingleResult,
     categories: { data: [], count: null, error: null } as ListResult,
+    seasons: { data: [], count: null, error: null } as ListResult,
   };
 
   let eventsBuilder!: Builder;
   let categoriesBuilder!: Builder;
+  let seasonsBuilder!: Builder;
   const eventsBuilders: Builder[] = [];
 
   const client = {
@@ -148,6 +154,10 @@ function setup() {
       if (table === 'categories') {
         categoriesBuilder = makeBuilder(() => results.categories, () => ({ data: null, error: null }));
         return categoriesBuilder;
+      }
+      if (table === 'seasons') {
+        seasonsBuilder = makeBuilder(() => results.seasons, () => ({ data: null, error: null }));
+        return seasonsBuilder;
       }
       const queued = results.eventsQueue.shift();
       eventsBuilder = makeBuilder(() => queued ?? results.events, () => results.single);
@@ -169,6 +179,9 @@ function setup() {
     },
     get categoriesBuilder() {
       return categoriesBuilder;
+    },
+    get seasonsBuilder() {
+      return seasonsBuilder;
     },
   };
 }
@@ -635,6 +648,32 @@ describe('eventsApi', () => {
       });
     });
 
+    describe('season filtering', () => {
+      it('narrows to events tagged with the season', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters({ season: 'halloween' }));
+
+        expect(s.eventsBuilder.contains).toHaveBeenCalledWith('seasons', ['halloween']);
+      });
+
+      it('applies to the map, which shares the query builder', async () => {
+        const s = setup();
+
+        await fetchMapEvents('szczecin', makeFilters({ season: 'halloween' }));
+
+        expect(s.eventsBuilder.contains).toHaveBeenCalledWith('seasons', ['halloween']);
+      });
+
+      it('sends no season clause without one', async () => {
+        const s = setup();
+
+        await fetchEvents('szczecin', makeFilters());
+
+        expect(s.eventsBuilder.contains).not.toHaveBeenCalled();
+      });
+    });
+
     describe('date & hour filtering', () => {
       it('filters by a single date', async () => {
         const s = setup();
@@ -1049,6 +1088,109 @@ describe('eventsApi', () => {
       s.results.categories = { data: null, count: null, error: { message: 'boom' } };
 
       await expect(fetchCategories()).rejects.toBeInstanceOf(ServerError);
+    });
+  });
+
+  describe('fetchOfferedSeasons', () => {
+    const NOW = new Date(2026, 9, 28, 12, 0, 0);
+    const row = (overrides: Record<string, unknown> = {}) => ({
+      slug: 'halloween',
+      name: 'Halloween',
+      emoji: '🎃',
+      description: 'Bale przebierańców.',
+      date_from: '2026-10-15',
+      date_to: '2026-11-02',
+      show_from: '2026-10-10',
+      sort: 10,
+      ...overrides,
+    });
+
+    it('reads the active seasons of the city and counts each one from today on', async () => {
+      const s = setup();
+      s.results.seasons = { data: [row()], count: null, error: null };
+      s.results.events = { data: null, count: 63, error: null };
+
+      const seasons = await fetchOfferedSeasons('wroclaw', NOW);
+
+      expect(getSupabaseForCityMock).toHaveBeenCalledWith('wroclaw');
+      expect(s.seasonsBuilder.eq).toHaveBeenCalledWith('active', true);
+      expect(s.eventsBuilder.select).toHaveBeenCalledWith('id', { count: 'exact', head: true });
+      expect(s.eventsBuilder.contains).toHaveBeenCalledWith('seasons', ['halloween']);
+      expect(s.eventsBuilder.gte).toHaveBeenCalledWith('date', '2026-10-28');
+      expect(s.eventsBuilder.lte).toHaveBeenCalledWith('date', '2027-01-28');
+      expect(seasons).toEqual([
+        {
+          slug: 'halloween',
+          name: 'Halloween',
+          emoji: '🎃',
+          description: 'Bale przebierańców.',
+          dateFrom: '2026-10-15',
+          dateTo: '2026-11-02',
+          showFrom: '2026-10-10',
+          sort: 10,
+          count: 63,
+          upcoming: false,
+        },
+      ]);
+    });
+
+    it('skips seasons outside their show window without counting them', async () => {
+      const s = setup();
+      s.results.seasons = {
+        data: [row({ slug: 'swieta', date_from: '2026-11-15', date_to: '2026-12-26', show_from: '2026-11-10' })],
+        count: null,
+        error: null,
+      };
+
+      await expect(fetchOfferedSeasons('wroclaw', NOW)).resolves.toEqual([]);
+      expect(s.eventsBuilders).toHaveLength(0);
+    });
+
+    it('drops a season with no events left — a tile promising nothing is worse than none', async () => {
+      const s = setup();
+      s.results.seasons = { data: [row()], count: null, error: null };
+      s.results.events = { data: null, count: 0, error: null };
+
+      await expect(fetchOfferedSeasons('wroclaw', NOW)).resolves.toEqual([]);
+    });
+
+    it('marks an announced season as upcoming, and starts one with no show_from on its first day', async () => {
+      const s = setup();
+      s.results.seasons = {
+        data: [
+          row({ date_from: '2026-11-01', show_from: '2026-10-20' }),
+          row({ slug: 'jesien', show_from: null, date_from: '2026-10-29', date_to: '2026-11-30' }),
+        ],
+        count: null,
+        error: null,
+      };
+      s.results.events = { data: null, count: 5, error: null };
+
+      const seasons = await fetchOfferedSeasons('wroclaw', NOW);
+
+      expect(seasons.map((season) => [season.slug, season.upcoming])).toEqual([['halloween', true]]);
+    });
+
+    it('offers only slugs the URL can carry back', async () => {
+      const s = setup();
+      s.results.seasons = {
+        data: [row({ slug: 'boze_narodzenie' }), row({ slug: 'Walentynki' }), row({ slug: 'a,b' }), row()],
+        count: null,
+        error: null,
+      };
+      s.results.events = { data: null, count: 3, error: null };
+
+      const seasons = await fetchOfferedSeasons('wroclaw', NOW);
+
+      expect(seasons.map((season) => season.slug)).toEqual(['halloween']);
+      expect(s.eventsBuilders).toHaveLength(1);
+    });
+
+    it('throws ServerError when the table cannot be read', async () => {
+      const s = setup();
+      s.results.seasons = { data: null, count: null, error: { message: 'relation does not exist' } };
+
+      await expect(fetchOfferedSeasons('wroclaw', NOW)).rejects.toBeInstanceOf(ServerError);
     });
   });
 });

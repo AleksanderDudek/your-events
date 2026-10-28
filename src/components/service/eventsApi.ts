@@ -6,6 +6,9 @@ import { expandWeekdayDates } from '@/lib/weekdays';
 import { CityId, getCity, CATEGORIES_CITY_ID } from '@/config/cities';
 import { shortId } from '@/lib/slug';
 import { boundingBox, distanceMeters } from '@/lib/geo';
+import { defaultDateWindow } from '@/lib/dateWindows';
+import { isSeasonUpcoming, parseSeasonSlug, seasonsInWindow } from '@/lib/seasons';
+import { OfferedSeason, Season } from '@/types/season.types';
 
 interface SupabaseEventRow {
   id: number;
@@ -197,6 +200,11 @@ function buildFilteredQuery<Columns extends string = '*'>(
     }
     query = query.or(orParts.join(','));
   }
+
+  // `seasons` is a text[] tagged by the pipeline; `cs` is "contains". The slug
+  // was validated on the way in (parseSeasonSlug), so it cannot reshape the
+  // array literal.
+  if (filters.season) query = query.contains('seasons', [filters.season]);
 
   if (filters.dateSingle) query = query.eq('date', filters.dateSingle);
   if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
@@ -515,6 +523,78 @@ export async function fetchCategories(): Promise<DbCategory[]> {
     .order('sort_order');
   if (error) throw new ServerError(error.message);
   return (data ?? []) as DbCategory[];
+}
+
+interface SupabaseSeasonRow {
+  slug: string;
+  name: string;
+  emoji: string | null;
+  description: string | null;
+  date_from: string;
+  date_to: string;
+  show_from: string | null;
+  sort: number | null;
+}
+
+function mapSeason(row: SupabaseSeasonRow): Season {
+  return {
+    slug: row.slug,
+    name: row.name,
+    emoji: row.emoji ?? '',
+    description: row.description ?? '',
+    dateFrom: row.date_from,
+    dateTo: row.date_to,
+    // No announcement date means the section appears when the season starts.
+    showFrom: row.show_from ?? row.date_from,
+    sort: row.sort ?? 0,
+  };
+}
+
+/**
+ * The seasonal sections worth offering in this city today: switched on, inside
+ * their show window, and with at least one event left in the window the list
+ * shows by default. A season whose last event has passed (Halloween on 1 Nov)
+ * would otherwise promise a list that comes up empty.
+ *
+ * Read from the city's own project — its events carry the tags — so a season
+ * can be live in one city and not another.
+ */
+export async function fetchOfferedSeasons(
+  cityId: CityId | string,
+  now: Date
+): Promise<OfferedSeason[]> {
+  const city = getCity(cityId);
+  const supabase = getSupabaseForCity(city.id);
+  const { data, error } = await supabase
+    .from('seasons')
+    .select('slug, name, emoji, description, date_from, date_to, show_from, sort')
+    .eq('active', true)
+    .order('sort');
+  if (error) throw new ServerError(error.message);
+
+  // Only slugs the URL can carry back are offered: one the parser would drop
+  // (`boze_narodzenie`, `Walentynki`) would open an unfiltered list from its
+  // tile and leave its toggle unable to show as pressed.
+  const rows = ((data as SupabaseSeasonRow[] | null) ?? []).filter(
+    (row) => parseSeasonSlug(row.slug) !== null
+  );
+  const candidates = seasonsInWindow(rows.map(mapSeason), now);
+  if (candidates.length === 0) return [];
+
+  const { dateFrom, dateTo } = defaultDateWindow(now);
+  const counted = await Promise.all(
+    candidates.map(async (season) => {
+      const { count, error: countError } = await supabase
+        .from('events')
+        .select('id', { count: 'exact', head: true })
+        .contains('seasons', [season.slug])
+        .gte('date', dateFrom)
+        .lte('date', dateTo);
+      if (countError) throw new ServerError(countError.message);
+      return { ...season, count: count ?? 0, upcoming: isSeasonUpcoming(season, now) };
+    })
+  );
+  return counted.filter((season) => season.count > 0);
 }
 
 // Build-time cache: one fetch-all per city per build process. Shared by
