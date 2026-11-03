@@ -8,8 +8,11 @@ function stub(key: string, value: unknown) {
   Object.defineProperty(navigator, key, { value, configurable: true, writable: true });
 }
 
+// A string body, not a Blob: jsdom's Blob has no .stream(), which Node's
+// Response needs on some versions (CI fails with "object.stream is not a
+// function"). The hook sets the File's type itself, so the type is cosmetic.
 function okResponse(type: string) {
-  return new Response(new Blob(['bytes'], { type }), { status: 200 });
+  return new Response('bytes', { status: 200, headers: { 'content-type': type } });
 }
 
 // canShare that accepts only the listed MIME types.

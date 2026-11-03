@@ -88,7 +88,7 @@ describe('ShareDialog', () => {
     stub('share', share);
     stub('canShare', vi.fn().mockReturnValue(true));
     stub('clipboard', { writeText });
-    fetchMock.mockResolvedValue(new Response(new Blob(['v'], { type: 'video/mp4' })));
+    fetchMock.mockResolvedValue(new Response('v', { headers: { 'content-type': 'video/mp4' } }));
     open();
 
     const button = await screen.findByRole('button', { name: 'Udostępnij z filmem' });
@@ -128,7 +128,7 @@ describe('ShareDialog', () => {
     fetchMock.mockImplementation((url: string) =>
       url.endsWith('.mp4')
         ? Promise.reject(new TypeError('offline'))
-        : Promise.resolve(new Response(new Blob(['i'], { type: 'image/jpeg' })))
+        : Promise.resolve(new Response('i', { headers: { 'content-type': 'image/jpeg' } }))
     );
     open();
 
