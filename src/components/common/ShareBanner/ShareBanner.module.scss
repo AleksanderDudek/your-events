@@ -1,0 +1,129 @@
+@use '../../../styles/mixins' as *;
+
+.banner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 32px 0;
+  padding: 16px 44px 16px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  // The video's own pastel palette, so the thumbnail sits in it.
+  background:
+    radial-gradient(circle at 0% 0%, rgba(249, 168, 212, 0.45), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(253, 186, 116, 0.45), transparent 55%),
+    var(--surface);
+  box-shadow: var(--shadow);
+
+  @include sm {
+    gap: 24px;
+    padding: 20px 56px 20px 20px;
+  }
+
+  @include md {
+    margin: 48px 0;
+  }
+}
+
+.thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 76px;
+  aspect-ratio: 9 / 16;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--surface-2);
+  box-shadow: 0 6px 18px rgba(34, 28, 38, 0.18);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  @include sm {
+    width: 104px;
+  }
+}
+
+.play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(244, 85, 59, 0.92);
+  color: #fff;
+}
+
+.text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent-primary-dark);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 1.125rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+
+  @include sm {
+    font-size: 1.375rem;
+  }
+}
+
+.body {
+  margin: 6px 0 12px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+
+  @include sm {
+    font-size: 0.9375rem;
+  }
+}
+
+.cta {
+  min-height: 44px;
+  text-transform: none !important;
+  font-weight: 700 !important;
+}
+
+.dismiss {
+  position: absolute !important;
+  top: 8px;
+  right: 8px;
+  color: var(--color-text-secondary) !important;
+}
+
+// The pastel wash at half strength on the dark surface, or it reads as a glow.
+:global([data-theme='dark']) .banner {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(249, 168, 212, 0.18), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(253, 186, 116, 0.16), transparent 55%),
+    var(--surface);
+}

@@ -186,6 +186,10 @@
     gap: 24px;
     align-items: stretch;
   }
+
+  @include lg {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .channel {
@@ -219,6 +223,10 @@
 
 .channelForm .channelIcon {
   background-color: var(--primary);
+}
+
+.channelShare .channelIcon {
+  background-color: var(--color-accent-violet);
 }
 
 .channelTitle {

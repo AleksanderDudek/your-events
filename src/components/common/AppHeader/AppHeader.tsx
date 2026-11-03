@@ -15,12 +15,15 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
+import IosShareIcon from '@mui/icons-material/IosShare';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import { GROW_WITH_US_PATH, MY_FILTERS_PATH } from '@/config/community';
+import { openShareDialog } from '@/components/service/usePromoShare';
 import LogoMark from '@/components/common/LogoMark/LogoMark';
 import ThemeToggle from '@/components/common/ThemeToggle/ThemeToggle';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -42,6 +45,22 @@ export default function AppHeader() {
     { label: t.NAV_PRESETS, href: MY_FILTERS_PATH as Route },
     { label: t.NAV_GROW, href: GROW_WITH_US_PATH as Route },
   ];
+
+  // "Poleć znajomym": opens the share dialog mounted in AppLayout. An icon in
+  // the bar on every screen size — on a phone it sits beside the burger rather
+  // than inside the drawer, because the moment to share is "I'm looking at
+  // this and my friend should see it", not "let me open the menu".
+  const shareButton = (
+    <Tooltip title={t.SHARE_OPEN}>
+      <IconButton
+        onClick={() => openShareDialog('header')}
+        aria-label={t.SHARE_OPEN}
+        sx={{ color: 'var(--color-text-primary)' }}
+      >
+        <IosShareIcon />
+      </IconButton>
+    </Tooltip>
+  );
 
   const isActive = (href: string) => {
     const current = pathname.replace(/\/$/, '') || '/';
@@ -126,6 +145,7 @@ export default function AppHeader() {
             <CitySwitcher />
             <LanguageSwitcher />
             <ThemeToggle />
+            {shareButton}
           </Box>
         ) : (
           // Everything but the wordmark lives in the drawer on a phone. The bar
@@ -133,6 +153,7 @@ export default function AppHeader() {
           // burger, which left the wordmark competing with four controls for a
           // 390px row.
           <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            {shareButton}
             <IconButton
               onClick={() => setDrawerOpen(true)}
               aria-label={t.NAV_OPEN_MENU}

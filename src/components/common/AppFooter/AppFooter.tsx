@@ -14,6 +14,7 @@ import {
   GROW_WITH_US_PATH,
 } from '@/config/community';
 import Spark from '@/components/common/Spark/Spark';
+import { openShareDialog } from '@/components/service/usePromoShare';
 import styles from './AppFooter.module.scss';
 
 export default function AppFooter() {
@@ -71,6 +72,13 @@ export default function AppFooter() {
             >
               {t.GROW_FORM_TITLE}
             </a>
+            <button
+              type="button"
+              className={styles.linkButtonReset}
+              onClick={() => openShareDialog('footer')}
+            >
+              {t.SHARE_OPEN}
+            </button>
             {/* A <button>, not an anchor: this changes app state (reopens the
                 cookie banner) rather than navigating, and an anchor with no
                 href isn't keyboard-operable. */}

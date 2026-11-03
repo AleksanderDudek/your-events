@@ -5,6 +5,8 @@ import Box from '@mui/material/Box';
 import ForumIcon from '@mui/icons-material/Forum';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import IosShareIcon from '@mui/icons-material/IosShare';
+import { openShareDialog } from '@/components/service/usePromoShare';
 import { useTranslation } from '@/i18n';
 import { AVAILABLE_CITIES } from '@/config/cities';
 import { DISCORD_INVITE_URL, FEEDBACK_FORM_URL } from '@/config/community';
@@ -101,6 +103,24 @@ export default function GrowWithUsView() {
               <p className={styles.channelHint}>{t.GROW_EXTERNAL_HINT}</p>
             </article>
           ))}
+          {/* Not an outbound channel: it opens the share dialog in place, so it
+              has no "opens in a new tab" hint. */}
+          <article className={`${styles.channel} ${styles.channelShare}`}>
+            <span className={styles.channelIcon} aria-hidden="true">
+              <IosShareIcon />
+            </span>
+            <h3 className={styles.channelTitle}>{t.SHARE_GROW_TITLE}</h3>
+            <p className={styles.channelBody}>{t.SHARE_GROW_BODY}</p>
+            <Button
+              className={styles.channelCta}
+              variant="outlined"
+              size="large"
+              startIcon={<IosShareIcon />}
+              onClick={() => openShareDialog('grow')}
+            >
+              {t.SHARE_GROW_CTA}
+            </Button>
+          </article>
         </div>
       </section>
     </Box>

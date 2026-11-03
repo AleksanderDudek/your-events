@@ -18,6 +18,7 @@ import { Translated } from '@/i18n/translation';
 import { useCity } from '@/config/CityProvider';
 import AnimatedLastWord from '@/components/common/AnimatedLastWord/AnimatedLastWord';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
+import ShareBanner from '@/components/common/ShareBanner/ShareBanner';
 import { useEvents } from '@/components/service/useEvents';
 import { useSeasons } from '@/components/service/useSeasons';
 import { seasonTheme } from '@/lib/seasons';
@@ -248,6 +249,8 @@ export default function HomeView() {
           </Link>
         ))}
       </section>
+
+      <ShareBanner />
 
       <section className={styles.mapSection} aria-label={t.HOME_MAP_TITLE}>
         <div className={styles.mapSectionHeader}>
