@@ -145,6 +145,26 @@ overload): `share_open_<entry>`, `share_native_<format>_<video|image|text>`,
 `share_banner_dismiss`, `share_event_native|copy|link_<target>`. Bounded names,
 no free text. Clarity's own consent handling applies.
 
+## After review
+
+An independent review found no blocker; these were fixed:
+
+- **The video could download twice.** On the first render after opening, the
+  prefetch had not yet reported, and the preview mounted a `<video>` on the
+  file's URL. The poster now shows until the prefetch settles.
+- **Without a Content-Length the stall timer was a total timer.** The download
+  is now read chunk by chunk either way, each chunk re-arming it.
+- **A download cancelled at the last moment left an object URL behind**, and
+  the image fetch was not cancelled at all. The URL is made only for a kept
+  result; the image has its own controller, aborted on close.
+- **A toast cut short by closing came back on the next open**, and one failed
+  video load pinned the image preview for the session. Both reset on close.
+
+Considered and left: retrying a failed file share as text (the first
+`share()` call uses up the tap's user activation, so a retry would be
+refused), and copying the caption only after a successful share (Instagram
+needs it on the clipboard before the sheet opens).
+
 ## Not done
 
 - **Attaching the event poster to an event share.** Posters are on other

@@ -97,6 +97,33 @@ describe('usePromoMedia', () => {
     await waitFor(() => expect(result.current.status).toBe('unavailable'));
   });
 
+  it('reads a response without a length chunk by chunk', async () => {
+    stub('canShare', canShareTypes('video/mp4', 'image/jpeg'));
+    const body = new ReadableStream<Uint8Array>({
+      start(c) {
+        c.enqueue(new Uint8Array([1, 2]));
+        c.enqueue(new Uint8Array([3]));
+        c.close();
+      },
+    });
+    fetchMock.mockResolvedValue(new Response(body, { status: 200 }));
+    const { result } = renderHook(() => usePromoMedia('post', true));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(result.current).toMatchObject({ kind: 'video' });
+    if (result.current.status === 'ready') expect(result.current.file.size).toBe(3);
+  });
+
+  it('keeps nothing, and makes no object URL, when closed mid-download', async () => {
+    stub('canShare', canShareTypes('video/mp4', 'image/jpeg'));
+    let resolve!: (r: Response) => void;
+    fetchMock.mockReturnValue(new Promise<Response>((r) => (resolve = r)));
+    const { unmount } = renderHook(() => usePromoMedia('post', true));
+    unmount();
+    resolve(okResponse('video/mp4'));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
   it('does not download the same format twice', async () => {
     stub('canShare', canShareTypes('video/mp4', 'image/jpeg'));
     fetchMock.mockResolvedValue(okResponse('video/mp4'));

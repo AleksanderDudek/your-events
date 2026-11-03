@@ -51,10 +51,13 @@ async function fetchFile(
   const response = await fetch(url, { signal });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const total = Number(response.headers.get('content-length')) || 0;
-  if (!response.body || !total) {
+  if (!response.body) {
     onProgress(null);
     return new File([await response.blob()], name, { type });
   }
+  // Read chunk by chunk even without a length (chunked or re-encoded
+  // responses): every chunk re-arms the stall timer, so a slow but steady
+  // download is never cut off. Progress is then unknown, not zero.
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let received = 0;
@@ -64,12 +67,16 @@ async function fetchFile(
     chunks.push(value);
     received += value.length;
     onBytes();
-    onProgress(Math.min(99, Math.round((received / total) * 100)));
+    onProgress(total ? Math.min(99, Math.round((received / total) * 100)) : null);
   }
   return new File(chunks as BlobPart[], name, { type });
 }
 
-function ready(kind: 'video' | 'image', file: File, fellBack: boolean): PromoMediaState {
+type Fetched = { kind: 'video' | 'image'; file: File; fellBack: boolean } | null;
+
+// The object URL is made only once a result is kept (see the effect), so a
+// download cancelled at the last moment leaves nothing to revoke.
+function ready({ kind, file, fellBack }: NonNullable<Fetched>): PromoMediaState {
   return { status: 'ready', kind, file, objectUrl: URL.createObjectURL(file), fellBack };
 }
 
@@ -96,6 +103,9 @@ export function usePromoMedia(format: ShareFormat, enabled: boolean): PromoMedia
 
     const media = PROMO_MEDIA[format];
     const controller = new AbortController();
+    // Its own controller: the video's may already be aborted by the stall
+    // timer, and the image must still be fetchable after that.
+    const imageController = new AbortController();
     let stall: ReturnType<typeof setTimeout> | undefined;
     const armStall = () => {
       clearTimeout(stall);
@@ -103,7 +113,7 @@ export function usePromoMedia(format: ShareFormat, enabled: boolean): PromoMedia
     };
     let cancelled = false;
 
-    const run = async (): Promise<PromoMediaState> => {
+    const run = async (): Promise<Fetched> => {
       const saveData = prefersReducedData();
       if (!saveData) {
         setState({ status: 'loading', progress: 0 });
@@ -117,25 +127,26 @@ export function usePromoMedia(format: ShareFormat, enabled: boolean): PromoMedia
             (progress) => !cancelled && setState({ status: 'loading', progress }),
             armStall
           );
-          if (canShareFiles([video])) return ready('video', video, false);
+          if (canShareFiles([video])) return { kind: 'video', file: video, fellBack: false };
         } catch {
           // Stalled, offline, 404 — fall back to the image below.
         } finally {
           clearTimeout(stall);
         }
       }
-      if (cancelled) return { status: 'idle' };
+      if (cancelled) return null;
       try {
-        const image = await fetchFile(media.image, media.imageName, 'image/jpeg', new AbortController().signal, () => {}, () => {});
-        if (canShareFiles([image])) return ready('image', image, !saveData);
+        const image = await fetchFile(media.image, media.imageName, 'image/jpeg', imageController.signal, () => {}, () => {});
+        if (canShareFiles([image])) return { kind: 'image', file: image, fellBack: !saveData };
       } catch {
         // Nothing to attach — text only.
       }
-      return { status: 'unavailable' };
+      return null;
     };
 
-    void run().then((result) => {
+    void run().then((fetched) => {
       if (cancelled) return;
+      const result: PromoMediaState = fetched ? ready(fetched) : { status: 'unavailable' };
       settled.set(format, result);
       setState(result);
     });
@@ -146,6 +157,7 @@ export function usePromoMedia(format: ShareFormat, enabled: boolean): PromoMedia
       cancelled = true;
       clearTimeout(stall);
       controller.abort();
+      imageController.abort();
     };
   }, [format, enabled]);
 

@@ -102,6 +102,26 @@ describe('ShareDialog', () => {
     expect(await screen.findByText(/Opis jest w schowku/)).toBeInTheDocument();
   });
 
+  it('shows the poster, not a second video download, until the prefetch lands', () => {
+    stub('share', vi.fn());
+    stub('canShare', vi.fn().mockReturnValue(true));
+    fetchMock.mockReturnValue(new Promise(() => {}));
+    const dialog = open();
+    expect(dialog.querySelector('video')).toBeNull();
+    expect(screen.getByRole('button', { name: /Przygotowuję film/ })).toBeDisabled();
+  });
+
+  it('forgets an old toast when reopened', async () => {
+    const user = userEvent.setup();
+    stub('clipboard', { writeText: vi.fn().mockResolvedValue(undefined) });
+    open();
+    await user.click(screen.getByRole('button', { name: 'Kopiuj opis' }));
+    expect(await screen.findByText('Opis skopiowany')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Zamknij' }));
+    act(() => openShareDialog('footer'));
+    expect(screen.queryByText('Opis skopiowany')).not.toBeInTheDocument();
+  });
+
   it('falls back to the image and says so when the video cannot be had', async () => {
     stub('share', vi.fn().mockResolvedValue(undefined));
     stub('canShare', vi.fn().mockReturnValue(true));

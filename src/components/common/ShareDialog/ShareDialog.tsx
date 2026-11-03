@@ -76,7 +76,13 @@ export default function ShareDialog() {
   const [autoPlay, setAutoPlay] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      // A toast whose timer was cut short by closing would otherwise greet
+      // the next open, and one bad load would pin the image-only preview.
+      setToast(null);
+      setVideoBroken(false);
+      return;
+    }
     setCanNativeShare(hasNativeShare());
     setAutoPlay(!prefersReducedMotion());
   }, [isOpen]);
@@ -146,18 +152,21 @@ export default function ShareDialog() {
         <Image src={assets.image} alt={t.SHARE_PREVIEW_IMAGE_ALT} fill unoptimized sizes="420px" className={styles.media} />
       );
     }
-    if (media.status === 'loading') {
+    if (media.status === 'loading' || media.status === 'idle') {
       // The poster until the file is in hand: a <video> pointed at the URL now
-      // would download it a second time alongside the prefetch.
+      // would download it a second time alongside the prefetch. 'idle' too —
+      // it is the first render after opening, before the prefetch decides.
       return (
         <>
           <Image src={assets.poster} alt="" fill unoptimized sizes="420px" className={styles.media} />
-          <LinearProgress
-            className={styles.progress}
-            variant={media.progress === null ? 'indeterminate' : 'determinate'}
-            value={media.progress ?? undefined}
-            aria-label={shareLabel}
-          />
+          {media.status === 'loading' && (
+            <LinearProgress
+              className={styles.progress}
+              variant={media.progress === null ? 'indeterminate' : 'determinate'}
+              value={media.progress ?? undefined}
+              aria-label={shareLabel}
+            />
+          )}
         </>
       );
     }
