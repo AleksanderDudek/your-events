@@ -5,7 +5,7 @@ import { buildCategorySlugMap, resolveCategorySlug } from '@/lib/slug';
 import { AVAILABLE_CITIES, getCity, isCityId, DEFAULT_CITY_ID } from '@/config/cities';
 import CategoryHubView from '@/components/views/CategoryHubView/CategoryHubView';
 import { messages, DEFAULT_LOCALE } from '@/i18n';
-import { SITE_URL } from '@/config/site';
+import { DEFAULT_OG_IMAGES, SITE_URL } from '@/config/site';
 
 export const dynamicParams = false;
 const HUB_LIMIT = 48;
@@ -47,6 +47,7 @@ export async function generateMetadata({ params }: HubProps): Promise<Metadata> 
       title: `${name} — ${messages[DEFAULT_LOCALE].META_EVENTS_TITLE(locative)}`,
       description: messages[DEFAULT_LOCALE].META_DESCRIPTION(locative),
       type: 'website',
+      images: DEFAULT_OG_IMAGES,
     },
   };
 }

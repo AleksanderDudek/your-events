@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import GrowWithUsView from '@/components/views/GrowWithUsView/GrowWithUsView';
 import { messages, DEFAULT_LOCALE } from '@/i18n';
-import { SITE_URL } from '@/config/site';
+import { DEFAULT_OG_IMAGES, SITE_URL } from '@/config/site';
 import { GROW_WITH_US_PATH } from '@/config/community';
 
 // Static metadata (no params to await): the page is city-agnostic and, like the
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     title: m.GROW_META_TITLE,
     description: m.GROW_META_DESCRIPTION,
     type: 'website',
+    images: DEFAULT_OG_IMAGES,
   },
 };
 

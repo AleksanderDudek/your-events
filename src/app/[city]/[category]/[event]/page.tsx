@@ -7,7 +7,7 @@ import type { RelatedEventLink } from '@/components/common/RelatedEvents/Related
 import { AVAILABLE_CITIES, getCity, isCityId, DEFAULT_CITY_ID } from '@/config/cities';
 import EventDetailView from '@/components/views/EventDetailView/EventDetailView';
 import { Event } from '@/types/event.types';
-import { SITE_URL } from '@/config/site';
+import { DEFAULT_OG_IMAGES, SITE_URL } from '@/config/site';
 
 export const dynamicParams = false;
 
@@ -53,7 +53,11 @@ export async function generateMetadata({ params }: DetailProps): Promise<Metadat
       title: `${found.name} — ${found.date}`,
       description: found.description.slice(0, 160),
       type: 'article',
-      ...(found.imageUrl && { images: [found.imageUrl] }),
+      // The event's poster when it is a real address; otherwise the site's
+      // card, so a shared event link never previews as a bare URL. Some
+      // events carry a generated data:image/svg+xml placeholder, which no
+      // crawler can fetch as og:image.
+      images: /^https?:\/\//.test(found.imageUrl) ? [found.imageUrl] : DEFAULT_OG_IMAGES,
     },
   };
 }

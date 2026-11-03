@@ -41,3 +41,18 @@ export const IS_NOINDEX = env.NEXT_PUBLIC_ROBOTS_NOINDEX === 'true';
 // and a typo cannot flip it there. Off means the sheet, the tour and the
 // footer's replay link all disappear, and nothing is read from localStorage.
 export const IS_ONBOARDING_ENABLED = env.NEXT_PUBLIC_ONBOARDING_ENABLED !== 'false';
+
+// Link preview for every page without a picture of its own (all but event
+// pages that have a poster). 1200×630, rendered by
+// scripts/render-promo-images.mjs. Absolute because crawlers fetch og:image
+// without resolving it against the page, and there is no metadataBase.
+// Pages that set their own `openGraph` must repeat this: Next replaces the
+// parent's openGraph object rather than merging it.
+export const DEFAULT_OG_IMAGES = [
+  {
+    url: `${SITE_URL}/promo/og.jpg`,
+    width: 1200,
+    height: 630,
+    alt: 'Idź na miasto — Otwierasz i wiesz. idznamiasto.pl',
+  },
+];

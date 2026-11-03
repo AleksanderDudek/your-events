@@ -18,6 +18,7 @@ async function loadLayout(overrides: { basePath?: string; noindex?: boolean } = 
   vi.doMock('@/config/site', () => ({
     SITE_URL: `https://example.test${basePath}`,
     IS_NOINDEX: overrides.noindex ?? false,
+    DEFAULT_OG_IMAGES: [{ url: `https://example.test${basePath}/promo/og.jpg`, width: 1200, height: 630, alt: '' }],
   }));
   vi.doMock('@/lib/constants', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@/lib/constants')>();
