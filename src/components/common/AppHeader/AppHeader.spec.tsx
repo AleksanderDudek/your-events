@@ -63,13 +63,16 @@ describe('AppHeader (mobile)', () => {
     isMdUp.mockReturnValue(false);
   });
 
-  it('leaves nothing but the wordmark and the menu button in the bar', () => {
-    // Four controls plus the wordmark did not fit a 390px row.
+  it('leaves only the wordmark, share and the menu button in the bar', () => {
+    // Four controls plus the wordmark did not fit a 390px row; the settings
+    // went into the drawer. Share stays out: on a phone it is the button that
+    // opens the system share sheet, and two icons still fit beside the name.
     render(<AppHeader />);
     const bar = screen.getByRole('banner');
     const buttons = within(bar).getAllByRole('button');
-    expect(buttons).toHaveLength(1);
-    expect(buttons[0]).toHaveAccessibleName('Otwórz menu');
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0]).toHaveAccessibleName('Poleć znajomym');
+    expect(buttons[1]).toHaveAccessibleName('Otwórz menu');
     expect(within(bar).getByText('Idź na miasto')).toBeInTheDocument();
   });
 

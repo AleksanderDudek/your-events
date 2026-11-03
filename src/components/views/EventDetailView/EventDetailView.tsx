@@ -18,6 +18,7 @@ import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import MediaFill from '@/components/ui/MediaFill/MediaFill';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import AddToCalendar from '@/components/ui/AddToCalendar/AddToCalendar';
+import ShareEvent from '@/components/ui/ShareEvent/ShareEvent';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
 import RelatedEvents, { type RelatedEventLink } from '@/components/common/RelatedEvents/RelatedEvents';
 import { formatDate, formatDateMedium, formatEventTime } from '@/lib/utils';
@@ -271,6 +272,11 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
                 share one, and a third item there overflowed the card. */}
             <Box className={styles.calendarCta}>
               <AddToCalendar event={event} />
+            </Box>
+            {/* This event, by its permalink. Not the header's "Poleć znajomym",
+                which recommends the app itself. */}
+            <Box className={styles.shareCta}>
+              <ShareEvent event={event} />
             </Box>
 
             {/* Sources */}

@@ -7,7 +7,7 @@ import { messages, DEFAULT_LOCALE } from '@/i18n';
 import { DEFAULT_CITY_ID, getCity } from '@/config/cities';
 import { env } from '@/config/env';
 import { withBasePath } from '@/lib/constants';
-import { IS_NOINDEX } from '@/config/site';
+import { DEFAULT_OG_IMAGES, IS_NOINDEX } from '@/config/site';
 import './globals.scss';
 
 // Server-side metadata is rendered at build time. Locale switching and city
@@ -38,7 +38,10 @@ export const metadata: Metadata = {
     description: defaultDescription,
     locale: 'pl_PL',
     type: 'website',
+    images: DEFAULT_OG_IMAGES,
   },
+  // X falls back to og:image for the picture; this asks for the large card.
+  twitter: { card: 'summary_large_image' },
 };
 
 export default function RootLayout({
