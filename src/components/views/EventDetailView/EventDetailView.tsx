@@ -235,7 +235,7 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
         {/* Sidebar info — appears under hero on mobile via CSS order */}
         <Box className={styles.detailSidebar}>
           <Box className={styles.infoCard}>
-            <Box className={styles.priceCtaRow}>
+            <Box className={styles.priceRow}>
               {/* Price */}
               <Box className={styles.infoRow}>
                 <Typography variant="caption" className={styles.detailLabel}>
@@ -250,26 +250,8 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
                   )}
                 </Box>
               </Box>
-
-              {/* External Link — only when the source URL is real */}
-              {hasUrl && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  href={event.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  endIcon={<OpenInNewIcon />}
-                  className={styles.externalLink}
-                  sx={{ minHeight: 44 }}
-                >
-                  {t.EXTERNAL_LINK}
-                </Button>
-              )}
             </Box>
 
-            {/* Its own row: below md the price and the ticket link already
-                share one, and a third item there overflowed the card. */}
             <Box className={styles.calendarCta}>
               <AddToCalendar event={event} />
             </Box>
@@ -278,6 +260,25 @@ export default function EventDetailView({ event, related = [] }: EventDetailView
             <Box className={styles.shareCta}>
               <ShareEvent event={event} />
             </Box>
+            {/* The organiser's page, last: the card reads price, then what to
+                do with the event here (calendar, share), then where to go next.
+                Only when the source URL is real. */}
+            {hasUrl && (
+              <Box className={styles.externalCta}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  href={event.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  endIcon={<OpenInNewIcon />}
+                  fullWidth
+                  sx={{ minHeight: 44 }}
+                >
+                  {t.EXTERNAL_LINK}
+                </Button>
+              </Box>
+            )}
 
             {/* Sources */}
             {event.sources.length > 0 && (
