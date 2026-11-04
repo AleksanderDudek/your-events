@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { SHARE_STRIP_INIT_SCRIPT } from '@/lib/shareStrip';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import Providers from './providers';
 import AppLayout from '@/components/common/AppLayout/AppLayout';
@@ -52,6 +53,9 @@ export default function RootLayout({
   return (
     <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
       <head>
+        {/* Before first paint: hides the share strip for a visitor who
+            already hid it, so the header never changes height on load. */}
+        <script dangerouslySetInnerHTML={{ __html: SHARE_STRIP_INIT_SCRIPT }} />
         <meta name="security-scan" content="wirtualnatarcza-verify-b910f78bb326f4ab115e4637d25e134410a83076" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

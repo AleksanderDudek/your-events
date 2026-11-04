@@ -16,7 +16,7 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   padding: 16px !important;
 
   @include sm {
@@ -44,7 +44,8 @@
 .lead {
   margin: 6px 0 0;
   color: var(--color-text-secondary);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
 }
 
 .close {
@@ -53,18 +54,115 @@
   color: var(--color-text-primary) !important;
 }
 
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionLabel {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+// Send-a-link row: round icons with a name under each, always one row — six
+// or seven equal columns (seven with "Więcej" where there is a share sheet).
+.targets {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include sm {
+    grid-auto-columns: 64px;
+    gap: 8px;
+  }
+}
+
+.target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+
+  @include focus-visible;
+
+  &:hover .targetIcon {
+    border-color: var(--color-accent-primary);
+    background: var(--color-accent-tint-soft);
+  }
+}
+
+.targetIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+
+  @include motion-safe {
+    transition: border-color var(--transition-base), background-color var(--transition-base);
+  }
+}
+
+// Brand colour on the glyph only: recognisable at a glance, and no white-on-
+// brand contrast to get wrong.
+.target-whatsapp {
+  color: #1da851;
+}
+
+.target-facebook {
+  color: #1877f2;
+}
+
+.target-linkedin {
+  color: #0a66c2;
+}
+
+// Allowed past its column: "WhatsApp" is the longest and its neighbours'
+// names are short, so it never collides.
+.targetName {
+  font-size: 0.625rem;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+
+  @include sm {
+    font-size: 0.6875rem;
+  }
+}
+
 .formats {
   gap: 8px;
 }
 
-// Two tall cards rather than a segmented pill: each carries a hint naming the
-// platforms, which is the part that tells people which one they want.
+// Two compact cards: the name, and the platforms it is for.
 .format {
   display: flex !important;
   flex-direction: column;
   align-items: flex-start !important;
-  gap: 2px;
-  padding: 10px 14px !important;
+  gap: 0;
+  padding: 6px 12px !important;
   text-align: left;
   text-transform: none !important;
   border-radius: var(--radius-md) !important;
@@ -80,48 +178,51 @@
 .formatName {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.9375rem;
 }
 
 .formatHint {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   line-height: 1.3;
   color: var(--color-text-secondary);
 }
 
+// Phone: preview and caption side by side, actions full width below.
+// md up: the preview tall on the left, caption and actions stacked right.
 .body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'preview caption'
+    'actions actions';
+  gap: 12px;
+  align-items: stretch;
 
   @include md {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 24px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'preview caption'
+      'preview actions';
+    column-gap: 24px;
   }
 }
 
-// Height-bound so a 9:16 story never pushes the buttons off a phone screen;
-// the width follows from the aspect ratio set inline.
+// Height-bound; the width follows from the aspect ratio set inline.
 .preview {
+  grid-area: preview;
   position: relative;
-  align-self: center;
-  // 30vh on a phone keeps the share button above the fold of a 760px screen.
-  height: min(30vh, 300px);
-  max-width: 100%;
+  height: 176px;
   border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--surface-2);
   box-shadow: var(--shadow);
-  flex-shrink: 0;
 
   @include sm {
-    height: min(40vh, 360px);
+    height: 240px;
   }
 
   @include md {
-    align-self: flex-start;
-    height: min(62vh, 520px);
+    height: min(56vh, 460px);
   }
 }
 
@@ -139,48 +240,60 @@
   bottom: 0;
 }
 
-.side {
+.captionBox {
+  grid-area: caption;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   min-width: 0;
-  flex: 1;
 }
 
 .captionLabel {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-text-secondary);
 }
 
-.captionBox {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
 .caption {
+  flex: 1;
   width: 100%;
+  min-height: 0;
   box-sizing: border-box;
   resize: none;
-  padding: 12px;
+  padding: 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   background: var(--color-bg-elevated);
   color: var(--ink);
   font: inherit;
-  font-size: 0.9375rem;
-  line-height: 1.45;
+  font-size: 0.875rem;
+  line-height: 1.4;
   @include focus-visible;
+
+  @include md {
+    flex: none;
+    height: 7.5em;
+    font-size: 0.9375rem;
+  }
 }
 
-.count {
-  align-self: flex-end;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
+.actions {
+  grid-area: actions;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+
+  :global(.MuiButton-sizeLarge),
+  :global(.MuiButton-sizeMedium) {
+    min-height: 44px;
+  }
+
+  :global(.MuiButton-root) {
+    text-transform: none;
+  }
 }
 
 .tip,
@@ -199,66 +312,24 @@
   color: var(--ink);
 }
 
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 4px;
-
-  :global(.MuiButton-root) {
-    min-height: 44px;
-    text-transform: none;
-  }
-}
-
 .primary {
+  @include share-gradient;
   font-weight: 700 !important;
 }
 
 .downloads {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-
-  // Side by side once "Pobierz grafikę" fits on one line.
-  @include sm {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.orSend {
-  margin: 8px 0 0;
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-}
-
-.targets {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+
+  > * {
+    flex: 1 1 auto;
+  }
 }
 
-.target {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 12px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: border-color var(--transition-base), background-color var(--transition-base);
-
-  &:hover {
-    border-color: var(--color-accent-primary);
-    background: var(--color-accent-tint-soft);
-  }
-
-  @include focus-visible;
+// While the video is prepared: the gradient stays, dimmed, so the button does
+// not jump from grey to colour when it is ready.
+.primary:global(.Mui-disabled) {
+  opacity: 0.6;
+  color: #ffffff !important;
 }

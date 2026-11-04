@@ -96,11 +96,14 @@ $bp-xl: 1536px;
 // white label text stays at or above 4.5:1 (4.6 on the coral, 5.7 on the
 // violet); plain --primary is 3.4. Same in both themes: the fill carries the
 // contrast, not the page behind it.
+$share-from: #d63c2a;
+$share-to: #7c3aed;
+
 @mixin share-gradient {
   // Doubled class (.x.x): MUI's emotion styles are injected after the CSS
   // modules, so a single class loses the background and colour to them.
   &#{&} {
-    background: linear-gradient(135deg, #d63c2a 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, $share-from 0%, $share-to 100%);
     color: #ffffff;
     box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28);
 

@@ -23,7 +23,7 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import EmailIcon from '@mui/icons-material/Email';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
-import { useShareDialog } from '@/components/service/usePromoShare';
+import { hideShareStrip, useShareDialog } from '@/components/service/usePromoShare';
 import { usePromoMedia } from '@/components/service/usePromoMedia';
 import { copyText, hasNativeShare, nativeShare } from '@/components/service/webShare';
 import { trackEvent } from '@/lib/analytics';
@@ -31,8 +31,6 @@ import {
   PROMO_MEDIA,
   PROMO_URL,
   SHARE_TARGETS,
-  SHARE_TEXT_LIMIT,
-  charCount,
   promoCaption,
   shareTargetUrl,
   type ShareFormat,
@@ -53,14 +51,16 @@ function prefersReducedMotion(): boolean {
 }
 
 /**
- * "Poleć Idź na miasto": a post or a story, each with its video, a caption that
- * fits 130 characters and the link. One instance lives in AppLayout and opens
- * from the header, the home banner, the footer and Rozwijaj z nami.
+ * "Poleć Idź na miasto". One instance lives in AppLayout and opens from the
+ * header, its strip, the home tile, the phone menu, the footer and Rozwijaj z
+ * nami.
  *
- * The one big button is the native share sheet, which on a phone is where
- * Instagram, TikTok, Messenger and WhatsApp live. Everything else is for when
- * there is no sheet (most desktops) or it fails: copy the caption, download
- * the file, or open a web share link.
+ * Two parts, quickest first, so both fit a phone screen without scrolling to
+ * find them:
+ * 1. "Wyślij link": one tap to WhatsApp, Facebook, X, LinkedIn, e-mail, the
+ *    system sheet ("Więcej") or the clipboard. Text and link, no file.
+ * 2. A post or a story with the video: preview beside the caption, then the
+ *    native share sheet (where Instagram and TikTok live) or the downloads.
  */
 export default function ShareDialog() {
   const { t, locale } = useTranslation();
@@ -94,6 +94,10 @@ export default function ShareDialog() {
     [format, t, city, locale]
   );
 
+  // The send-a-link row is not tied to a format: always the post caption,
+  // which says what the app is rather than teasing it.
+  const linkCaption = useMemo(() => promoCaption('post', t, city.displayName[locale]), [t, city, locale]);
+
   const chooseFormat = (_: unknown, next: ShareFormat | null) => {
     if (!next) return; // exclusive group: re-pressing the active one is not "none"
     setFormat(next);
@@ -112,6 +116,7 @@ export default function ShareDialog() {
       file ? { files: [file], text: caption, title: t.APP_NAME } : { text: caption, title: t.APP_NAME }
     );
     if (outcome === 'shared') {
+      hideShareStrip('shared');
       trackEvent(`share_native_${format}_${file && media.status === 'ready' ? media.kind : 'text'}`);
       if (file) setToast(t.SHARE_TOAST_CAPTION_READY);
     } else if (outcome === 'failed') {
@@ -120,9 +125,20 @@ export default function ShareDialog() {
   };
 
   const handleCopy = async () => {
-    const ok = await copyText(caption);
+    const ok = await copyText(linkCaption);
     setToast(ok ? t.SHARE_TOAST_COPIED : t.SHARE_TOAST_COPY_FAILED);
-    if (ok) trackEvent(`share_copy_${format}`);
+    if (ok) trackEvent('share_copy_link');
+  };
+
+  // Messenger, Telegram, SMS and the rest: the system sheet, text only.
+  const handleMore = async () => {
+    const outcome = await nativeShare({ text: linkCaption, title: t.APP_NAME });
+    if (outcome === 'shared') {
+      hideShareStrip('shared');
+      trackEvent('share_native_link');
+    } else if (outcome === 'failed') {
+      setToast(t.SHARE_TOAST_FAILED);
+    }
   };
 
   const shareLabel =
@@ -214,56 +230,93 @@ export default function ShareDialog() {
           </IconButton>
         </div>
 
-        <ToggleButtonGroup
-          value={format}
-          exclusive
-          onChange={chooseFormat}
-          aria-label={t.SHARE_FORMAT_LABEL}
-          className={styles.formats}
-          fullWidth
-        >
-          <ToggleButton value="post" className={styles.format}>
-            <span className={styles.formatName}>{t.SHARE_FORMAT_POST}</span>
-            <span className={styles.formatHint}>{t.SHARE_FORMAT_POST_HINT}</span>
-          </ToggleButton>
-          <ToggleButton value="story" className={styles.format}>
-            <span className={styles.formatName}>{t.SHARE_FORMAT_STORY}</span>
-            <span className={styles.formatHint}>{t.SHARE_FORMAT_STORY_HINT}</span>
-          </ToggleButton>
-        </ToggleButtonGroup>
+        <section className={styles.section} aria-labelledby="share-quick-label">
+          <h3 id="share-quick-label" className={styles.sectionLabel}>
+            {t.SHARE_QUICK_LABEL}
+          </h3>
+          <ul className={styles.targets}>
+            {canNativeShare && (
+              <li>
+                <button type="button" className={styles.target} onClick={handleMore}>
+                  <span className={styles.targetIcon}>
+                    <IosShareIcon fontSize="small" />
+                  </span>
+                  <span className={styles.targetName}>{t.SHARE_MORE_APPS}</span>
+                </button>
+              </li>
+            )}
+            {SHARE_TARGETS.map((target) => (
+              <li key={target}>
+                <a
+                  className={styles.target}
+                  href={shareTargetUrl(target, { text: linkCaption, url: PROMO_URL, subject: t.SHARE_EMAIL_SUBJECT })}
+                  target={target === 'email' ? undefined : '_blank'}
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    hideShareStrip('shared');
+                    trackEvent(`share_link_${target}`);
+                  }}
+                >
+                  <span className={`${styles.targetIcon} ${styles[`target-${target}`]}`}>{TARGET_ICONS[target]}</span>
+                  <span className={styles.targetName}>{targetLabel[target]}</span>
+                </a>
+              </li>
+            ))}
+            <li>
+              <button type="button" className={styles.target} onClick={handleCopy}>
+                <span className={styles.targetIcon}>
+                  <ContentCopyIcon fontSize="small" />
+                </span>
+                <span className={styles.targetName}>{t.SHARE_COPY}</span>
+              </button>
+            </li>
+          </ul>
+        </section>
 
-        <div className={styles.body}>
-          <div className={styles.preview} style={{ aspectRatio: assets.aspect }} data-format={format}>
-            {renderPreview()}
-          </div>
+        <section className={styles.section} aria-labelledby="share-media-label">
+          <h3 id="share-media-label" className={styles.sectionLabel}>
+            {t.SHARE_MEDIA_LABEL}
+          </h3>
 
-          <div className={styles.side}>
-            <label className={styles.captionLabel} htmlFor="share-caption">
-              {t.SHARE_CAPTION_LABEL}
-            </label>
+          <ToggleButtonGroup
+            value={format}
+            exclusive
+            onChange={chooseFormat}
+            aria-label={t.SHARE_FORMAT_LABEL}
+            className={styles.formats}
+            fullWidth
+          >
+            <ToggleButton value="post" className={styles.format}>
+              <span className={styles.formatName}>{t.SHARE_FORMAT_POST}</span>
+              <span className={styles.formatHint}>{t.SHARE_FORMAT_POST_HINT}</span>
+            </ToggleButton>
+            <ToggleButton value="story" className={styles.format}>
+              <span className={styles.formatName}>{t.SHARE_FORMAT_STORY}</span>
+              <span className={styles.formatHint}>{t.SHARE_FORMAT_STORY_HINT}</span>
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          <div className={styles.body}>
+            <div className={styles.preview} style={{ aspectRatio: assets.aspect }} data-format={format}>
+              {renderPreview()}
+            </div>
+
             <div className={styles.captionBox}>
+              <label className={styles.captionLabel} htmlFor="share-caption">
+                {t.SHARE_CAPTION_LABEL}
+              </label>
               {/* A read-only textarea rather than a <p>: it can be selected and
                   copied by hand when the clipboard is refused. */}
-              <textarea
-                id="share-caption"
-                className={styles.caption}
-                value={caption}
-                readOnly
-                rows={4}
-                aria-describedby="share-caption-count"
-              />
-              <span id="share-caption-count" className={styles.count}>
-                {t.SHARE_CHAR_COUNT(charCount(caption), SHARE_TEXT_LIMIT)}
-              </span>
+              <textarea id="share-caption" className={styles.caption} value={caption} readOnly />
             </div>
-            {format === 'story' && <p className={styles.tip}>{t.SHARE_STORY_TIP}</p>}
-            {media.status === 'ready' && media.fellBack && (
-              <p className={styles.notice} role="status">
-                {t.SHARE_FALLBACK_NOTICE}
-              </p>
-            )}
 
             <div className={styles.actions}>
+              {format === 'story' && <p className={styles.tip}>{t.SHARE_STORY_TIP}</p>}
+              {media.status === 'ready' && media.fellBack && (
+                <p className={styles.notice} role="status">
+                  {t.SHARE_FALLBACK_NOTICE}
+                </p>
+              )}
               {canNativeShare && (
                 <Button
                   variant="contained"
@@ -276,18 +329,12 @@ export default function ShareDialog() {
                   {shareLabel}
                 </Button>
               )}
-              <Button
-                variant={canNativeShare ? 'outlined' : 'contained'}
-                size={canNativeShare ? 'medium' : 'large'}
-                startIcon={<ContentCopyIcon />}
-                onClick={handleCopy}
-                className={canNativeShare ? undefined : styles.primary}
-              >
-                {t.SHARE_COPY}
-              </Button>
+              {/* Secondary where the sheet can attach the file; the way to get
+                  the video at all where it cannot (most desktops). */}
               <div className={styles.downloads}>
                 <Button
-                  variant="outlined"
+                  variant={canNativeShare ? 'text' : 'outlined'}
+                  size={canNativeShare ? 'small' : 'medium'}
                   startIcon={<DownloadIcon />}
                   component="a"
                   href={assets.video}
@@ -297,7 +344,8 @@ export default function ShareDialog() {
                   {t.SHARE_DOWNLOAD_VIDEO}
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant={canNativeShare ? 'text' : 'outlined'}
+                  size={canNativeShare ? 'small' : 'medium'}
                   startIcon={<DownloadIcon />}
                   component="a"
                   href={assets.image}
@@ -308,28 +356,8 @@ export default function ShareDialog() {
                 </Button>
               </div>
             </div>
-
-            <p className={styles.orSend} id="share-targets-label">
-              {t.SHARE_OR_SEND}
-            </p>
-            <ul className={styles.targets} aria-labelledby="share-targets-label">
-              {SHARE_TARGETS.map((target) => (
-                <li key={target}>
-                  <a
-                    className={styles.target}
-                    href={shareTargetUrl(target, { text: caption, url: PROMO_URL, subject: t.SHARE_EMAIL_SUBJECT })}
-                    target={target === 'email' ? undefined : '_blank'}
-                    rel="noopener noreferrer"
-                    onClick={() => trackEvent(`share_link_${target}`)}
-                  >
-                    {TARGET_ICONS[target]}
-                    <span>{targetLabel[target]}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
           </div>
-        </div>
+        </section>
       </DialogContent>
 
       <Snackbar

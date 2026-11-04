@@ -165,6 +165,43 @@ Considered and left: retrying a failed file share as text (the first
 refused), and copying the caption only after a successful share (Instagram
 needs it on the clipboard before the sheet opens).
 
+## Round 3 (2026-11-04): share everywhere, and why it helps the sharer
+
+Asked for: the share entry on `/[city]` right after the season tile, in the
+phone menu, a thin sticky strip attached to the header, the dialog's social
+icons moved up with everything visible on small phones, and copy that makes
+sharing feel like it helps the sharer.
+
+**The message.** Three reasons that are about the visitor, not the app:
+company ("będzie z kim iść"), fuller local venues, and so more events in town.
+The strip carries the short form on a phone ("Wyślij znajomym, będzie z kim
+iść") and the whole sentence from md. The tile says it with the city
+("…kolejne wydarzenia w Szczecinie"). The dialog lead repeats it once.
+
+**Entry points now.** Header pill; the strip under it; a compact tile after
+the season tile (first, when there is no season); "Poleć znajomym" in the phone
+drawer under the destinations; footer; Rozwijaj z nami. The in-page banner
+between the tiles and the map is gone: the strip and the tile replace it, and a
+third prompt on one screen would be nagging.
+
+**The strip** lives inside the sticky AppBar, so the two move as one. It is in
+the prerendered HTML for everyone. Hiding it (×, or any completed share — a
+native share, a WhatsApp/Facebook/… link) writes `go-to-city.share-strip` and
+sets `<html data-share-strip="off">`; an inline `<head>` script sets the same
+attribute before first paint on later visits, so CSS removes it with no layout
+jump. Things that sit under the header use `--header-offset` (toolbar + strip)
+instead of `--header-height`.
+
+**The dialog, quickest first.** "Wyślij link": one row of round icons —
+Więcej (system sheet, text only, where there is one), WhatsApp, Facebook, X,
+LinkedIn, E-mail, Kopiuj — always one row, seven equal columns on a 360px
+phone. Then "post or story with the video": compact format cards (platforms
+only; the 4:5 / 9:16 ratios went), preview beside the caption on a phone, the
+gradient share button, and downloads as small text buttons. Removed: the
+character counter (the 130 limit is enforced in code and tested) and the
+separate "Kopiuj opis" (the link row's Kopiuj covers it). Checked at 360×640:
+the share button is on screen without scrolling.
+
 ## Not done
 
 - **Attaching the event poster to an event share.** Posters are on other

@@ -26,6 +26,7 @@ import { useCity } from '@/config/CityProvider';
 import { GROW_WITH_US_PATH, MY_FILTERS_PATH } from '@/config/community';
 import { openShareDialog } from '@/components/service/usePromoShare';
 import LogoMark from '@/components/common/LogoMark/LogoMark';
+import ShareStrip from '@/components/common/ShareStrip/ShareStrip';
 import ThemeToggle from '@/components/common/ThemeToggle/ThemeToggle';
 import LanguageSwitcher from './LanguageSwitcher';
 import CitySwitcher from './CitySwitcher';
@@ -249,6 +250,21 @@ export default function AppHeader() {
                 </List>
               </Box>
 
+              {/* Right under the destinations: the one action in the menu. */}
+              <Box sx={{ px: 2, pb: 2 }}>
+                <Button
+                  fullWidth
+                  startIcon={<IosShareIcon />}
+                  className={styles.drawerShare}
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    openShareDialog('menu');
+                  }}
+                >
+                  {t.SHARE_OPEN}
+                </Button>
+              </Box>
+
               {/* Pushed to the bottom: these are settings, not destinations, so
                   they sit below the navigation rather than above it. */}
               <Box
@@ -273,6 +289,7 @@ export default function AppHeader() {
           </Box>
         )}
       </Toolbar>
+      <ShareStrip />
     </AppBar>
   );
 }

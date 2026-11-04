@@ -20,6 +20,8 @@ const fetchMock = vi.fn();
 
 beforeEach(() => {
   resetShareStoreForTests();
+  document.documentElement.removeAttribute('data-share-strip');
+  window.localStorage.clear();
   resetPromoMediaForTests();
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
@@ -45,12 +47,37 @@ describe('ShareDialog', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('shows the post caption with its character count', () => {
+  it('shows the post caption', () => {
     open();
     const caption = screen.getByLabelText('Opis') as HTMLTextAreaElement;
     expect(caption.value).toContain('idznamiasto.pl');
     expect(caption.value).toContain('#idznamiasto #Szczecin');
-    expect(screen.getByText(/\/130 znaków/)).toBeInTheDocument();
+  });
+
+  it('puts the send-a-link row before the video section', () => {
+    const dialog = open();
+    const quick = screen.getByRole('heading', { name: 'Wyślij link' });
+    const media = screen.getByRole('heading', { name: /Albo wrzuć post lub relację/ });
+    expect(quick.compareDocumentPosition(media) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // The row itself sits before the format choice and the preview.
+    const whatsapp = screen.getByRole('link', { name: 'WhatsApp' });
+    const format = screen.getByRole('button', { name: /^Post/ });
+    expect(whatsapp.compareDocumentPosition(format) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(dialog).toHaveTextContent('z kim iść');
+  });
+
+  it('offers the system sheet for the link, as text only, where there is one', async () => {
+    const user = userEvent.setup();
+    const share = vi.fn().mockResolvedValue(undefined);
+    stub('share', share);
+    fetchMock.mockReturnValue(new Promise(() => {}));
+    open();
+    await user.click(screen.getByRole('button', { name: 'Więcej' }));
+    const data = share.mock.calls[0][0] as ShareData;
+    expect(data.files).toBeUndefined();
+    expect(data.text).toContain('idznamiasto.pl');
+    // Shared once: the strip under the header is not needed any more.
+    expect(document.documentElement).toHaveAttribute('data-share-strip', 'off');
   });
 
   it('switches to the story caption and its tip', async () => {
@@ -69,9 +96,10 @@ describe('ShareDialog', () => {
     open();
 
     expect(screen.queryByRole('button', { name: /Udostępnij/ })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Kopiuj opis' }));
+    expect(screen.queryByRole('button', { name: 'Więcej' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Kopiuj' }));
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('idznamiasto.pl'));
-    expect(await screen.findByText('Opis skopiowany')).toBeInTheDocument();
+    expect(await screen.findByText('Tekst z linkiem skopiowany')).toBeInTheDocument();
 
     expect(screen.getByRole('link', { name: /Pobierz film/ })).toHaveAttribute('download', 'idznamiasto-post.mp4');
     expect(screen.getByRole('link', { name: /Pobierz grafikę/ })).toHaveAttribute('download', 'idznamiasto-post.jpg');
@@ -115,11 +143,11 @@ describe('ShareDialog', () => {
     const user = userEvent.setup();
     stub('clipboard', { writeText: vi.fn().mockResolvedValue(undefined) });
     open();
-    await user.click(screen.getByRole('button', { name: 'Kopiuj opis' }));
-    expect(await screen.findByText('Opis skopiowany')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Kopiuj' }));
+    expect(await screen.findByText('Tekst z linkiem skopiowany')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Zamknij' }));
     act(() => openShareDialog('footer'));
-    expect(screen.queryByText('Opis skopiowany')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tekst z linkiem skopiowany')).not.toBeInTheDocument();
   });
 
   it('falls back to the image and says so when the video cannot be had', async () => {

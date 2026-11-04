@@ -227,7 +227,7 @@
   @include md {
     padding: 24px;
     position: sticky;
-    top: calc(var(--header-height) + 16px);
+    top: calc(var(--header-offset) + 16px);
   }
 }
 

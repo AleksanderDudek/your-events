@@ -2,7 +2,9 @@
 
 .header {
   z-index: 1100;
-  height: var(--header-height);
+  // Toolbar plus the share strip, when it shows: both inside the one sticky
+  // bar so they move together.
+  height: auto;
 }
 
 .toolbar {
@@ -94,4 +96,12 @@
   @include lg {
     display: inline;
   }
+}
+
+.drawerShare {
+  @include share-gradient;
+  min-height: 44px;
+  border-radius: 999px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
 }

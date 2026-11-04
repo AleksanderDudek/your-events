@@ -1,12 +1,14 @@
 import { test, expect, type Page } from '@playwright/test';
-import { CITY, firstCard, gotoEvents, skipFirstVisitPrompts } from './support/helpers';
+import { CITY, firstCard, gotoEvents, openHeaderMenu, skipFirstVisitPrompts } from './support/helpers';
 
 // "Poleć Idź na miasto" (the app, with the promo video) and "Udostępnij
 // wydarzenie" (one event). Headless Chromium has no share sheet, so the
 // specs that need one install a recording stand-in: the contract is what the
 // page hands to navigator.share, not what the OS does with it.
 
-const BANNER_TITLE = /co dziś robimy\?/;
+// The strip under the header: its button's name carries the reason to share.
+const STRIP = /będzie z kim iść/;
+const TILE = /Więcej was, więcej się dzieje/;
 
 async function recordShares(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -34,11 +36,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Recommend the app', () => {
-  test('the home banner opens a dialog with a caption for each format', async ({ page }) => {
+  test('the home tile opens a dialog with a caption for each format', async ({ page }) => {
     await page.goto(`/${CITY}`);
-    const banner = page.getByRole('region', { name: BANNER_TITLE });
-    await expect(banner).toBeVisible();
-    await banner.getByRole('button', { name: 'Udostępnij' }).click();
+    await page.getByRole('button', { name: TILE }).click();
 
     const dialog = page.getByRole('dialog', { name: 'Poleć Idź na miasto' });
     await expect(dialog).toBeVisible();
@@ -85,13 +85,35 @@ test.describe('Recommend the app', () => {
     expect(data.files[0].name).toBe('idznamiasto-post.jpg');
   });
 
-  test('the banner stays hidden once dismissed', async ({ page }) => {
+  test('the strip moves with the sticky header and opens the dialog', async ({ page }) => {
     await page.goto(`/${CITY}`);
-    await page.getByRole('button', { name: 'Ukryj baner' }).click();
-    await expect(page.getByRole('region', { name: BANNER_TITLE })).toHaveCount(0);
+    const strip = page.getByRole('banner').getByRole('button', { name: STRIP });
+    await expect(strip).toBeVisible();
+    await page.mouse.wheel(0, 1500);
+    await expect(strip).toBeInViewport();
+    await strip.click();
+    await expect(page.getByRole('dialog', { name: 'Poleć Idź na miasto' })).toBeVisible();
+  });
+
+  test('the strip stays hidden once dismissed, with no jump on reload', async ({ page }) => {
+    await page.goto(`/${CITY}`);
+    await page.getByRole('button', { name: 'Ukryj pasek polecania' }).click();
+    await expect(page.getByRole('button', { name: STRIP })).toHaveCount(0);
     await page.reload();
+    // Set by the <head> script before first paint, not after hydration.
+    await expect(page.locator('html')).toHaveAttribute('data-share-strip', 'off');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByRole('region', { name: BANNER_TITLE })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: STRIP })).toHaveCount(0);
+  });
+
+  test('on a phone, the menu offers it and the dialog shows the link row at once', async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) >= 900, 'phone menu only');
+    await page.goto(`/${CITY}`);
+    await openHeaderMenu(page);
+    await page.getByRole('presentation').getByRole('button', { name: 'Poleć znajomym' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Poleć Idź na miasto' });
+    await expect(dialog.getByRole('link', { name: 'WhatsApp' })).toBeInViewport();
+    await expect(dialog.getByRole('button', { name: 'Kopiuj' })).toBeInViewport();
   });
 
   test('every page has a link preview image', async ({ page }) => {

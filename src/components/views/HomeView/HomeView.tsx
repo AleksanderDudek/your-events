@@ -13,12 +13,13 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import NightlifeIcon from '@mui/icons-material/Nightlife';
 import CelebrationIcon from '@mui/icons-material/Celebration';
+import Diversity3Icon from '@mui/icons-material/Diversity3';
 import { useTranslation } from '@/i18n';
 import { Translated } from '@/i18n/translation';
 import { useCity } from '@/config/CityProvider';
 import AnimatedLastWord from '@/components/common/AnimatedLastWord/AnimatedLastWord';
 import EventsMap from '@/components/common/EventsMap/EventsMap';
-import ShareBanner from '@/components/common/ShareBanner/ShareBanner';
+import { openShareDialog } from '@/components/service/usePromoShare';
 import { useEvents } from '@/components/service/useEvents';
 import { useSeasons } from '@/components/service/useSeasons';
 import { seasonTheme } from '@/lib/seasons';
@@ -235,6 +236,27 @@ export default function HomeView() {
             </span>
           </Link>
         ))}
+        {/* "Poleć znajomym", one compact row right after the season (or first,
+            when there is none). A button, not a link: it opens the share
+            dialog. Spans only, since a button may not hold an <h2>. */}
+        <button
+          type="button"
+          className={`${styles.tile} ${styles.tileShare}`}
+          onClick={() => openShareDialog('tile')}
+        >
+          <span className={styles.tileIcon} aria-hidden="true">
+            <Diversity3Icon />
+          </span>
+          <span className={styles.shareText}>
+            <span className={styles.shareBadge}>{t.SHARE_TILE_BADGE}</span>
+            <span className={styles.tileTitle}>{t.SHARE_TILE_TITLE}</span>
+            <span className={styles.tileSub}>{t.SHARE_TILE_SUB(cityLocative)}</span>
+          </span>
+          <span className={styles.tileCta}>
+            <span className={styles.shareCtaLabel}>{t.SHARE_TILE_CTA}</span>
+            <ArrowForwardIcon fontSize="small" />
+          </span>
+        </button>
         {tiles.map((tile) => (
           <Link key={tile.key} href={tile.href} className={`${styles.tile} ${tile.className}`}>
             <span className={styles.tileIcon} aria-hidden="true">
@@ -249,8 +271,6 @@ export default function HomeView() {
           </Link>
         ))}
       </section>
-
-      <ShareBanner />
 
       <section className={styles.mapSection} aria-label={t.HOME_MAP_TITLE}>
         <div className={styles.mapSectionHeader}>

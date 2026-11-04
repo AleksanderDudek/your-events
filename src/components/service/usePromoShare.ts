@@ -2,25 +2,26 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 import { trackEvent } from '@/lib/analytics';
+import { SHARE_STRIP_ATTRIBUTE, SHARE_STRIP_STORAGE_KEY } from '@/lib/shareStrip';
 
 // Two small external stores behind "Poleć Idź na miasto":
 //
 // - whether the share dialog is open. One dialog is mounted in AppLayout and
-//   opened from anywhere (header, home banner, footer, Rozwijaj z nami), so the
-//   state lives outside any one component — the same module-store pattern as
-//   useConsent's `reopened` flag.
-// - whether the visitor hid the home banner, persisted in localStorage.
+//   opened from anywhere (header, strip, home tile, menu, footer, Rozwijaj z
+//   nami), so the state lives outside any one component — the same
+//   module-store pattern as useConsent's `reopened` flag.
+// - whether the thin strip under the header is hidden: by its ×, or for good
+//   once the visitor has shared. Persisted in localStorage and mirrored onto
+//   <html data-share-strip="off"> — see @/lib/shareStrip.
 
-export const SHARE_BANNER_STORAGE_KEY = 'go-to-city.share-banner';
-
-export type ShareEntry = 'header' | 'banner' | 'footer' | 'grow';
+export type ShareEntry = 'header' | 'strip' | 'tile' | 'menu' | 'footer' | 'grow';
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
 let dialogOpen = false;
 // Also kept in memory, so hiding works for the visit even where localStorage
 // throws (private mode, sandboxed iframes).
-let bannerDismissed = false;
+let stripDismissed = false;
 
 function emit(): void {
   listeners.forEach((l) => l());
@@ -51,38 +52,45 @@ export function useShareDialog(): { isOpen: boolean; open: (entry: ShareEntry) =
   return { isOpen, open: openShareDialog, close: closeShareDialog };
 }
 
-function readBannerDismissed(): boolean {
-  if (bannerDismissed) return true;
+function readStripDismissed(): boolean {
+  if (stripDismissed) return true;
   try {
-    return window.localStorage.getItem(SHARE_BANNER_STORAGE_KEY) === 'dismissed';
+    return window.localStorage.getItem(SHARE_STRIP_STORAGE_KEY) === 'dismissed';
   } catch {
     return false;
   }
 }
 
 /**
- * The home banner's visibility. Reads false until hydration (server snapshot),
- * so the prerendered HTML never carries a banner that a returning visitor has
- * hidden — it appears, if at all, right after hydration, below the tiles.
+ * Hides the strip for good. `reason` only names the analytics event: the ×,
+ * or a completed share (someone who has shared needs no further nudge).
  */
-export function useShareBanner(): { isVisible: boolean; dismiss: () => void } {
-  const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
-  const dismissed = useSyncExternalStore(subscribe, readBannerDismissed, () => true);
-  const dismiss = useCallback(() => {
-    bannerDismissed = true;
-    try {
-      window.localStorage.setItem(SHARE_BANNER_STORAGE_KEY, 'dismissed');
-    } catch {
-      // Unpersistable: it comes back on the next visit, which is harmless.
-    }
-    trackEvent('share_banner_dismiss');
-    emit();
-  }, []);
-  return { isVisible: isHydrated && !dismissed, dismiss };
+export function hideShareStrip(reason: 'dismiss' | 'shared'): void {
+  if (readStripDismissed()) return;
+  stripDismissed = true;
+  try {
+    window.localStorage.setItem(SHARE_STRIP_STORAGE_KEY, 'dismissed');
+  } catch {
+    // Unpersistable: it comes back on the next visit, which is harmless.
+  }
+  document.documentElement.setAttribute(SHARE_STRIP_ATTRIBUTE, 'off');
+  trackEvent(`share_strip_${reason}`);
+  emit();
+}
+
+/**
+ * The strip's visibility. The server snapshot is "visible", matching the
+ * prerendered HTML; for a visitor who hid it, the <head> script has already
+ * hidden it with CSS, and this unmounts it right after hydration.
+ */
+export function useShareStrip(): { isVisible: boolean; dismiss: () => void } {
+  const dismissed = useSyncExternalStore(subscribe, readStripDismissed, () => false);
+  const dismiss = useCallback(() => hideShareStrip('dismiss'), []);
+  return { isVisible: !dismissed, dismiss };
 }
 
 // Test seam: module state outlives a single test file otherwise.
 export function resetShareStoreForTests(): void {
   dialogOpen = false;
-  bannerDismissed = false;
+  stripDismissed = false;
 }
