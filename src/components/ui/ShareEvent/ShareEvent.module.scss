@@ -1,0 +1,12 @@
+@use '../../../styles/mixins' as *;
+
+// Same fill as the header's "Poleć znajomym": both are "send this to someone",
+// and the colour is what marks them apart from the outlined calendar button.
+.button {
+  @include share-gradient;
+  min-height: 44px;
+  width: 100%;
+  border-radius: var(--radius-sm, 8px);
+  text-transform: none !important;
+  font-weight: 600 !important;
+}

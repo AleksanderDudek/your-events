@@ -19,6 +19,7 @@ import { formatDate, formatEventTime } from '@/lib/utils';
 import { eventShareUrl, shareTargetUrl, type ShareTarget } from '@/lib/share';
 import { copyText, hasNativeShare, nativeShare } from '@/components/service/webShare';
 import { trackEvent } from '@/lib/analytics';
+import styles from './ShareEvent.module.scss';
 
 interface ShareEventProps {
   event: Event;
@@ -37,8 +38,8 @@ const MENU_TARGETS: readonly { target: ShareTarget; icon: React.ReactNode }[] = 
  *
  * With a native share sheet (phones, Safari, Chrome on Windows) one tap opens
  * it; the link carries the event's own og: card, poster included. Without one,
- * the same button opens a menu: copy the link, or a web share link. Styled as
- * the AddToCalendar button's twin, which it sits beside.
+ * the same button opens a menu: copy the link, or a web share link. Filled with
+ * the share gradient, like the header's "Poleć znajomym".
  */
 export default function ShareEvent({ event }: Readonly<ShareEventProps>) {
   const { t, locale } = useTranslation();
@@ -93,23 +94,14 @@ export default function ShareEvent({ event }: Readonly<ShareEventProps>) {
   return (
     <>
       <Button
-        variant="outlined"
+        variant="contained"
+        disableElevation
         onClick={handleClick}
         startIcon={<IosShareIcon />}
         // No aria-haspopup: on most phones this opens the system share sheet,
         // not the menu. aria-expanded still reports the menu when it is shown.
         aria-expanded={menuOpen || undefined}
-        sx={{
-          minHeight: 44,
-          width: '100%',
-          textTransform: 'none',
-          color: 'var(--color-text-primary)',
-          borderColor: 'var(--color-border)',
-          '&:hover': {
-            borderColor: 'var(--color-accent-primary)',
-            backgroundColor: 'var(--color-accent-tint-soft)',
-          },
-        }}
+        className={styles.button}
       >
         {t.SHARE_EVENT}
       </Button>

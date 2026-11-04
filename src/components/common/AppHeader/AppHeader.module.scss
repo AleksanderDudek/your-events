@@ -66,3 +66,32 @@
     border-radius: 1px;
   }
 }
+
+// "Poleć znajomym": the one coloured control in the bar, so it reads as an
+// action rather than a setting. Icon-only on phones and at md (the nav is full
+// there); icon + label from lg, where the row has room for it.
+.shareButton {
+  @include share-gradient;
+  min-width: 0 !important;
+  height: 40px;
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  gap: 6px;
+  text-transform: none !important;
+  font-family: var(--font-body);
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  white-space: nowrap;
+
+  @include lg {
+    padding: 0 16px 0 12px !important;
+  }
+}
+
+.shareLabel {
+  display: none;
+
+  @include lg {
+    display: inline;
+  }
+}

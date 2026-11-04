@@ -8,6 +8,7 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -50,15 +51,20 @@ export default function AppHeader() {
   // the bar on every screen size — on a phone it sits beside the burger rather
   // than inside the drawer, because the moment to share is "I'm looking at
   // this and my friend should see it", not "let me open the menu".
+  //
+  // One element at every width: the label is hidden by CSS below lg, and the
+  // aria-label (the same words) names it when only the icon shows. The tooltip
+  // is redundant once the label is visible, but harmless.
   const shareButton = (
     <Tooltip title={t.SHARE_OPEN}>
-      <IconButton
+      <Button
         onClick={() => openShareDialog('header')}
         aria-label={t.SHARE_OPEN}
-        sx={{ color: 'var(--color-text-primary)' }}
+        className={styles.shareButton}
       >
-        <IosShareIcon />
-      </IconButton>
+        <IosShareIcon fontSize="small" />
+        <span className={styles.shareLabel}>{t.SHARE_OPEN}</span>
+      </Button>
     </Tooltip>
   );
 
@@ -152,7 +158,7 @@ export default function AppHeader() {
           // used to carry the city, language and theme controls alongside the
           // burger, which left the wordmark competing with four controls for a
           // 390px row.
-          <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
             {shareButton}
             <IconButton
               onClick={() => setDrawerOpen(true)}

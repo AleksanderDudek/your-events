@@ -231,25 +231,9 @@
   }
 }
 
-.priceCtaRow {
+.priceRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
-  @include md {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-}
-
-.externalLink {
-  flex-shrink: 0;
-
-  @include md {
-    width: 100%;
-  }
 }
 
 .calendarCta {
@@ -261,6 +245,10 @@
 }
 
 .shareCta {
+  margin-top: 8px;
+}
+
+.externalCta {
   margin-top: 8px;
 }
 
