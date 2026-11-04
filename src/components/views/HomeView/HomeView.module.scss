@@ -406,6 +406,90 @@
   }
 }
 
+// "Poleć znajomym" — one compact row after the season tile. Shorter than the
+// destination tiles: it is a side action, not a place to go.
+.tileShare {
+  grid-column: 1 / -1;
+  min-height: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &::before {
+    background:
+      radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.22) 0%, transparent 55%),
+      linear-gradient(120deg, $share-from 0%, $share-to 100%);
+  }
+
+  .tileIcon {
+    flex-shrink: 0;
+  }
+
+  .tileTitle {
+    display: block;
+    font-size: 1.125rem;
+  }
+
+  .tileSub {
+    display: block;
+    flex: none;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .tileCta {
+    flex-shrink: 0;
+    margin-top: 0;
+  }
+
+  @include md {
+    min-height: 0;
+    gap: 20px;
+    padding: 20px 28px;
+
+    .tileTitle {
+      font-size: 1.375rem;
+    }
+
+    .tileSub {
+      font-size: 0.9375rem;
+    }
+  }
+}
+
+.shareText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.shareBadge {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+// The arrow alone on a phone: the row is narrow and the whole of it is the
+// button anyway.
+.shareCtaLabel {
+  display: none;
+
+  @include md {
+    display: inline;
+  }
+}
+
 // Map preview section -------------------------------------------------------
 
 .mapSection {

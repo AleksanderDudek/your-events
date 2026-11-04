@@ -1,9 +1,16 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import AppHeader from './AppHeader';
+import { openShareDialog } from '@/components/service/usePromoShare';
+
+// The real store, with the dialog opener observable.
+vi.mock('@/components/service/usePromoShare', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/components/service/usePromoShare')>()),
+  openShareDialog: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/events',
@@ -67,13 +74,30 @@ describe('AppHeader (mobile)', () => {
     // Four controls plus the wordmark did not fit a 390px row; the settings
     // went into the drawer. Share stays out: on a phone it is the button that
     // opens the system share sheet, and two icons still fit beside the name.
+    // (The share strip below the toolbar is its own row — see ShareStrip.)
     render(<AppHeader />);
-    const bar = screen.getByRole('banner');
-    const buttons = within(bar).getAllByRole('button');
+    const toolbar = screen.getByRole('banner').querySelector('.MuiToolbar-root') as HTMLElement;
+    const buttons = within(toolbar).getAllByRole('button');
     expect(buttons).toHaveLength(2);
     expect(buttons[0]).toHaveAccessibleName('Poleć znajomym');
     expect(buttons[1]).toHaveAccessibleName('Otwórz menu');
-    expect(within(bar).getByText('Idź na miasto')).toBeInTheDocument();
+    expect(within(toolbar).getByText('Idź na miasto')).toBeInTheDocument();
+  });
+
+  it('carries the share strip inside the sticky header', () => {
+    render(<AppHeader />);
+    const bar = screen.getByRole('banner');
+    expect(within(bar).getByRole('button', { name: /Wyślij znajomym, będzie z kim iść/ })).toBeInTheDocument();
+  });
+
+  it('offers "Poleć znajomym" in the menu, which closes it and opens the dialog', async () => {
+    const user = userEvent.setup();
+    render(<AppHeader />);
+    await user.click(screen.getByRole('button', { name: 'Otwórz menu' }));
+    const drawer = screen.getByRole('presentation');
+    await user.click(within(drawer).getByRole('button', { name: 'Poleć znajomym' }));
+    expect(openShareDialog).toHaveBeenCalledWith('menu');
+    await waitFor(() => expect(screen.queryByRole('presentation')).not.toBeInTheDocument());
   });
 
   it('opens a drawer carrying the wordmark, the links and the settings', async () => {

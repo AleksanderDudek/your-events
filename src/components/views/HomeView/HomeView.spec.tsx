@@ -110,4 +110,15 @@ describe('HomeView', () => {
     const { container } = render(<HomeView />);
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  it('puts "Poleć znajomym" right after the season, before the regular tiles', () => {
+    seasonMocks.seasons = [HALLOWEEN];
+    render(<HomeView />);
+    const season = screen.getByRole('link', { name: /Halloween/ });
+    const share = screen.getByRole('button', { name: /Więcej was, więcej się dzieje/ });
+    const now = screen.getByRole('link', { name: /Co się dzieje teraz/ });
+    expect(season.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(share.compareDocumentPosition(now) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(share).toHaveTextContent('w Szczecinie');
+  });
 });

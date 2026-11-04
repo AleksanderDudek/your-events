@@ -67,6 +67,11 @@
 
   --sidebar-width: 280px;
   --header-height: 64px;
+  // The share strip under the toolbar, inside the same sticky header. Things
+  // that sit below the header (sticky panels, scroll offsets) use
+  // --header-offset, which follows the strip in and out.
+  --share-strip-height: 32px;
+  --header-offset: calc(var(--header-height) + var(--share-strip-height));
 
   // --- Category hues (brief §2). Base = chip text / icon on light. ---
   --cat-muzyka: #7c5ce0;
@@ -172,4 +177,8 @@
   --cat-dla-dzieci-ink: var(--cat-dla-dzieci);
   --cat-zwierzeta-ink: var(--cat-zwierzeta);
   --cat-inne-ink: var(--cat-inne);
+}
+
+:root[data-share-strip='off'] {
+  --share-strip-height: 0px;
 }

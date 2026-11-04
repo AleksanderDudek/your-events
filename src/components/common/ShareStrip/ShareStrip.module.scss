@@ -1,0 +1,101 @@
+@use '../../../styles/mixins' as *;
+
+// White on the share gradient: 4.6:1 at the coral end, 5.7:1 at the violet.
+.strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--share-strip-height);
+  background: linear-gradient(90deg, $share-from 0%, $share-to 100%);
+  color: #ffffff;
+
+  // The pre-paint attribute: hidden before React has even hydrated.
+  :global(:root[data-share-strip='off']) & {
+    display: none;
+  }
+}
+
+.open {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  // Room on the right for the absolutely placed ×.
+  padding: 0 40px 0 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover .cta {
+    background: rgba(255, 255, 255, 0.32);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: -4px;
+  }
+}
+
+.icon {
+  font-size: 1rem !important;
+  flex-shrink: 0;
+}
+
+.short,
+.long {
+  @include text-ellipsis;
+  min-width: 0;
+}
+
+.long {
+  display: none;
+}
+
+@include md {
+  .short {
+    display: none;
+  }
+
+  .long {
+    display: inline;
+  }
+}
+
+.cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+
+  @include motion-safe {
+    transition: background var(--transition-base);
+  }
+}
+
+.arrow {
+  font-size: 0.875rem !important;
+}
+
+.dismiss {
+  position: absolute !important;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ffffff !important;
+  font-size: 1rem !important;
+  width: 28px;
+  height: 28px;
+}
