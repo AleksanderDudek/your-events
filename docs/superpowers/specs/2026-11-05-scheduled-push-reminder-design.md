@@ -131,8 +131,10 @@ anon key through `supabase.rpc` (the page already has a client):
   - keys over 200 characters.
 
   A `tz` not in `pg_timezone_names` is stored as `Europe/Warsaw`, not refused:
-  a wrong-hour reminder beats no subscription. A repeat call keeps
-  `last_slot_at`, so re-subscribing never rings twice for one slot.
+  a wrong-hour reminder beats no subscription. A NEW row starts with
+  `last_slot_at = now()`, so turning reminders on at 12:20 does not ring at
+  once for the 12:00 slot. A repeat call keeps `last_slot_at`, so
+  re-subscribing never rings twice for one slot.
 - `push_unsubscribe(endpoint)`: delete. Knowing the endpoint is the
   capability: only the browser holding it knows it.
 
@@ -172,8 +174,8 @@ to `anon`:
 | `push_record(endpoint, status int)` | applies one send result (decision 6) | the Edge Function |
 
 `push_any_due` and `push_claim_due` both read one function,
-`push_due_rows(at timestamptz default now())`, so the two can never disagree
-about what is due, and tests can pass any instant as `at`.
+`push_due_rows(p_at timestamptz default now())`, so the two can never disagree
+about what is due, and tests can pass any instant as `p_at`.
 
 ### 5. What runs every minute, and what runs only when needed
 
@@ -437,7 +439,7 @@ there", never as a switch that errors.
   - `push_subscribe` refuses http, a non-push host and oversized keys; upserts
     a repeat without touching `last_slot_at`; stores an unknown `tz` as
     `Europe/Warsaw`.
-  - `push_due_rows(at)`: a
+  - `push_due_rows(p_at)`: a
     Warsaw device at 11:59 / 12:00 / 12:59 / 13:01 on a Tuesday; a Monday (not
     due); a London device at Warsaw's 12:00 (not due) and at London's 12:00
     (due); a disabled row (not due); a 23:30 slot caught up at 00:10 (due);
