@@ -49,6 +49,13 @@ describe('PrivacyView', () => {
     expect(screen.getByText(/podpowiedzieć najbliższe miasto/)).toBeInTheDocument();
   });
 
+  it('explains what push reminders store, and that the marked filter stays on the phone', () => {
+    render(<PrivacyView />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Przypomnienia' })).toBeInTheDocument();
+    expect(screen.getByText(/strefę czasową i czas ostatniego przypomnienia/)).toBeInTheDocument();
+    expect(screen.getByText(/zostaje w telefonie/)).toBeInTheDocument();
+  });
+
   it('passes accessibility check', async () => {
     const { container } = render(<PrivacyView />);
     const results = await axe(container);
