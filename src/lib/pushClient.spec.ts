@@ -8,14 +8,16 @@ vi.mock('@/lib/constants', () => ({ withBasePath: (p: string) => `/your-events${
 
 import {
   deviceTimeZone,
+  refreshSubscription,
   subscribeDevice,
   unsubscribeDevice,
   urlBase64ToUint8Array,
 } from './pushClient';
 
-function fakeSubscription(endpoint = 'https://fcm.googleapis.com/fcm/send/abc') {
+function fakeSubscription(endpoint = 'https://fcm.googleapis.com/fcm/send/abc', key: number[] | null = [1, 2, 3]) {
   return {
     endpoint,
+    options: { applicationServerKey: key ? new Uint8Array(key).buffer : null },
     toJSON: () => ({ endpoint, keys: { p256dh: 'P', auth: 'A' } }),
     unsubscribe: vi.fn(async () => true),
   };
@@ -103,5 +105,47 @@ describe('pushClient', () => {
     await unsubscribeDevice();
     expect(existing.unsubscribe).toHaveBeenCalled();
     expect(rpc).toHaveBeenCalledWith('push_unsubscribe', { p_endpoint: existing.endpoint });
+  });
+
+  it('replaces a subscription made with an old VAPID key', async () => {
+    const old = fakeSubscription('https://fcm.googleapis.com/fcm/send/old', [9, 9, 9]);
+    const { pushManager, created } = installBrowser({ existing: old });
+    expect(await subscribeDevice()).toBe('enabled');
+    expect(rpc).toHaveBeenCalledWith('push_unsubscribe', { p_endpoint: old.endpoint });
+    expect(old.unsubscribe).toHaveBeenCalled();
+    expect(pushManager.subscribe).toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith('push_subscribe', expect.objectContaining({ p_endpoint: created.endpoint }));
+  });
+
+  it('keeps a subscription whose key is unknown', async () => {
+    const existing = fakeSubscription('https://fcm.googleapis.com/fcm/send/k', null);
+    const { pushManager } = installBrowser({ existing });
+    expect(await subscribeDevice()).toBe('enabled');
+    expect(pushManager.subscribe).not.toHaveBeenCalled();
+    expect(existing.unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it('refreshSubscription re-subscribes on key rotation without prompting', async () => {
+    const old = fakeSubscription('https://fcm.googleapis.com/fcm/send/old', [7]);
+    const { pushManager } = installBrowser({ existing: old });
+    vi.stubGlobal('Notification', { permission: 'granted', requestPermission: vi.fn() });
+    await refreshSubscription();
+    expect(Notification.requestPermission).not.toHaveBeenCalled();
+    expect(pushManager.subscribe).toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith('push_subscribe', expect.anything());
+  });
+
+  it('refreshSubscription does nothing without granted permission', async () => {
+    const { pushManager } = installBrowser({ existing: fakeSubscription() });
+    vi.stubGlobal('Notification', { permission: 'denied', requestPermission: vi.fn() });
+    await refreshSubscription();
+    expect(pushManager.getSubscription).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('reports failed when Notification does not exist', async () => {
+    installBrowser();
+    vi.stubGlobal('Notification', undefined);
+    expect(await subscribeDevice()).toBe('failed');
   });
 });

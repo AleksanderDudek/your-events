@@ -48,25 +48,51 @@ export async function sendSubscription(sub: PushSubscription): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+function sameBytes(a: ArrayBuffer, b: Uint8Array): boolean {
+  const x = new Uint8Array(a);
+  return x.length === b.length && x.every((v, i) => v === b[i]);
+}
+
+/**
+ * The browser's subscription for the current VAPID key. A subscription made
+ * with an older key is dropped and made again: the push service answers 403
+ * for it for ever otherwise. An unknown key (null) is kept.
+ */
+async function ensureSubscription(reg: ServiceWorkerRegistration): Promise<PushSubscription> {
+  const key = urlBase64ToUint8Array(env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) {
+    const current = existing.options?.applicationServerKey ?? null;
+    if (!current || sameBytes(current, key)) return existing;
+    await hub().rpc('push_unsubscribe', { p_endpoint: existing.endpoint }).then(undefined, () => undefined);
+    await existing.unsubscribe();
+  }
+  return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+}
+
 /** Must be called from a click: browsers refuse a permission prompt otherwise. */
 export async function subscribeDevice(): Promise<EnableResult> {
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return 'denied';
+  if (typeof Notification === 'undefined') return 'failed';
   try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return 'denied';
     await navigator.serviceWorker.register(withBasePath(PUSH_SW_PATH), { scope: withBasePath('/') });
     // subscribe() needs an ACTIVE worker; `ready` resolves once there is one.
     const reg = await navigator.serviceWorker.ready;
-    const sub =
-      (await reg.pushManager.getSubscription()) ??
-      (await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(env.NEXT_PUBLIC_VAPID_PUBLIC_KEY),
-      }));
-    await sendSubscription(sub);
+    await sendSubscription(await ensureSubscription(reg));
     return 'enabled';
   } catch {
     return 'failed';
   }
+}
+
+/** Once per session: re-sends the subscription (fresh timezone), replacing it if the VAPID key rotated. No prompt. */
+export async function refreshSubscription(): Promise<void> {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  if (!('serviceWorker' in navigator)) return;
+  const reg = await navigator.serviceWorker.getRegistration(withBasePath('/'));
+  if (!reg || !(await reg.pushManager.getSubscription())) return;
+  await sendSubscription(await ensureSubscription(reg));
 }
 
 export async function unsubscribeDevice(): Promise<void> {

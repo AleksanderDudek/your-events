@@ -15,6 +15,8 @@ const DB = 'idznamiasto-push';
 const STORE = 'kv';
 const KEY = 'settings';
 const NAME_MAX = 60;
+// WebKit can stall IndexedDB in a worker. The reminder must still show.
+const READ_TIMEOUT_MS = 3000;
 
 const TEXT = {
   pl: {
@@ -44,6 +46,7 @@ function readSettings() {
     }
     req.onupgradeneeded = () => req.result.createObjectStore(STORE);
     req.onerror = () => resolve(null);
+    req.onblocked = () => resolve(null);
     req.onsuccess = () => {
       const db = req.result;
       try {
@@ -88,7 +91,14 @@ async function onPush(event) {
   } catch {
     payload = null;
   }
-  const settings = await readSettings().catch(() => null);
+  let timer;
+  const settings = await Promise.race([
+    readSettings().catch(() => null),
+    new Promise((resolve) => {
+      timer = self.setTimeout(() => resolve(null), READ_TIMEOUT_MS);
+    }),
+  ]);
+  self.clearTimeout(timer);
   const n = compose(payload, settings);
   await self.registration.showNotification(n.title, {
     body: n.body,

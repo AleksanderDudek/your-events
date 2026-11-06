@@ -24,6 +24,8 @@ function boot(scope = 'https://idznamiasto.pl/', idb: unknown = globalThis.index
     },
     caches: { keys: vi.fn(async () => ['workbox-precache-v2']), delete: vi.fn(async () => true) },
     skipWaiting: vi.fn(),
+    setTimeout: (fn: () => void, ms: number) => setTimeout(fn, ms),
+    clearTimeout: (id: unknown) => clearTimeout(id as number),
     addEventListener: (type: string, fn: Listener) => {
       listeners[type] = fn;
     },
@@ -161,5 +163,24 @@ describe('push-sw.js', () => {
     await fire(listeners.activate, {});
     expect(self.caches.delete).toHaveBeenCalledWith('workbox-precache-v2');
     expect(self.clients.claim).toHaveBeenCalled();
+  });
+
+  it('still shows the payload when IndexedDB never answers', async () => {
+    vi.useFakeTimers();
+    try {
+      const hung = { open: () => ({}) };
+      const { self, listeners } = boot('https://idznamiasto.pl/', hung);
+      const pending: Promise<unknown>[] = [];
+      listeners.push({ ...pushEvent(), waitUntil: (p: Promise<unknown>) => pending.push(p) });
+      await vi.advanceTimersByTimeAsync(3500);
+      await Promise.all(pending);
+      expect(self.registration.showNotification).toHaveBeenCalledTimes(1);
+      expect(self.registration.showNotification).toHaveBeenCalledWith(
+        'Idź na miasto',
+        expect.objectContaining({ data: { url: 'https://idznamiasto.pl/?src=push' } })
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/i18n';
 import { IS_PUSH_ENABLED } from '@/config/site';
 import { trackEvent } from '@/lib/analytics';
 import { pushSupport, type PushSupport } from '@/lib/pushSupport';
 import {
   currentSubscription,
-  sendSubscription,
+  refreshSubscription,
   subscribeDevice,
   unsubscribeDevice,
   type EnableResult,
@@ -58,6 +58,8 @@ export function usePushReminder(presets: readonly FilterPreset[]): PushReminder 
   const [settings, setSettings] = useState<PushSettings | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Bumped by every user action: an older async write must not land after it.
+  const generation = useRef(0);
 
   useEffect(() => {
     if (!IS_PUSH_ENABLED) return;
@@ -75,7 +77,7 @@ export function usePushReminder(presets: readonly FilterPreset[]): PushReminder 
       setEnabled(on);
       setSettings(on ? stored : null);
       // Keeps tz current and replaces a subscription the browser rotated.
-      if (on && sub && !refreshedThisSession()) sendSubscription(sub).catch(() => undefined);
+      if (on && sub && !refreshedThisSession()) refreshSubscription().catch(() => undefined);
     };
     void load();
     return () => {
@@ -89,13 +91,20 @@ export function usePushReminder(presets: readonly FilterPreset[]): PushReminder 
     let next = reconcileMark(settings, readStoredPresets());
     if (next.locale !== locale) next = { ...next, locale };
     if (next === settings) return;
+    const mine = generation.current;
     void writePushSettings(next)
-      .then(() => setSettings(next))
+      .then(() => {
+        if (generation.current === mine) setSettings(next);
+      })
       .catch(() => undefined);
+    return () => {
+      generation.current += 1;
+    };
   }, [settings, presets, locale]);
 
   const enable = useCallback(async (): Promise<EnableResult> => {
     setBusy(true);
+    generation.current += 1;
     try {
       const result = await subscribeDevice();
       if (result === 'denied') {
@@ -105,7 +114,13 @@ export function usePushReminder(presets: readonly FilterPreset[]): PushReminder 
       }
       if (result === 'failed') return result;
       const next: PushSettings = { locale, preset: settings?.preset ?? null };
-      await writePushSettings(next);
+      try {
+        await writePushSettings(next);
+      } catch {
+        // No record means the worker could not name the filter: do not stay subscribed.
+        await unsubscribeDevice().catch(() => undefined);
+        return 'failed';
+      }
       setSettings(next);
       setEnabled(true);
       trackEvent('push_enable');
@@ -117,6 +132,7 @@ export function usePushReminder(presets: readonly FilterPreset[]): PushReminder 
 
   const disable = useCallback(async () => {
     setBusy(true);
+    generation.current += 1;
     try {
       await unsubscribeDevice().catch(() => undefined);
       await clearPushSettings().catch(() => undefined);
@@ -135,8 +151,13 @@ export function usePushReminder(presets: readonly FilterPreset[]): PushReminder 
         const result = await enable();
         if (result !== 'enabled') return result;
       }
+      generation.current += 1;
       const next = markPreset({ locale, preset: settings?.preset ?? null }, unmarking ? null : preset);
-      await writePushSettings(next);
+      try {
+        await writePushSettings(next);
+      } catch {
+        return 'failed' as const;
+      }
       setSettings(next);
       trackEvent(unmarking ? 'push_filter_off' : 'push_filter_on');
       return unmarking ? ('unmarked' as const) : ('marked' as const);

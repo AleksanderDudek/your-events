@@ -8,6 +8,7 @@ vi.mock('@/lib/analytics', () => ({ trackEvent: vi.fn() }));
 vi.mock('@/lib/pushClient', () => ({
   currentSubscription: vi.fn(),
   sendSubscription: vi.fn(async () => undefined),
+  refreshSubscription: vi.fn(async () => undefined),
   subscribeDevice: vi.fn(),
   unsubscribeDevice: vi.fn(async () => undefined),
 }));
@@ -52,12 +53,12 @@ describe('usePushReminder', () => {
     const { result, unmount } = renderHook(() => usePushReminder([preset('a', 'A')]));
     await waitFor(() => expect(result.current.enabled).toBe(true));
     expect(result.current.markedId).toBe('a');
-    expect(client.sendSubscription).toHaveBeenCalledTimes(1);
+    expect(client.refreshSubscription).toHaveBeenCalledTimes(1);
     unmount();
 
     renderHook(() => usePushReminder([preset('a', 'A')]));
     await waitFor(() => expect(client.currentSubscription).toHaveBeenCalledTimes(2));
-    expect(client.sendSubscription).toHaveBeenCalledTimes(1);
+    expect(client.refreshSubscription).toHaveBeenCalledTimes(1);
   });
 
   it('enable writes the record and counts the event', async () => {
@@ -134,5 +135,51 @@ describe('usePushReminder', () => {
     expect(store.clearPushSettings).toHaveBeenCalled();
     expect(result.current.enabled).toBe(false);
     expect(trackEvent).toHaveBeenCalledWith('push_disable');
+  });
+
+  it('enable returns failed and undoes the subscription when the record cannot be written', async () => {
+    vi.mocked(client.subscribeDevice).mockResolvedValue('enabled');
+    vi.mocked(store.writePushSettings).mockRejectedValueOnce(new Error('quota'));
+    const { result } = renderHook(() => usePushReminder([]));
+    await waitFor(() => expect(result.current.support).toBe('ready'));
+    await act(async () => {
+      expect(await result.current.enable()).toBe('failed');
+    });
+    expect(client.unsubscribeDevice).toHaveBeenCalled();
+    expect(result.current.enabled).toBe(false);
+  });
+
+  it('toggleMark returns failed when the record cannot be written', async () => {
+    vi.mocked(client.currentSubscription).mockResolvedValue(SUB);
+    vi.mocked(store.readPushSettings).mockResolvedValue({ locale: 'pl', preset: null });
+    vi.mocked(readStoredPresets).mockReturnValue([preset('b', 'B')]);
+    const { result } = renderHook(() => usePushReminder([preset('b', 'B')]));
+    await waitFor(() => expect(result.current.enabled).toBe(true));
+    vi.mocked(store.writePushSettings).mockRejectedValueOnce(new Error('quota'));
+    await act(async () => {
+      expect(await result.current.toggleMark(preset('b', 'B'))).toBe('failed');
+    });
+    expect(result.current.markedId).toBeNull();
+  });
+
+  it('a reconcile write that lands after disable does not resurrect the record', async () => {
+    vi.mocked(client.currentSubscription).mockResolvedValue(SUB);
+    vi.mocked(store.readPushSettings).mockResolvedValue({ locale: 'pl', preset: { id: 'a', name: 'Old' } });
+    vi.mocked(readStoredPresets).mockReturnValue([preset('a', 'New')]);
+    let release: () => void = () => undefined;
+    vi.mocked(store.writePushSettings).mockImplementationOnce(
+      () => new Promise<void>((r) => { release = r; })
+    );
+    const { result } = renderHook(() => usePushReminder([preset('a', 'New')]));
+    await waitFor(() => expect(store.writePushSettings).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await result.current.disable();
+    });
+    await act(async () => {
+      release();
+    });
+    expect(result.current.enabled).toBe(false);
+    expect(result.current.markedId).toBeNull();
+    expect(store.writePushSettings).toHaveBeenCalledTimes(1);
   });
 });
