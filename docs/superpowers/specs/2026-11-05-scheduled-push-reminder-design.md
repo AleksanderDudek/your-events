@@ -1,7 +1,8 @@
 # Scheduled push reminder — design
 
 Date: 2026-11-05
-Status: designed, not built. Waiting for the owner's review.
+Status: built on `feat/push-reminder` (2026-11-06), not deployed. Where the
+build differs from the decisions below, "As built" at the end is current.
 Replaces the 2026-11-04 weekly-digest design that stood at this path before
 it was renamed (that one counted events on the phone; this one counts nothing).
 
@@ -463,6 +464,71 @@ there", never as a switch that errors.
 - **Manual (phase 0 checklist, repeated before phase 3):** the three devices;
   a schedule edit taking effect within a minute; "turn off, then nothing at
   the next slot".
+
+## As built (2026-11-06)
+
+Differences between the decisions above and the code on `feat/push-reminder`.
+Where they disagree, this section is current.
+
+**Server**
+- **Sender:** `npm:web-push@3.6.7` under Deno. The fallbacks (`@negrel/webpush`,
+  GitHub Actions) were not needed. It has not yet been run against a real
+  browser (that is the plan's Task 5). Locally Deno needs
+  `--node-modules-dir=none`, because the repository root has a `package.json`.
+- **Send options:** a 15 s timeout per push. One hung connection would
+  otherwise stall the whole batch.
+- **Batches:** 200 devices per claim, not 500, so a batch stays below
+  PostgREST's `max_rows`. Rows past that limit would be claimed but never sent.
+- **Function config:** the function reads `PUSH_CRON_SECRET` and `SITE_URL_*`
+  per request and refuses through its own 401/500. It never crashes on a
+  missing value.
+- **Failed run:** if a claim fails mid-run, the function still logs its counts
+  and answers `500 {error: 'claim', ...counts}`.
+- **Tick:** one parameterless `push_tick()` per schema (cron jobs
+  `push-tick-public` and `push-tick-dev`), not `push_tick('public')`.
+
+**Database**
+- **Function privileges:** `push_due_rows` and `push_any_due` are plain
+  functions with no grants. Only functions that need it are `security definer`.
+- **What `push_subscribe` also refuses:**
+  - an endpoint containing a backslash, `@` or whitespace, or whose host is not
+    plain `[a-z0-9.-]`. Without this, `https://evil.com\x.notify.windows.com/`
+    passed the host allowlist and web-push would have sent to `evil.com`. The
+    sender re-checks the host before every send and answers 410 for a bad one;
+  - empty keys;
+  - endpoints over 1000 characters;
+  - new rows once the table holds 50,000 (an abuse ceiling).
+- **Timezones:** a trigger stores `Europe/Warsaw` for any `tz` the database
+  does not know, however the row was written. One bad zone would otherwise make
+  the minute check fail for everybody.
+
+**Service worker**
+- **Notification options:** `icon` only, no `badge`: there is no monochrome
+  badge asset yet.
+- **Reading the stored settings:** at most 3 s (`onblocked` counts as no
+  record). After that the worker shows the payload as received.
+- **Caches:** on activate the worker deletes only this site's old Workbox
+  caches (`workbox-*` names containing its scope). The dev site's origin is
+  shared with other GitHub Pages projects.
+
+**Page**
+- **The hook:** `usePushReminder`, not `usePushSettings`. A rename or delete of
+  the marked filter reaches IndexedDB through an effect, not through
+  `usePresets.save`/`remove`. So it happens while `/moje-filtry` or a save
+  button is mounted, which covers every edit path today.
+- **Rotated VAPID key:** `ensureSubscription` handles it. A subscription made
+  with another key is unsubscribed and made again, on enable and on the
+  once-per-session refresh.
+- **After saving a filter:** the existing "Zapisano" toast gets a "Przypominaj
+  o nim" action, instead of a separate question. A failure there, or from a
+  bell, shows `PUSH_FAILED`.
+- **The card:** two sentences (when the reminders come, what the bell does).
+  While the check runs, the card shows its text without the switch, so nothing
+  jumps. The switch and the bells use `aria-disabled` while busy, so they keep
+  keyboard focus.
+- **Privacy page:** it also names the sign-up date and the failed-delivery
+  counter. It says that removing site data deletes the address at the next
+  reminder, not at once.
 
 ## Open questions for the owner
 

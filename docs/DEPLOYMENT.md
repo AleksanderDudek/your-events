@@ -323,6 +323,7 @@ was down, and is dropped after that.
 - Edge Function `push-send` (`supabase/functions/push-send/`), deployed with JWT verification **off**. Its secrets: `PUSH_CRON_SECRET`, `VAPID_SUBJECT`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SITE_URL_PUBLIC`, `SITE_URL_DEV`.
 - Vault secrets read by `push_tick`: `push_send_url`, `push_cron_secret` (same value as the function's `PUSH_CRON_SECRET`).
 - GitHub environment variables: `NEXT_PUBLIC_PUSH_ENABLED` (`true` to show the feature), `NEXT_PUBLIC_VAPID_PUBLIC_KEY`.
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` must be the SAME key as the function's `VAPID_PUBLIC_KEY`. If they differ, every push service answers 403, nothing arrives, and each subscription is deleted after 5 failed reminders. After rotating the key pair, a visitor's browser re-subscribes on their next visit.
 - Locally the Edge Function is checked with `deno test --node-modules-dir=none --no-lock supabase/functions/push-send/` and `deno check --node-modules-dir=none --no-lock supabase/functions/push-send/index.ts` (the repo-root package.json otherwise makes Deno refuse `npm:` imports).
 
 ### Turning it off
