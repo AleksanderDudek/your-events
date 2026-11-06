@@ -42,6 +42,12 @@ export const IS_NOINDEX = env.NEXT_PUBLIC_ROBOTS_NOINDEX === 'true';
 // footer's replay link all disappear, and nothing is read from localStorage.
 export const IS_ONBOARDING_ENABLED = env.NEXT_PUBLIC_ONBOARDING_ENABLED !== 'false';
 
+// Whether push reminders ship. Needs the exact string 'true' AND a VAPID public
+// key: without the key no browser can subscribe, so a set flag alone would show
+// a switch that can only fail.
+export const IS_PUSH_ENABLED =
+  env.NEXT_PUBLIC_PUSH_ENABLED === 'true' && env.NEXT_PUBLIC_VAPID_PUBLIC_KEY !== '';
+
 // Link preview for every page without a picture of its own (all but event
 // pages that have a poster). 1200×630, rendered by
 // scripts/render-promo-images.mjs. Absolute because crawlers fetch og:image

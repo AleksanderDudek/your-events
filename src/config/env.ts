@@ -38,6 +38,14 @@ const envSchema = z.object({
   // be "the sheet still shows" rather than "the feature quietly disappeared and
   // nobody noticed for a month". See @/config/site.
   NEXT_PUBLIC_ONBOARDING_ENABLED: z.string().default('true'),
+  // Push reminders. Off unless this is the exact string 'true' — the opposite
+  // of onboarding's default on purpose: a half-configured push (no VAPID key,
+  // no table) must fail as "the card is not there", never as a switch that
+  // errors. See docs/superpowers/specs/2026-11-05-scheduled-push-reminder-design.md
+  NEXT_PUBLIC_PUSH_ENABLED: z.string().default(''),
+  // Public half of the VAPID key pair (the private half is an Edge Function
+  // secret). Not a secret: it ships in the page.
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().default(''),
 });
 
 function validateEnv() {
@@ -51,6 +59,8 @@ function validateEnv() {
     NEXT_PUBLIC_CLARITY_PROJECT_ID: process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID,
     NEXT_PUBLIC_ROBOTS_NOINDEX: process.env.NEXT_PUBLIC_ROBOTS_NOINDEX,
     NEXT_PUBLIC_ONBOARDING_ENABLED: process.env.NEXT_PUBLIC_ONBOARDING_ENABLED,
+    NEXT_PUBLIC_PUSH_ENABLED: process.env.NEXT_PUBLIC_PUSH_ENABLED,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   });
 
   if (!parsed.success) {
