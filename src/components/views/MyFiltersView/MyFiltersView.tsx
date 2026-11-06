@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
+import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -12,11 +13,16 @@ import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import { useSeasonName } from '@/components/service/useSeasons';
 import { useCategories } from '@/components/service/useCategories';
 import { usePresets } from '@/components/service/usePresets';
+import { usePushReminder } from '@/components/service/usePushReminder';
+import PushReminderCard from '@/components/common/PushReminderCard/PushReminderCard';
+import { presetToOpen } from '@/lib/pushOpen';
 import CategoryIcon from '@/components/ui/CategoryIcon/CategoryIcon';
 import {
   MAX_PRESETS,
@@ -38,6 +44,18 @@ export default function MyFiltersView() {
   const seasonName = useSeasonName();
   const { presets, save, remove, duplicate } = usePresets();
   const [draft, setDraft] = useState<FilterPreset | null>(null);
+  const router = useRouter();
+  const reminder = usePushReminder(presets);
+  const showBells = reminder.available && reminder.support === 'ready';
+
+  // A reminder for a marked filter lands here as ?open=<id>. The filter's link
+  // depends on the day it is opened ("W weekend" means the coming weekend), so
+  // it is resolved now, from the filter as it is now. Re-runs when presets
+  // arrive: during hydration the list is briefly empty.
+  useEffect(() => {
+    const target = presetToOpen(window.location.search, presets);
+    if (target) router.replace(presetHref(target, new Date()) as Route);
+  }, [presets, router]);
 
   const slugToName = new Map(topLevel.map((c) => [c.slug, c.display_name]));
 
@@ -118,6 +136,8 @@ export default function MyFiltersView() {
         <p className={styles.subtitle}>{t.PRESETS_SUBTITLE}</p>
       </header>
 
+      <PushReminderCard reminder={reminder} />
+
       {presets.length === 0 ? (
         <Box className={styles.empty}>
           <h2 className={styles.emptyTitle}>{t.PRESETS_EMPTY_TITLE}</h2>
@@ -179,6 +199,23 @@ export default function MyFiltersView() {
                   </Link>
 
                   <div className={styles.tileActions}>
+                    {showBells && (
+                      <Tooltip title={t.PUSH_MARK}>
+                        <IconButton
+                          size="small"
+                          aria-label={t.PUSH_MARK}
+                          aria-pressed={reminder.markedId === preset.id}
+                          disabled={reminder.busy}
+                          onClick={() => void reminder.toggleMark(preset)}
+                        >
+                          {reminder.markedId === preset.id ? (
+                            <NotificationsActiveIcon fontSize="small" />
+                          ) : (
+                            <NotificationsNoneIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+                    )}
                     <Tooltip title={t.PRESETS_EDIT}>
                       <IconButton
                         size="small"

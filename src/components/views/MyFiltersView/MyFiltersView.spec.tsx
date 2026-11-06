@@ -7,6 +7,25 @@ import { serializePresets } from '@/lib/presets';
 import type { FilterPreset } from '@/types/preset.types';
 import MyFiltersView from './MyFiltersView';
 
+import type { PushReminder } from '@/components/service/usePushReminder';
+
+const replace = vi.fn();
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
+
+const reminderState: { current: PushReminder } = {
+  current: {
+    available: false,
+    support: 'checking',
+    enabled: false,
+    markedId: null,
+    busy: false,
+    enable: vi.fn(),
+    disable: vi.fn(),
+    toggleMark: vi.fn(),
+  },
+};
+vi.mock('@/components/service/usePushReminder', () => ({ usePushReminder: () => reminderState.current }));
+
 // Season names come from the city's seasons table; outside a season, from the slug.
 vi.mock('@/components/service/useSeasons', () => ({
   useSeasonName: () => (slug: string) => (slug === 'swieta' ? 'Święta' : slug),
@@ -186,5 +205,65 @@ describe('MyFiltersView', () => {
     const { container } = render(<MyFiltersView />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
+  });
+});
+
+describe('MyFiltersView push reminders', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    replace.mockReset();
+    window.history.replaceState(null, '', '/moje-filtry/');
+    reminderState.current = {
+      available: true,
+      support: 'ready',
+      enabled: true,
+      markedId: null,
+      busy: false,
+      enable: vi.fn(),
+      disable: vi.fn(),
+      toggleMark: vi.fn(async () => 'marked' as const),
+    };
+  });
+
+  it('shows the reminder card, also with no filters saved', () => {
+    render(<MyFiltersView />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Przypomnienia' })).toBeInTheDocument();
+  });
+
+  it('each tile has a bell that marks that filter', async () => {
+    seed([preset()]);
+    render(<MyFiltersView />);
+    const bell = screen.getByRole('button', { name: 'Przypominaj o tym filtrze' });
+    expect(bell).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(bell);
+    expect(reminderState.current.toggleMark).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }));
+  });
+
+  it('the marked filter shows a pressed bell', () => {
+    reminderState.current.markedId = 'p1';
+    seed([preset()]);
+    render(<MyFiltersView />);
+    expect(screen.getByRole('button', { name: 'Przypominaj o tym filtrze' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('no bells when reminders are not available', () => {
+    reminderState.current.available = false;
+    seed([preset()]);
+    render(<MyFiltersView />);
+    expect(screen.queryByRole('button', { name: 'Przypominaj o tym filtrze' })).not.toBeInTheDocument();
+  });
+
+  it('?open=<id> goes straight to that filter', () => {
+    seed([preset()]);
+    window.history.replaceState(null, '', '/moje-filtry/?open=p1');
+    render(<MyFiltersView />);
+    expect(replace).toHaveBeenCalledWith(expect.stringContaining('/wroclaw/wydarzenia'));
+  });
+
+  it('?open= with an unknown id stays on the list', () => {
+    seed([preset()]);
+    window.history.replaceState(null, '', '/moje-filtry/?open=gone');
+    render(<MyFiltersView />);
+    expect(replace).not.toHaveBeenCalled();
   });
 });
