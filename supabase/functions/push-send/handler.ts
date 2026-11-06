@@ -21,7 +21,9 @@ export interface Deps {
   log?(line: string): void;
 }
 
-export const BATCH = 500;
+// Must stay below PostgREST's max_rows (Supabase default 1000): rows beyond it
+// would be claimed but never returned, so never sent.
+export const BATCH = 200;
 export const CONCURRENCY = 20;
 
 /** The one payload every device gets. The phone's service worker rewrites it. */
@@ -83,23 +85,29 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   const payload = buildPayload(deps.siteUrls[s]);
   const counts = { claimed: 0, sent: 0, gone: 0, failed: 0, recordFailed: 0 };
 
-  for (;;) {
-    const batch = await deps.claim(s, BATCH);
-    counts.claimed += batch.length;
-    await forEachLimited(batch, CONCURRENCY, async (sub) => {
-      const status = await deps.send(sub, payload).catch(() => 0);
-      if (status >= 200 && status < 300) counts.sent++;
-      else if (status === 404 || status === 410) counts.gone++;
-      else counts.failed++;
-      try {
-        await deps.record(s, sub.endpoint, status);
-      } catch {
-        counts.recordFailed++;
-      }
-    });
-    if (batch.length < BATCH) break;
+  let claimFailed = false;
+  try {
+    for (;;) {
+      const batch = await deps.claim(s, BATCH);
+      counts.claimed += batch.length;
+      await forEachLimited(batch, CONCURRENCY, async (sub) => {
+        const status = await deps.send(sub, payload).catch(() => 0);
+        if (status >= 200 && status < 300) counts.sent++;
+        else if (status === 404 || status === 410) counts.gone++;
+        else counts.failed++;
+        try {
+          await deps.record(s, sub.endpoint, status);
+        } catch {
+          counts.recordFailed++;
+        }
+      });
+      if (batch.length < BATCH) break;
+    }
+  } catch {
+    claimFailed = true;
+  } finally {
+    (deps.log ?? console.log)(JSON.stringify({ schema: s, ...counts, ...(claimFailed ? { claimFailed } : {}) }));
   }
-
-  (deps.log ?? console.log)(JSON.stringify({ schema: s, ...counts }));
+  if (claimFailed) return reply(500, { error: 'claim', ...counts });
   return reply(200, counts);
 }

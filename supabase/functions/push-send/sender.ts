@@ -13,6 +13,9 @@ export interface Vapid {
 // 6 hours: a phone that is off at noon still gets it the same afternoon.
 export const TTL_SECONDS = 21600;
 
+// Without a socket timeout a hung connection stalls the whole batch.
+export const SEND_TIMEOUT_MS = 15_000;
+
 export function makeWebPushSender(vapid: Vapid): (sub: Subscription, payload: string) => Promise<number> {
   webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
   return async (sub, payload) => {
@@ -20,7 +23,7 @@ export function makeWebPushSender(vapid: Vapid): (sub: Subscription, payload: st
       const res = await webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
         payload,
-        { TTL: TTL_SECONDS, urgency: 'high' }
+        { TTL: TTL_SECONDS, urgency: 'high', timeout: SEND_TIMEOUT_MS }
       );
       return res.statusCode;
     } catch (err) {

@@ -37,8 +37,8 @@ function db(schema: Schema): SupabaseClient<any, string> {
 
 Deno.serve((req) =>
   handle(req, {
-    secret: need('PUSH_CRON_SECRET'),
-    siteUrls: { public: need('SITE_URL_PUBLIC'), dev: need('SITE_URL_DEV') },
+    secret: Deno.env.get('PUSH_CRON_SECRET') ?? '',
+    siteUrls: { public: Deno.env.get('SITE_URL_PUBLIC') ?? '', dev: Deno.env.get('SITE_URL_DEV') ?? '' },
     async claim(schema, batch) {
       const { data, error } = await db(schema).rpc('push_claim_due', { p_batch: batch });
       if (error) throw new Error(`push_claim_due: ${error.message}`);

@@ -115,3 +115,17 @@ Deno.test('safeEqual', () => {
   assert(!safeEqual('abc', 'abcd'));
   assert(!safeEqual('', 'a'));
 });
+
+Deno.test('a claim that throws mid-run returns 500 with counts and logs once', async () => {
+  let call = 0;
+  const d = deps({
+    claim: () => (call++ === 0 ? Promise.resolve(Array.from({ length: BATCH }, (_, n) => sub(n))) : Promise.reject(new Error('db down'))),
+  });
+  const res = await handle(post({ schema: 'dev' }), d);
+  assertEquals(res.status, 500);
+  const body = await res.json();
+  assertEquals(body.error, 'claim');
+  assertEquals(body.claimed, BATCH);
+  assertEquals(body.sent, BATCH);
+  assertEquals(d.logs.length, 1);
+});
