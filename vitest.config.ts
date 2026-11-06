@@ -8,8 +8,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
-    // Both e2e suites are Playwright's (dev server / static export).
-    exclude: ['e2e/**', 'e2e-export/**', 'node_modules/**'],
+    // Both e2e suites are Playwright's (dev server / static export). supabase/
+    // holds Deno code with its own `deno test`.
+    exclude: ['e2e/**', 'e2e-export/**', 'node_modules/**', 'supabase/**', 'scripts/**'],
     css: {
       modules: {
         classNameStrategy: 'non-scoped',

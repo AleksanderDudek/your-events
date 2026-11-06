@@ -41,6 +41,8 @@
     "playwright.export.config.ts",
     "vitest.config.ts",
     "e2e",
-    "e2e-export"
+    "e2e-export",
+    "supabase",
+    "scripts/push-spike"
   ]
 }
