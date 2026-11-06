@@ -16,7 +16,7 @@ function hub() {
   return getSupabaseForCity(DEFAULT_CITY_ID);
 }
 
-export function urlBase64ToUint8Array(base64: string): Uint8Array {
+export function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4);
   const raw = atob((base64 + padding).replace(/-/g, '+').replace(/_/g, '/'));
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
