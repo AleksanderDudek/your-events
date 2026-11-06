@@ -425,7 +425,7 @@ const pl = {
     'Zgodę możesz zmienić w każdej chwili za pomocą linku „Cookies” w stopce. Po odrzuceniu Clarity usuwa swoje cookies i przestaje je zapisywać.',
   PRIVACY_PUSH_HEADING: 'Przypomnienia',
   PRIVACY_PUSH_BODY:
-    'Jeśli włączysz przypomnienia, zapisujemy techniczny adres powiadomień Twojej przeglądarki, dwa klucze szyfrujące, strefę czasową i czas ostatniego przypomnienia. Nie zapisujemy Twoich filtrów ani preferencji: to, który filtr jest zaznaczony dzwonkiem, zostaje w Twojej przeglądarce. Przypomnienia wyłączysz przełącznikiem w „Moich filtrach” albo usuwając dane strony w przeglądarce; wtedy adres usuwamy.',
+    'Jeśli włączysz przypomnienia, zapisujemy techniczny adres powiadomień Twojej przeglądarki, dwa klucze szyfrujące, strefę czasową, datę włączenia, czas ostatniego przypomnienia i licznik nieudanych doręczeń. Nie zapisujemy Twoich filtrów ani preferencji: to, który filtr jest zaznaczony dzwonkiem, zostaje w Twojej przeglądarce. Przypomnienia wyłączysz przełącznikiem w „Moich filtrach” — wtedy od razu usuwamy adres. Jeśli zamiast tego usuniesz dane strony w przeglądarce, adres usuniemy przy najbliższym przypomnieniu.',
   TRANSLATION_DOWNLOADING: 'Tłumaczenie treści…',
   TRANSLATION_ERROR: 'Nie udało się przetłumaczyć treści — zostaje w języku polskim.',
   TRANSLATION_ERROR_DISMISS: 'Zamknij',
@@ -871,7 +871,7 @@ const en: Messages = {
     'You can change your choice at any time with the "Cookies" link in the footer. After a rejection Clarity deletes its cookies and stops writing them.',
   PRIVACY_PUSH_HEADING: 'Reminders',
   PRIVACY_PUSH_BODY:
-    'If you switch reminders on, we store your browser\'s technical notification address, two encryption keys, your timezone and when the last reminder went out. We store none of your filters or preferences: which filter carries the bell stays in your browser. Switch reminders off with the switch in "My filters", or by removing the site\'s data in your browser, and we delete the address.',
+    'If you switch reminders on, we store your browser\'s technical notification address, two encryption keys, your timezone, when you switched them on, when the last reminder went out and a failed-delivery counter. We store none of your filters or preferences: which filter carries the bell stays in your browser. Switch reminders off with the switch in "My filters" and we delete the address at once. If you remove the site\'s data in your browser instead, we delete it at the next reminder.',
   TRANSLATION_DOWNLOADING: 'Translating content…',
   TRANSLATION_ERROR: 'Translation failed — content stays in Polish.',
   TRANSLATION_ERROR_DISMISS: 'Dismiss',

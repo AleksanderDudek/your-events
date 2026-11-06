@@ -52,7 +52,8 @@ describe('PrivacyView', () => {
   it('explains what push reminders store, and that the marked filter stays on the phone', () => {
     render(<PrivacyView />);
     expect(screen.getByRole('heading', { level: 2, name: 'Przypomnienia' })).toBeInTheDocument();
-    expect(screen.getByText(/strefę czasową i czas ostatniego przypomnienia/)).toBeInTheDocument();
+    expect(screen.getByText(/datę włączenia/)).toBeInTheDocument();
+    expect(screen.getByText(/przy najbliższym przypomnieniu/)).toBeInTheDocument();
     expect(screen.getByText(/dzwonkiem, zostaje w Twojej przeglądarce/)).toBeInTheDocument();
   });
 
