@@ -15,6 +15,7 @@ import Snackbar from '@mui/material/Snackbar';
 import BookmarkAddOutlinedIcon from '@mui/icons-material/BookmarkAddOutlined';
 import { useTranslation } from '@/i18n';
 import { usePresets } from '@/components/service/usePresets';
+import { usePushReminder } from '@/components/service/usePushReminder';
 import {
   MAX_NAME_LENGTH,
   MAX_PRESETS,
@@ -25,7 +26,7 @@ import {
 import { DEFAULT_WINDOW_MONTHS, hasDateValue, inferDateWindow } from '@/lib/dateWindows';
 import { MY_FILTERS_PATH } from '@/config/community';
 import type { EventFilters } from '@/types/filter.types';
-import type { PresetDateWindow } from '@/types/preset.types';
+import type { FilterPreset, PresetDateWindow } from '@/types/preset.types';
 
 interface SavePresetButtonProps {
   filters: EventFilters;
@@ -51,6 +52,9 @@ export default function SavePresetButton({ filters, cityId }: SavePresetButtonPr
   const [name, setName] = useState('');
   const [saved, setSaved] = useState(false);
   const [dateWindow, setDateWindow] = useState<PresetDateWindow>('none');
+  const reminder = usePushReminder(presets);
+  // The filter this toast is about, so its action can mark exactly that one.
+  const [savedPreset, setSavedPreset] = useState<FilterPreset | null>(null);
 
   const isFull = presets.length >= MAX_PRESETS;
   const trimmed = name.trim();
@@ -83,13 +87,15 @@ export default function SavePresetButton({ filters, cityId }: SavePresetButtonPr
 
   const submit = () => {
     if (!trimmed) return;
-    save({
+    const preset: FilterPreset = {
       id: newPresetId(),
       name: trimmed.slice(0, MAX_NAME_LENGTH),
       cityId,
       filters: presetFiltersFromEventFilters(filters, dateWindow),
       createdAt: new Date().toISOString(),
-    });
+    };
+    save(preset);
+    setSavedPreset(preset);
     setOpen(false);
     setName('');
     setSaved(true);
@@ -164,14 +170,31 @@ export default function SavePresetButton({ filters, cityId }: SavePresetButtonPr
         onClose={() => setSaved(false)}
         message={t.PRESETS_SAVED_TOAST}
         action={
-          <Button
-            component={Link}
-            href={MY_FILTERS_PATH as Route}
-            size="small"
-            sx={{ color: 'var(--accent)' }}
-          >
-            {t.NAV_PRESETS}
-          </Button>
+          <>
+            {reminder.available &&
+              reminder.support === 'ready' &&
+              savedPreset &&
+              reminder.markedId !== savedPreset.id && (
+                <Button
+                  size="small"
+                  sx={{ color: 'var(--accent)' }}
+                  onClick={() => {
+                    void reminder.toggleMark(savedPreset);
+                    setSaved(false);
+                  }}
+                >
+                  {t.PUSH_SAVED_ACTION}
+                </Button>
+              )}
+            <Button
+              component={Link}
+              href={MY_FILTERS_PATH as Route}
+              size="small"
+              sx={{ color: 'var(--accent)' }}
+            >
+              {t.NAV_PRESETS}
+            </Button>
+          </>
         }
       />
     </>

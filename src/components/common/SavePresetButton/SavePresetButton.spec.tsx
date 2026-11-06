@@ -6,6 +6,13 @@ import { PRESETS_STORAGE_KEY } from '@/components/service/usePresets';
 import { getDefaultFilters } from '@/lib/filterUtils';
 import { parsePresets } from '@/lib/presets';
 import type { EventFilters } from '@/types/filter.types';
+import type { PushReminder } from '@/components/service/usePushReminder';
+
+const toggleMark = vi.fn(async () => 'marked' as const);
+const reminderState: { current: Partial<PushReminder> } = { current: { available: false, support: 'checking' } };
+vi.mock('@/components/service/usePushReminder', () => ({
+  usePushReminder: () => ({ markedId: null, busy: false, enabled: false, toggleMark, ...reminderState.current }),
+}));
 
 function storedPresets() {
   return parsePresets(window.localStorage.getItem(PRESETS_STORAGE_KEY));
@@ -136,5 +143,34 @@ describe('SavePresetButton — dates it cannot keep as they are', () => {
     await user.click(screen.getByRole('combobox', { name: 'Kiedy' }));
     await user.click(screen.getByRole('option', { name: 'Od dziś (najbliższe 3 miesiące)' }));
     expect(screen.getByText(/Godziny działają tylko/)).toBeInTheDocument();
+  });
+});
+
+describe('SavePresetButton push offer', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    toggleMark.mockClear();
+  });
+
+  async function saveOne() {
+    await userEvent.click(screen.getByRole('button', { name: 'Zapisz filtry' }));
+    await userEvent.type(screen.getByLabelText('Nazwa'), 'Koncerty');
+    await userEvent.click(screen.getByRole('button', { name: 'Zapisz' }));
+  }
+
+  it('offers to remind about the filter just saved', async () => {
+    reminderState.current = { available: true, support: 'ready' };
+    render(<SavePresetButton filters={getDefaultFilters()} cityId="wroclaw" />);
+    await saveOne();
+    await userEvent.click(await screen.findByRole('button', { name: 'Przypominaj o nim' }));
+    expect(toggleMark).toHaveBeenCalledWith(expect.objectContaining({ name: 'Koncerty', cityId: 'wroclaw' }));
+  });
+
+  it('does not offer it when reminders are not available here', async () => {
+    reminderState.current = { available: false, support: 'checking' };
+    render(<SavePresetButton filters={getDefaultFilters()} cityId="wroclaw" />);
+    await saveOne();
+    await screen.findByText('Zapisano w „Moje filtry”');
+    expect(screen.queryByRole('button', { name: 'Przypominaj o nim' })).not.toBeInTheDocument();
   });
 });
