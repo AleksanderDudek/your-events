@@ -7,9 +7,10 @@
 // on its next update check, and it deletes every cache the old worker made,
 // unregisters itself, and reloads the open tabs onto the plain site.
 //
-// Nothing in the app registers a service worker, so a browser that never had
-// the old one never runs this. It can be deleted once old visits have aged out
-// (a few weeks is plenty for the dev site).
+// The app registers only public/push-sw.js (push reminders), at the same scope.
+// Registering it replaces this script in that registration, so a browser runs
+// this file only if it still had the old Vite worker. It can be deleted once
+// old visits have aged out (a few weeks is plenty for the dev site).
 self.addEventListener('install', () => {
   self.skipWaiting();
 });
