@@ -308,6 +308,24 @@ const pl = {
   PRESETS_META_TITLE: 'Moje filtry',
   PRESETS_META_DESCRIPTION:
     'Twoje własne szybkie filtry wydarzeń — zapisane w przeglądarce, gotowe na jedno kliknięcie.',
+  // Push reminders: the /moje-filtry card, the tile bell, the save toast.
+  PUSH_CARD_TITLE: 'Przypomnienia',
+  PUSH_CARD_BODY:
+    'Kilka razy w tygodniu, w południe, przypomnimy Ci, żeby zajrzeć, co nowego. Zaznacz dzwonkiem jeden filtr, a przypomnienie otworzy właśnie jego.',
+  PUSH_SWITCH: 'Przypominaj mi',
+  PUSH_BLOCKED:
+    'Powiadomienia z tej strony są zablokowane. Odblokujesz je w ustawieniach przeglądarki (ikona przy adresie strony).',
+  PUSH_FAILED: 'Nie udało się włączyć przypomnień. Spróbuj ponownie za chwilę.',
+  PUSH_IOS_BUTTON: 'Jak włączyć na iPhonie',
+  PUSH_IOS_TITLE: 'Przypomnienia na iPhonie',
+  PUSH_IOS_STEPS: [
+    'Stuknij „Udostępnij” na pasku Safari.',
+    'Wybierz „Do ekranu początkowego”.',
+    'Otwórz Idź na miasto z ikony na ekranie i włącz przypomnienia tutaj.',
+  ],
+  PUSH_IOS_CLOSE: 'Rozumiem',
+  PUSH_MARK: 'Przypominaj o tym filtrze',
+  PUSH_SAVED_ACTION: 'Przypominaj o nim',
   GROW_META_TITLE: 'Rozwijaj z nami',
   GROW_META_DESCRIPTION:
     'Dołącz do naszego Discorda albo wypełnij krótką ankietę i współdecyduj, w którą stronę rozwija się Idź na miasto.',
@@ -405,6 +423,9 @@ const pl = {
   PRIVACY_WITHDRAW_HEADING: 'Wycofanie zgody',
   PRIVACY_WITHDRAW_BODY:
     'Zgodę możesz zmienić w każdej chwili za pomocą linku „Cookies” w stopce. Po odrzuceniu Clarity usuwa swoje cookies i przestaje je zapisywać.',
+  PRIVACY_PUSH_HEADING: 'Przypomnienia',
+  PRIVACY_PUSH_BODY:
+    'Jeśli włączysz przypomnienia, zapisujemy techniczny adres powiadomień Twojej przeglądarki, dwa klucze szyfrujące, strefę czasową i czas ostatniego przypomnienia. Nie zapisujemy Twoich filtrów ani preferencji: to, który filtr jest zaznaczony dzwonkiem, zostaje w telefonie. Przypomnienia wyłączysz przełącznikiem w „Moich filtrach” albo usuwając dane strony w przeglądarce; wtedy adres usuwamy.',
   TRANSLATION_DOWNLOADING: 'Tłumaczenie treści…',
   TRANSLATION_ERROR: 'Nie udało się przetłumaczyć treści — zostaje w języku polskim.',
   TRANSLATION_ERROR_DISMISS: 'Zamknij',
@@ -739,6 +760,23 @@ const en: Messages = {
   PRESETS_META_TITLE: 'My filters',
   PRESETS_META_DESCRIPTION:
     'Your own quick event filters — saved in your browser, one click away.',
+  PUSH_CARD_TITLE: 'Reminders',
+  PUSH_CARD_BODY:
+    "A few times a week, at noon, we'll remind you to look at what's new. Mark one filter with the bell and the reminder opens that one.",
+  PUSH_SWITCH: 'Remind me',
+  PUSH_BLOCKED:
+    "Notifications from this site are blocked. You can unblock them in your browser's settings (the icon next to the address).",
+  PUSH_FAILED: 'Reminders could not be switched on. Try again in a moment.',
+  PUSH_IOS_BUTTON: 'How to switch them on on an iPhone',
+  PUSH_IOS_TITLE: 'Reminders on an iPhone',
+  PUSH_IOS_STEPS: [
+    'Tap "Share" in the Safari toolbar.',
+    'Choose "Add to Home Screen".',
+    'Open Idź na miasto from the icon and switch reminders on here.',
+  ],
+  PUSH_IOS_CLOSE: 'Got it',
+  PUSH_MARK: 'Remind me about this filter',
+  PUSH_SAVED_ACTION: 'Remind me about it',
   GROW_META_TITLE: 'Grow with us',
   GROW_META_DESCRIPTION:
     'Join our Discord or fill in a short survey and help decide where Go to city goes next.',
@@ -831,6 +869,9 @@ const en: Messages = {
   PRIVACY_WITHDRAW_HEADING: 'Withdrawing consent',
   PRIVACY_WITHDRAW_BODY:
     'You can change your choice at any time with the "Cookies" link in the footer. After a rejection Clarity deletes its cookies and stops writing them.',
+  PRIVACY_PUSH_HEADING: 'Reminders',
+  PRIVACY_PUSH_BODY:
+    'If you switch reminders on, we store your browser\'s technical notification address, two encryption keys, your timezone and when the last reminder went out. We store none of your filters or preferences: which filter carries the bell stays on your phone. Switch reminders off with the switch in "My filters", or by removing the site\'s data in your browser, and we delete the address.',
   TRANSLATION_DOWNLOADING: 'Translating content…',
   TRANSLATION_ERROR: 'Translation failed — content stays in Polish.',
   TRANSLATION_ERROR_DISMISS: 'Dismiss',
