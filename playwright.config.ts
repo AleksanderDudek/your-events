@@ -41,6 +41,13 @@ export default defineConfig({
     // base path) so specs can use root-relative paths like '/events'. Supabase
     // credentials flow in from .env.local locally and from CI secrets in the
     // pipeline (Playwright merges these over process.env).
-    env: { NEXT_PUBLIC_BASE_PATH: '' },
+    // Push reminders on, with a public VAPID key (public by definition; the
+    // e2e stubs the push service, so no private half exists anywhere).
+    env: {
+      NEXT_PUBLIC_BASE_PATH: '',
+      NEXT_PUBLIC_PUSH_ENABLED: 'true',
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY:
+        'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U',
+    },
   },
 });

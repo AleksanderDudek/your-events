@@ -62,3 +62,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
           NEXT_PUBLIC_CLARITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_CLARITY_PROJECT_ID }}
           NEXT_PUBLIC_ROBOTS_NOINDEX: ${{ vars.NEXT_PUBLIC_ROBOTS_NOINDEX }}
+          # Push reminders: off unless the environment's variable is 'true'.
+          NEXT_PUBLIC_PUSH_ENABLED: ${{ vars.NEXT_PUBLIC_PUSH_ENABLED }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}

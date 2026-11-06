@@ -294,3 +294,44 @@ curl -s "$BASE/" | grep -c 'name="robots"'          # expect 0
 curl -s "https://aleksanderdudek.github.io/your-events/" \
   | grep -o 'name="robots" content="[^"]*"'         # expect noindex, nofollow
 ```
+
+## Push reminders
+
+Design: [docs/superpowers/specs/2026-11-05-scheduled-push-reminder-design.md](superpowers/specs/2026-11-05-scheduled-push-reminder-design.md).
+
+### Changing when reminders go out
+
+Supabase dashboard, hub project, **Table Editor**, schema `public` (prod) or
+`dev`, table **`push_schedule`**. One row = one reminder a week:
+
+| column | meaning |
+| --- | --- |
+| `weekday` | 1 = Monday … 7 = Sunday |
+| `local_time` | the visitor's own wall-clock time, whole minutes (`12:00`) |
+| `enabled` | untick to pause that day without deleting it |
+| `note` | free text for you |
+
+It applies at the next minute: no deploy. Each visitor gets it at that time
+in their own timezone. A reminder runs up to 60 minutes late if the scheduler
+was down, and is dropped after that.
+
+### Moving parts
+
+- `supabase/push/core.sql`: tables, functions, grants (`scripts/push-sql.sh <schema> <file>` renders it; `scripts/test-push-sql.sh` tests it locally in Docker).
+- `supabase/push/seed.sql`: the starting schedule.
+- `supabase/push/cron.sql`: `push_tick()` and the per-minute `pg_cron` job, one per schema (`push-tick-public`, `push-tick-dev`).
+- Edge Function `push-send` (`supabase/functions/push-send/`), deployed with JWT verification **off**. Its secrets: `PUSH_CRON_SECRET`, `VAPID_SUBJECT`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SITE_URL_PUBLIC`, `SITE_URL_DEV`.
+- Vault secrets read by `push_tick`: `push_send_url`, `push_cron_secret` (same value as the function's `PUSH_CRON_SECRET`).
+- GitHub environment variables: `NEXT_PUBLIC_PUSH_ENABLED` (`true` to show the feature), `NEXT_PUBLIC_VAPID_PUBLIC_KEY`.
+- Locally the Edge Function is checked with `deno test --node-modules-dir=none --no-lock supabase/functions/push-send/` and `deno check --node-modules-dir=none --no-lock supabase/functions/push-send/index.ts` (the repo-root package.json otherwise makes Deno refuse `npm:` imports).
+
+### Turning it off
+
+- Stop sending everywhere: in the SQL editor, `select cron.unschedule('push-tick-public');` (or untick every `push_schedule` row).
+- Hide the UI: set `NEXT_PUBLIC_PUSH_ENABLED` to empty and redeploy. Existing subscribers stop getting reminders only once sending stops too.
+
+### Is it working?
+
+- `select jobname, status, return_message, start_time from cron.job_run_details join cron.job using (jobid) where jobname like 'push-tick-%' order by start_time desc limit 10;`
+- Edge Function logs for `push-send`: one JSON line per run, `{schema, claimed, sent, gone, failed, recordFailed}`.
+- `select count(*), count(*) filter (where failure_count > 0) from public.push_subscriptions;`
