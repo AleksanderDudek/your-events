@@ -29,6 +29,26 @@ create table if not exists __SCHEMA__.push_subscriptions (
 alter table __SCHEMA__.push_subscriptions enable row level security;
 
 revoke all on table __SCHEMA__.push_schedule, __SCHEMA__.push_subscriptions from anon, authenticated;
+revoke all on sequence __SCHEMA__.push_schedule_id_seq from anon, authenticated;
+
+-- A row with a time zone Postgres does not know would make push_due_rows raise
+-- on every tick and silence everybody. Whatever writes the row, it gets Warsaw.
+create or replace function __SCHEMA__.push_fix_tz()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if not exists (select 1 from pg_catalog.pg_timezone_names where name = new.tz) then
+    new.tz := 'Europe/Warsaw';
+  end if;
+  return new;
+end $$;
+revoke all on function __SCHEMA__.push_fix_tz() from public, anon, authenticated;
+
+drop trigger if exists push_fix_tz on __SCHEMA__.push_subscriptions;
+create trigger push_fix_tz before insert or update of tz on __SCHEMA__.push_subscriptions
+  for each row execute function __SCHEMA__.push_fix_tz();
 
 -- Devices with a slot to ring at p_at: a schedule row placed on the device's
 -- local today or yesterday (so a 23:30 slot is caught up after midnight),

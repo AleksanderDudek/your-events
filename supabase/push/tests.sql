@@ -95,7 +95,22 @@ end $$;
 
 -- The three accepted calls above really subscribed those devices; remove them
 -- so later sections see only the warsaw/london fixtures.
-delete from __SCHEMA__.push_subscriptions where endpoint not like 'https://fcm.googleapis.com/fcm/send/%';
+delete from __SCHEMA__.push_subscriptions where endpoint in (
+  'https://updates.push.services.mozilla.com/wpush/v2/x',
+  'https://web.push.apple.com/x',
+  'https://db5p.notify.windows.com/w/?token=x');
+
+-- 6b. A bad time zone written directly is stored as Warsaw and breaks nothing.
+do $$ begin
+  insert into __SCHEMA__.push_subscriptions (endpoint, p256dh, auth, tz)
+    values ('https://fcm.googleapis.com/fcm/send/badtz', 'k', 'a', 'Nowhere/Bad');
+  assert (select tz from __SCHEMA__.push_subscriptions where endpoint like '%/badtz') = 'Europe/Warsaw', 'bad tz fixed';
+  perform pg_temp.due('2026-11-10 11:00+00');
+  update __SCHEMA__.push_subscriptions set tz = 'Nowhere/Bad' where endpoint like '%/badtz';
+  assert (select tz from __SCHEMA__.push_subscriptions where endpoint like '%/badtz') = 'Europe/Warsaw', 'bad tz on update fixed';
+  perform pg_temp.due('2026-11-10 11:00+00');
+  delete from __SCHEMA__.push_subscriptions where endpoint like '%/badtz';
+end $$;
 
 -- 7. push_subscribe: what it stores.
 do $$
@@ -149,6 +164,11 @@ begin
     values ('https://fcm.googleapis.com/fcm/send/old', 'k', 'a', '2026-08-01 00:00+00');
   perform __SCHEMA__.push_record('https://fcm.googleapis.com/fcm/send/old', 503, '2026-11-10 11:00+00');
   assert not exists (select 1 from __SCHEMA__.push_subscriptions where endpoint like '%/old'), '60 days without success deletes';
+
+  insert into __SCHEMA__.push_subscriptions (endpoint, p256dh, auth, created_at)
+    values ('https://fcm.googleapis.com/fcm/send/never', 'k', 'a', '2026-08-01 00:00+00');
+  perform __SCHEMA__.push_record('https://fcm.googleapis.com/fcm/send/never', 503, '2026-11-10 11:00+00');
+  assert not exists (select 1 from __SCHEMA__.push_subscriptions where endpoint like '%/never'), 'never succeeded: created_at fallback deletes';
 end $$;
 
 -- 9. Claiming: exactly once per slot, in batches.
@@ -179,6 +199,8 @@ do $$ begin
   assert not has_function_privilege('anon', '__SCHEMA__.push_any_due(timestamptz)', 'execute'), 'anon any due';
   assert has_function_privilege('service_role', '__SCHEMA__.push_claim_due(integer,timestamptz)', 'execute'), 'service claim';
   assert has_function_privilege('service_role', '__SCHEMA__.push_record(text,integer,timestamptz)', 'execute'), 'service record';
+  assert not has_function_privilege('authenticated', '__SCHEMA__.push_claim_due(integer,timestamptz)', 'execute'), 'authenticated claim';
+  assert not has_sequence_privilege('anon', '__SCHEMA__.push_schedule_id_seq', 'usage'), 'anon sequence';
   assert not has_table_privilege('anon', '__SCHEMA__.push_subscriptions', 'select'), 'anon table';
   assert not has_table_privilege('anon', '__SCHEMA__.push_schedule', 'select'), 'anon schedule';
 end $$;

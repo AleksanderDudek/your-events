@@ -22,6 +22,10 @@ create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin;
 create schema dev;
+grant usage on schema dev to anon, authenticated, service_role;
+alter default privileges in schema dev grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema dev grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema dev grant all on functions to anon, authenticated, service_role;
 SQL
 scripts/push-sql.sh dev supabase/push/core.sql | run
 scripts/push-sql.sh dev supabase/push/tests.sql | run
