@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'jest-axe';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -265,5 +265,41 @@ describe('MyFiltersView push reminders', () => {
     window.history.replaceState(null, '', '/moje-filtry/?open=gone');
     render(<MyFiltersView />);
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('a bell that fails shows the same alert as the switch', async () => {
+    reminderState.current.toggleMark = vi.fn(async () => 'failed' as const);
+    seed([preset()]);
+    render(<MyFiltersView />);
+    await userEvent.click(screen.getByRole('button', { name: 'Przypominaj o tym filtrze' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się włączyć przypomnień');
+  });
+
+  it('a busy bell stays focusable (aria-disabled) and does nothing', async () => {
+    reminderState.current.busy = true;
+    seed([preset()]);
+    render(<MyFiltersView />);
+    const bell = screen.getByRole('button', { name: 'Przypominaj o tym filtrze' });
+    expect(bell).not.toBeDisabled();
+    expect(bell).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(bell);
+    expect(reminderState.current.toggleMark).not.toHaveBeenCalled();
+  });
+
+  it('has no accessibility violations with a bell on a tile', async () => {
+    seed([preset()]);
+    const { container } = render(<MyFiltersView />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('?open= still redirects when the filters arrive after the first render', async () => {
+    window.history.replaceState(null, '', '/moje-filtry/?open=p1');
+    render(<MyFiltersView />);
+    expect(replace).not.toHaveBeenCalled();
+    seed([preset()]);
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: PRESETS_STORAGE_KEY }));
+    });
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(expect.stringContaining('/wroclaw/wydarzenia')));
   });
 });

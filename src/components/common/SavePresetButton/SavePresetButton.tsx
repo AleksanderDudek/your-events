@@ -54,6 +54,7 @@ export default function SavePresetButton({ filters, cityId }: SavePresetButtonPr
   const [dateWindow, setDateWindow] = useState<PresetDateWindow>('none');
   const reminder = usePushReminder(presets);
   // The filter this toast is about, so its action can mark exactly that one.
+  const [remindFailed, setRemindFailed] = useState(false);
   const [savedPreset, setSavedPreset] = useState<FilterPreset | null>(null);
 
   const isFull = presets.length >= MAX_PRESETS;
@@ -178,9 +179,9 @@ export default function SavePresetButton({ filters, cityId }: SavePresetButtonPr
                 <Button
                   size="small"
                   sx={{ color: 'var(--accent)' }}
-                  onClick={() => {
-                    void reminder.toggleMark(savedPreset);
+                  onClick={async () => {
                     setSaved(false);
+                    if ((await reminder.toggleMark(savedPreset)) === 'failed') setRemindFailed(true);
                   }}
                 >
                   {t.PUSH_SAVED_ACTION}
@@ -196,6 +197,13 @@ export default function SavePresetButton({ filters, cityId }: SavePresetButtonPr
             </Button>
           </>
         }
+      />
+      <Snackbar
+        open={remindFailed}
+        autoHideDuration={6000}
+        onClose={() => setRemindFailed(false)}
+        message={t.PUSH_FAILED}
+        slotProps={{ content: { role: 'alert' } }}
       />
     </>
   );

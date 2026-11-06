@@ -28,8 +28,27 @@ describe('PushReminderCard', () => {
     expect(container).toBeEmptyDOMElement();
     rerender(<PushReminderCard reminder={reminder({ support: 'unsupported' })} />);
     expect(container).toBeEmptyDOMElement();
-    rerender(<PushReminderCard reminder={reminder({ support: 'checking' })} />);
-    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('while checking, reserves the card with no control', () => {
+    render(<PushReminderCard reminder={reminder({ support: 'checking' })} />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Przypomnienia' })).toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
+  it('keeps the switch focusable while busy (aria-disabled, not disabled)', async () => {
+    const r = reminder({ busy: true });
+    render(<PushReminderCard reminder={r} />);
+    const sw = screen.getByRole('switch', { name: 'Przypominaj mi' });
+    expect(sw).not.toBeDisabled();
+    expect(sw).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(sw);
+    expect(r.enable).not.toHaveBeenCalled();
+  });
+
+  it('shows a failure raised elsewhere (a bell)', () => {
+    render(<PushReminderCard reminder={reminder()} failed />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Nie udało się włączyć przypomnień');
   });
 
   it('the switch turns reminders on and off', async () => {

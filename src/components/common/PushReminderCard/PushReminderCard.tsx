@@ -14,19 +14,22 @@ import IosInstallDialog from './IosInstallDialog';
 
 interface PushReminderCardProps {
   reminder: PushReminder;
+  /** A failure raised outside the card (a tile bell), shown like the switch's own. */
+  failed?: boolean;
 }
 
 /** The on/off switch for push reminders, at the top of /moje-filtry. */
-export default function PushReminderCard({ reminder }: PushReminderCardProps) {
+export default function PushReminderCard({ reminder, failed: failedElsewhere = false }: PushReminderCardProps) {
   const { t } = useTranslation();
   const [iosOpen, setIosOpen] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  if (!reminder.available || reminder.support === 'unsupported' || reminder.support === 'checking') {
+  if (!reminder.available || reminder.support === 'unsupported') {
     return null;
   }
 
   const toggle = async (on: boolean) => {
+    if (reminder.busy) return;
     setFailed(false);
     if (on) {
       if ((await reminder.enable()) === 'failed') setFailed(true);
@@ -58,9 +61,8 @@ export default function PushReminderCard({ reminder }: PushReminderCardProps) {
           control={
             <Switch
               checked={reminder.enabled}
-              disabled={reminder.busy}
               onChange={(e) => void toggle(e.target.checked)}
-              slotProps={{ input: { role: 'switch' } }}
+              slotProps={{ input: { role: 'switch', 'aria-disabled': reminder.busy } }}
             />
           }
           label={t.PUSH_SWITCH}
@@ -86,7 +88,7 @@ export default function PushReminderCard({ reminder }: PushReminderCardProps) {
         </Button>
       )}
 
-      {failed && (
+      {(failed || failedElsewhere) && (
         <Typography variant="body2" role="alert" sx={{ color: 'error.main', mt: 1 }}>
           {t.PUSH_FAILED}
         </Typography>

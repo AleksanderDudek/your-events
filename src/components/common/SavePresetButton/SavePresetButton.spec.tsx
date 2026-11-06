@@ -173,4 +173,13 @@ describe('SavePresetButton push offer', () => {
     await screen.findByText('Zapisano w „Moje filtry”');
     expect(screen.queryByRole('button', { name: 'Przypominaj o nim' })).not.toBeInTheDocument();
   });
+
+  it('says so when the reminder could not be switched on', async () => {
+    toggleMark.mockResolvedValueOnce('failed' as never);
+    reminderState.current = { available: true, support: 'ready' };
+    render(<SavePresetButton filters={getDefaultFilters()} cityId="wroclaw" />);
+    await saveOne();
+    await userEvent.click(await screen.findByRole('button', { name: 'Przypominaj o nim' }));
+    expect(await screen.findByText(/Nie udało się włączyć przypomnień/)).toBeInTheDocument();
+  });
 });

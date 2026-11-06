@@ -18,6 +18,12 @@ describe('PushOpenTracker', () => {
     expect(window.location.search).toBe('?open=p1');
   });
 
+  it('strips without carrying the existing history state (router-safe)', () => {
+    window.history.replaceState({ __NA: true }, '', '/?src=push');
+    render(<PushOpenTracker />);
+    expect(window.history.state).toBeNull();
+  });
+
   it('ignores an ordinary visit', () => {
     window.history.replaceState(null, '', '/?a=1');
     render(<PushOpenTracker />);

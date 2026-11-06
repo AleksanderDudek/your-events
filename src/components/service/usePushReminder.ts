@@ -66,14 +66,18 @@ export function usePushReminder(presets: readonly FilterPreset[]): PushReminder 
     let cancelled = false;
     const load = async () => {
       const found = pushSupport(navigator, window);
-      setSupport(found);
-      if (found !== 'ready') return;
+      if (found !== 'ready') {
+        setSupport(found);
+        return;
+      }
       const [sub, stored] = await Promise.all([
         currentSubscription().catch(() => null),
         readPushSettings().catch(() => null),
       ]);
       if (cancelled) return;
       const on = Boolean(sub && stored);
+      // Together, so the switch never shows off and then flips on.
+      setSupport(found);
       setEnabled(on);
       setSettings(on ? stored : null);
       // Keeps tz current and replaces a subscription the browser rotated.

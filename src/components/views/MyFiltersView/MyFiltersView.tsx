@@ -46,6 +46,7 @@ export default function MyFiltersView() {
   const [draft, setDraft] = useState<FilterPreset | null>(null);
   const router = useRouter();
   const reminder = usePushReminder(presets);
+  const [bellFailed, setBellFailed] = useState(false);
   const showBells = reminder.available && reminder.support === 'ready';
 
   // A reminder for a marked filter lands here as ?open=<id>. The filter's link
@@ -136,7 +137,7 @@ export default function MyFiltersView() {
         <p className={styles.subtitle}>{t.PRESETS_SUBTITLE}</p>
       </header>
 
-      <PushReminderCard reminder={reminder} />
+      <PushReminderCard reminder={reminder} failed={bellFailed} />
 
       {presets.length === 0 ? (
         <Box className={styles.empty}>
@@ -205,8 +206,12 @@ export default function MyFiltersView() {
                           size="small"
                           aria-label={t.PUSH_MARK}
                           aria-pressed={reminder.markedId === preset.id}
-                          disabled={reminder.busy}
-                          onClick={() => void reminder.toggleMark(preset)}
+                          aria-disabled={reminder.busy}
+                          onClick={async () => {
+                            if (reminder.busy) return;
+                            setBellFailed(false);
+                            if ((await reminder.toggleMark(preset)) === 'failed') setBellFailed(true);
+                          }}
                         >
                           {reminder.markedId === preset.id ? (
                             <NotificationsActiveIcon fontSize="small" />

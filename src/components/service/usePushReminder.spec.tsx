@@ -46,6 +46,18 @@ describe('usePushReminder', () => {
     expect(result.current.enabled).toBe(false);
   });
 
+  it('stays "checking" until the subscription read settles, so the switch never flips', async () => {
+    let release!: (v: PushSubscription) => void;
+    vi.mocked(client.currentSubscription).mockReturnValue(new Promise((r) => (release = r)));
+    vi.mocked(store.readPushSettings).mockResolvedValue({ locale: 'pl', preset: null });
+    const { result } = renderHook(() => usePushReminder([]));
+    await act(async () => undefined);
+    expect(result.current.support).toBe('checking');
+    await act(async () => release(SUB));
+    expect(result.current.support).toBe('ready');
+    expect(result.current.enabled).toBe(true);
+  });
+
   it('is on when the browser has a subscription AND the record exists, and refreshes once per session', async () => {
     vi.mocked(client.currentSubscription).mockResolvedValue(SUB);
     vi.mocked(store.readPushSettings).mockResolvedValue({ locale: 'pl', preset: { id: 'a', name: 'A' } });

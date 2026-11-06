@@ -16,7 +16,7 @@ export default function PushOpenTracker() {
     const stripped = stripPushSource(window.location.href);
     if (!stripped) return;
     trackEvent('push_open');
-    window.history.replaceState(window.history.state, '', stripped);
+    window.history.replaceState(null, '', stripped);
   }, [pathname]);
   return null;
 }

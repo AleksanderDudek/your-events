@@ -45,7 +45,7 @@ describe('PrivacyView', () => {
   // location of their own to suggest one.
   it('owns up to where a location is kept, and to the city suggestion', () => {
     render(<PrivacyView />);
-    expect(screen.getByText(/zostaje w Twojej przeglądarce/)).toBeInTheDocument();
+    expect(screen.getByText(/dzwonkiem, zostaje w Twojej przeglądarce/)).toBeInTheDocument();
     expect(screen.getByText(/podpowiedzieć najbliższe miasto/)).toBeInTheDocument();
   });
 
@@ -53,7 +53,7 @@ describe('PrivacyView', () => {
     render(<PrivacyView />);
     expect(screen.getByRole('heading', { level: 2, name: 'Przypomnienia' })).toBeInTheDocument();
     expect(screen.getByText(/strefę czasową i czas ostatniego przypomnienia/)).toBeInTheDocument();
-    expect(screen.getByText(/zostaje w telefonie/)).toBeInTheDocument();
+    expect(screen.getByText(/dzwonkiem, zostaje w Twojej przeglądarce/)).toBeInTheDocument();
   });
 
   it('passes accessibility check', async () => {
