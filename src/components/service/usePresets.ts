@@ -49,6 +49,11 @@ function getServerSnapshot(): string | null {
   return null;
 }
 
+/** The saved filters as they are in storage right now, outside React. */
+export function readStoredPresets(): FilterPreset[] {
+  return parsePresets(getSnapshot());
+}
+
 function write(presets: FilterPreset[]): void {
   try {
     window.localStorage.setItem(PRESETS_STORAGE_KEY, serializePresets(presets));
