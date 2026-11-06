@@ -160,8 +160,14 @@ describe('push-sw.js', () => {
 
   it('activate clears the old PWA caches and takes control of open tabs', async () => {
     const { self, listeners } = boot();
+    self.caches.keys.mockResolvedValue([
+      'workbox-precache-v2-https://idznamiasto.pl/',
+      'workbox-precache-v2-https://other.example/',
+      'some-other-app-cache',
+    ]);
     await fire(listeners.activate, {});
-    expect(self.caches.delete).toHaveBeenCalledWith('workbox-precache-v2');
+    expect(self.caches.delete).toHaveBeenCalledTimes(1);
+    expect(self.caches.delete).toHaveBeenCalledWith('workbox-precache-v2-https://idznamiasto.pl/');
     expect(self.clients.claim).toHaveBeenCalled();
   });
 

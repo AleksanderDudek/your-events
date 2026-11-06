@@ -131,10 +131,13 @@ self.addEventListener('install', () => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      // Caches left by the retired Vite PWA worker (see public/sw.js). This
-      // worker makes none of its own.
+      // Caches left by the retired Vite PWA worker (see public/sw.js) for THIS
+      // site only: Workbox names them workbox-<kind>-<version>-<scope>, and the
+      // dev origin is shared with other GitHub Pages projects. This worker
+      // makes no caches of its own.
       const names = await self.caches.keys();
-      await Promise.all(names.map((name) => self.caches.delete(name)));
+      const mine = names.filter((n) => n.startsWith('workbox-') && n.includes(self.registration.scope));
+      await Promise.all(mine.map((name) => self.caches.delete(name)));
       // Control open tabs so a notification click can navigate them.
       await self.clients.claim();
     })()
