@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>push spike</title>
+<p>Manual tool: subscribe this browser, then run scripts/push-spike/send.ts.</p>
+<label>VAPID public key <input id="key" size="100" /></label>
+<button id="go">Subscribe</button>
+<p id="status"></p>
+<p><textarea id="out" rows="8" cols="100" readonly></textarea></p>
+<script>
+  // Served by serve.ts: /key prefills the public key and /sub stores the
+  // subscription for send.ts. Served any other way, paste and copy by hand.
+  fetch('key')
+    .then((r) => (r.ok ? r.text() : ''))
+    .then((k) => {
+      if (k) document.getElementById('key').value = k.trim();
+    })
+    .catch(() => {});
+
+  function b64(s) {
+    const p = '='.repeat((4 - (s.length % 4)) % 4);
+    const raw = atob((s + p).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  }
+
+  document.getElementById('go').onclick = async () => {
+    const status = document.getElementById('status');
+    if ((await Notification.requestPermission()) !== 'granted') {
+      status.textContent = 'Notification permission refused.';
+      return;
+    }
+    await navigator.serviceWorker.register('sw.js');
+    const reg = await navigator.serviceWorker.ready;
+    const sub =
+      (await reg.pushManager.getSubscription()) ??
+      (await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: b64(document.getElementById('key').value.trim()),
+      }));
+    const json = JSON.stringify(sub.toJSON());
+    document.getElementById('out').value = json;
+    const saved = await fetch('sub', { method: 'POST', body: json }).then((r) => r.ok).catch(() => false);
+    status.textContent = saved ? 'Subscribed and saved for send.ts.' : 'Subscribed. Copy the JSON below into a file.';
+  };
+</script>
