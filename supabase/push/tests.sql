@@ -91,6 +91,11 @@ do $$ begin
   assert not pg_temp.refused('https://updates.push.services.mozilla.com/wpush/v2/x', 'k', 'a'), 'Mozilla';
   assert not pg_temp.refused('https://web.push.apple.com/x', 'k', 'a'), 'Apple';
   assert not pg_temp.refused('https://db5p.notify.windows.com/w/?token=x', 'k', 'a'), 'Windows';
+  assert pg_temp.refused(E'https://evil.com\\x.notify.windows.com/', 'k', 'a'), 'backslash bypass';
+  assert pg_temp.refused('https://fcm.googleapis.com@evil.com/x', 'k', 'a'), 'userinfo: real host evil.com';
+  assert pg_temp.refused('https://user@fcm.googleapis.com/x', 'k', 'a'), 'any userinfo';
+  assert pg_temp.refused('https://fcm.googleapis.com/fcm/send/a b', 'k', 'a'), 'space';
+  assert not pg_temp.refused('https://FCM.googleapis.com/fcm/send/ucase', 'k', 'a'), 'uppercase host accepted';
 end $$;
 
 -- The three accepted calls above really subscribed those devices; remove them
@@ -98,7 +103,8 @@ end $$;
 delete from __SCHEMA__.push_subscriptions where endpoint in (
   'https://updates.push.services.mozilla.com/wpush/v2/x',
   'https://web.push.apple.com/x',
-  'https://db5p.notify.windows.com/w/?token=x');
+  'https://db5p.notify.windows.com/w/?token=x',
+  'https://FCM.googleapis.com/fcm/send/ucase');
 
 -- 6b. A bad time zone written directly is stored as Warsaw and breaks nothing.
 do $$ begin
@@ -110,6 +116,25 @@ do $$ begin
   assert (select tz from __SCHEMA__.push_subscriptions where endpoint like '%/badtz') = 'Europe/Warsaw', 'bad tz on update fixed';
   perform pg_temp.due('2026-11-10 11:00+00');
   delete from __SCHEMA__.push_subscriptions where endpoint like '%/badtz';
+end $$;
+
+-- 6c. Subscription cap: a new endpoint is refused at the limit, a repeat is not.
+do $$
+declare n int;
+begin
+  delete from __SCHEMA__.push_subscriptions;
+  create or replace function __SCHEMA__.push_subscription_limit() returns int language sql immutable as 'select 3';
+  perform __SCHEMA__.push_subscribe('https://fcm.googleapis.com/fcm/send/c1', 'k', 'a', 'Europe/Warsaw');
+  perform __SCHEMA__.push_subscribe('https://fcm.googleapis.com/fcm/send/c2', 'k', 'a', 'Europe/Warsaw');
+  perform __SCHEMA__.push_subscribe('https://fcm.googleapis.com/fcm/send/c3', 'k', 'a', 'Europe/Warsaw');
+  assert pg_temp.refused('https://fcm.googleapis.com/fcm/send/c4', 'k', 'a'), 'fourth new endpoint refused';
+  perform __SCHEMA__.push_subscribe('https://fcm.googleapis.com/fcm/send/c2', 'k2', 'a', 'Europe/Warsaw');
+  assert (select p256dh from __SCHEMA__.push_subscriptions where endpoint like '%/c2') = 'k2', 'repeat still accepted';
+  delete from __SCHEMA__.push_subscriptions;
+  insert into __SCHEMA__.push_subscriptions (endpoint, p256dh, auth, tz) values
+    ('https://fcm.googleapis.com/fcm/send/warsaw', 'k', 'a', 'Europe/Warsaw'),
+    ('https://fcm.googleapis.com/fcm/send/london', 'k', 'a', 'Europe/London');
+  create or replace function __SCHEMA__.push_subscription_limit() returns int language sql immutable as 'select 50000';
 end $$;
 
 -- 7. push_subscribe: what it stores.

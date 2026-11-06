@@ -129,6 +129,14 @@ begin
   end if;
 end $$;
 
+-- Abuse ceiling on stored subscriptions. One obvious place to change it.
+create or replace function __SCHEMA__.push_subscription_limit()
+returns int
+language sql immutable
+set search_path = ''
+as $$ select 50000 $$;
+revoke all on function __SCHEMA__.push_subscription_limit() from public, anon, authenticated;
+
 -- Called by the page with the anon key.
 create or replace function __SCHEMA__.push_subscribe(p_endpoint text, p_p256dh text, p_auth text, p_tz text)
 returns void
@@ -142,7 +150,13 @@ begin
   if p_endpoint is null or p_endpoint !~ '^https://' or length(p_endpoint) > 1000 then
     raise exception 'push_subscribe: endpoint must be an https URL' using errcode = '22023';
   end if;
+  if p_endpoint ~ '[\\@[:space:]]' then
+    raise exception 'push_subscribe: endpoint has forbidden characters' using errcode = '22023';
+  end if;
   v_host := lower(substring(p_endpoint from '^https://([^/:?#]+)'));
+  if v_host is null or v_host !~ '^[a-z0-9.-]+$' then
+    raise exception 'push_subscribe: bad host' using errcode = '22023';
+  end if;
   if not (v_host = 'fcm.googleapis.com'
           or v_host = 'web.push.apple.com'
           or v_host like '%.push.services.mozilla.com'
@@ -155,6 +169,11 @@ begin
   end if;
   v_tz := case when exists (select 1 from pg_catalog.pg_timezone_names where name = p_tz)
                then p_tz else 'Europe/Warsaw' end;
+
+  if not exists (select 1 from __SCHEMA__.push_subscriptions where endpoint = p_endpoint)
+     and (select count(*) from __SCHEMA__.push_subscriptions) >= __SCHEMA__.push_subscription_limit() then
+    raise exception 'push_subscribe: subscription limit reached' using errcode = '22023';
+  end if;
 
   insert into __SCHEMA__.push_subscriptions (endpoint, p256dh, auth, tz, last_slot_at)
   values (p_endpoint, p_p256dh, p_auth, v_tz, now())
