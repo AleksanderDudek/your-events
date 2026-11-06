@@ -10,6 +10,7 @@ import { pl } from 'date-fns/locale';
 import { theme } from '@/styles/theme';
 import { LocaleProvider } from '@/i18n';
 import { CityProvider } from '@/config/CityProvider';
+import PushOpenTracker from '@/components/common/PushOpenTracker/PushOpenTracker';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -37,6 +38,7 @@ export default function Providers({ children }: Readonly<ProvidersProps>) {
           <ThemeProvider theme={theme} defaultMode="system">
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={pl}>
               <CssBaseline />
+              <PushOpenTracker />
               {children}
             </LocalizationProvider>
           </ThemeProvider>
