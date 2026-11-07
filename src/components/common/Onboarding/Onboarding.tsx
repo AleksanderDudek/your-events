@@ -5,12 +5,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { useOnboarding } from '@/components/service/useOnboarding';
 import { useConsent } from '@/components/service/useConsent';
+import { usePushReminder } from '@/components/service/usePushReminder';
 import { useCity } from '@/config/CityProvider';
 import { isCityId } from '@/config/cities';
 import { useTranslation } from '@/i18n';
 import { countActiveFilters, parseFiltersFromParams } from '@/lib/filterUtils';
 import { isOnboardingRoute, isTourRoute, tourPath } from '@/lib/onboarding';
 import { visibleSteps, type TourStep } from '@/lib/tourSteps';
+import type { FilterPreset } from '@/types/preset.types';
 import WelcomeSheet from './WelcomeSheet';
 import StoryRunner from './StoryRunner';
 
@@ -20,6 +22,26 @@ import StoryRunner from './StoryRunner';
 // start is retried for about a second.
 const ANCHOR_RETRY_LIMIT = 10;
 const ANCHOR_RETRY_MS = 100;
+
+// usePushReminder takes the presets only as a re-check trigger; the sheet has
+// none to offer, and a stable empty list keeps that trigger quiet.
+const NO_PRESETS: readonly FilterPreset[] = [];
+
+interface WelcomeProps {
+  cityLocative: string;
+  onSkip: () => void;
+  onStart: () => void;
+}
+
+/**
+ * The sheet plus its reminder offer. A component of its own so the push hook
+ * (a service-worker lookup and an IndexedDB read) runs only while the sheet is
+ * on screen, not on every page of the site, where Onboarding is mounted.
+ */
+function Welcome(props: WelcomeProps) {
+  const reminder = usePushReminder(NO_PRESETS);
+  return <WelcomeSheet {...props} reminder={reminder} />;
+}
 
 /**
  * Decides what — if anything — a visitor is shown on arrival.
@@ -124,7 +146,7 @@ export default function Onboarding() {
   if (!showSheet) return null;
 
   return (
-    <WelcomeSheet
+    <Welcome
       cityLocative={city.locativeForm[locale]}
       onSkip={markSeen}
       onStart={handleStart}

@@ -49,6 +49,23 @@ vi.mock('@/components/service/useCategories', () => ({
   }),
 }));
 
+// The sheet's reminder offer. Counted, so a test can tell the hook only runs
+// while the sheet is shown.
+const enableReminders = vi.fn().mockResolvedValue('enabled');
+const usePushReminderMock = vi.fn(() => ({
+  available: true,
+  support: 'ready' as const,
+  enabled: false,
+  markedId: null,
+  busy: false,
+  enable: enableReminders,
+  disable: vi.fn(),
+  toggleMark: vi.fn(),
+}));
+vi.mock('@/components/service/usePushReminder', () => ({
+  usePushReminder: () => usePushReminderMock(),
+}));
+
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
@@ -90,6 +107,8 @@ describe('Onboarding', () => {
     resetOnboardingStoreForTests();
     push.mockClear();
     updateFilters.mockClear();
+    enableReminders.mockClear();
+    usePushReminderMock.mockClear();
     pathname = '/szczecin/wydarzenia/';
     currentFilters = getDefaultFilters();
     // The sheet reads the arrival query string straight off window.location.
@@ -153,6 +172,26 @@ describe('Onboarding', () => {
 
       expect(push).toHaveBeenCalledWith('/szczecin/wydarzenia');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('the reminder offer', () => {
+    it('is ticked on the sheet and asked for when the visitor carries on', async () => {
+      const user = userEvent.setup();
+      renderOnboarding();
+      expect(
+        await screen.findByRole('checkbox', { name: 'Przypominaj mi o nowych wydarzeniach' })
+      ).toBeChecked();
+      await user.click(screen.getByRole('button', { name: 'Pomiń' }));
+      expect(enableReminders).toHaveBeenCalledOnce();
+    });
+
+    // Onboarding is mounted on every page; the push hook touches the service
+    // worker and IndexedDB, so it must not run where no sheet is shown.
+    it('does not run the push hook when no sheet is shown', () => {
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION));
+      renderOnboarding();
+      expect(usePushReminderMock).not.toHaveBeenCalled();
     });
   });
 
