@@ -4,7 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { LocaleProvider } from '@/i18n';
 import { CityProvider } from '@/config/CityProvider';
 import { CONSENT_STORAGE_KEY } from '@/lib/consent';
-import { ONBOARDING_STORAGE_KEY, ONBOARDING_VERSION } from '@/lib/onboarding';
+import {
+  ONBOARDING_STORAGE_KEY,
+  ONBOARDING_VERSION,
+  REMINDER_OFFER_STORAGE_KEY,
+} from '@/lib/onboarding';
 import { PRESETS_STORAGE_KEY } from '@/components/service/usePresets';
 import { resetConsentStoreForTests } from '@/components/service/useConsent';
 import { resetOnboardingStoreForTests } from '@/components/service/useOnboarding';
@@ -52,9 +56,10 @@ vi.mock('@/components/service/useCategories', () => ({
 // The sheet's reminder offer. Counted, so a test can tell the hook only runs
 // while the sheet is shown.
 const enableReminders = vi.fn().mockResolvedValue('enabled');
+let pushSupportState: 'ready' | 'unsupported' = 'ready';
 const usePushReminderMock = vi.fn(() => ({
   available: true,
-  support: 'ready' as const,
+  support: pushSupportState,
   enabled: false,
   markedId: null,
   busy: false,
@@ -64,6 +69,11 @@ const usePushReminderMock = vi.fn(() => ({
 }));
 vi.mock('@/components/service/usePushReminder', () => ({
   usePushReminder: () => usePushReminderMock(),
+}));
+// The build flag decides whether the standalone step exists at all.
+vi.mock('@/config/site', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/config/site')>()),
+  IS_PUSH_ENABLED: true,
 }));
 
 beforeAll(() => {
@@ -97,6 +107,7 @@ async function next(user: ReturnType<typeof userEvent.setup>, heading: string) {
 
 async function startStory(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'Pokaż mi' }));
+  await user.click(await screen.findByRole('button', { name: 'Nie teraz' }));
   await screen.findByRole('heading', { name: 'Zacznijmy od przykładu' });
 }
 
@@ -109,12 +120,11 @@ describe('Onboarding', () => {
     updateFilters.mockClear();
     enableReminders.mockClear();
     usePushReminderMock.mockClear();
+    pushSupportState = 'ready';
     pathname = '/szczecin/wydarzenia/';
     currentFilters = getDefaultFilters();
     // The sheet reads the arrival query string straight off window.location.
     window.history.replaceState(null, '', '/szczecin/wydarzenia/');
-    // A consent choice already on file — otherwise the cookie banner is open
-    // and onboarding must stay closed.
     localStorage.setItem(CONSENT_STORAGE_KEY, 'accepted');
   });
 
@@ -124,14 +134,22 @@ describe('Onboarding', () => {
       expect(await screen.findByRole('heading', sheetTitle)).toBeInTheDocument();
     });
 
-    it('stays closed while the cookie banner is still unanswered', () => {
-      localStorage.removeItem(CONSENT_STORAGE_KEY);
+    // Whatever the visitor does with the cookie banner — answer it, or ignore
+    // it — they are welcomed.
+    it.each([
+      ['unanswered', null],
+      ['rejected', 'rejected'],
+      ['accepted', 'accepted'],
+    ])('greets the visitor with the cookie banner %s', async (_label, choice) => {
+      if (choice === null) localStorage.removeItem(CONSENT_STORAGE_KEY);
+      else localStorage.setItem(CONSENT_STORAGE_KEY, choice);
       renderOnboarding();
-      expect(screen.queryByRole('heading', sheetTitle)).not.toBeInTheDocument();
+      expect(await screen.findByRole('heading', sheetTitle)).toBeInTheDocument();
     });
 
     it('stays closed for someone who has already seen it', () => {
       localStorage.setItem(ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION));
+      localStorage.setItem(REMINDER_OFFER_STORAGE_KEY, '1');
       renderOnboarding();
       expect(screen.queryByRole('heading', sheetTitle)).not.toBeInTheDocument();
     });
@@ -159,9 +177,11 @@ describe('Onboarding', () => {
       const user = userEvent.setup();
       renderOnboarding();
       await user.click(await screen.findByRole('button', { name: 'Pomiń' }));
+      await user.click(await screen.findByRole('button', { name: 'Nie teraz' }));
 
       expect(localStorage.getItem(ONBOARDING_STORAGE_KEY)).toBe(String(ONBOARDING_VERSION));
-      expect(screen.queryByRole('heading', sheetTitle)).not.toBeInTheDocument();
+      expect(localStorage.getItem(REMINDER_OFFER_STORAGE_KEY)).toBe('1');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     it('navigates to the events list before telling the story from the city home', async () => {
@@ -169,27 +189,61 @@ describe('Onboarding', () => {
       pathname = '/szczecin/';
       renderOnboarding();
       await user.click(await screen.findByRole('button', { name: 'Pokaż mi' }));
+      await user.click(await screen.findByRole('button', { name: 'Nie teraz' }));
 
       expect(push).toHaveBeenCalledWith('/szczecin/wydarzenia');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 
-  describe('the reminder offer', () => {
-    it('is ticked on the sheet and asked for when the visitor carries on', async () => {
+  describe('the notification step', () => {
+    it('follows the welcome sheet and asks the device on "Włącz powiadomienia"', async () => {
       const user = userEvent.setup();
       renderOnboarding();
-      expect(
-        await screen.findByRole('checkbox', { name: 'Przypominaj mi o nowych wydarzeniach' })
-      ).toBeChecked();
-      await user.click(screen.getByRole('button', { name: 'Pomiń' }));
+      await user.click(await screen.findByRole('button', { name: 'Pomiń' }));
+      await user.click(await screen.findByRole('button', { name: 'Włącz powiadomienia' }));
       expect(enableReminders).toHaveBeenCalledOnce();
+      expect(localStorage.getItem(REMINDER_OFFER_STORAGE_KEY)).toBe('1');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    // Everyone who saw the tour before reminders shipped is asked once,
+    // without being shown the whole tour again.
+    it('is offered on its own to someone who saw the tour but was never asked', async () => {
+      const user = userEvent.setup();
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION));
+      renderOnboarding();
+      expect(screen.queryByRole('heading', sheetTitle)).not.toBeInTheDocument();
+      await user.click(await screen.findByRole('button', { name: 'Włącz powiadomienia' }));
+      expect(enableReminders).toHaveBeenCalledOnce();
+      expect(localStorage.getItem(REMINDER_OFFER_STORAGE_KEY)).toBe('1');
+    });
+
+    it('records "not now" so the step does not come back', async () => {
+      const user = userEvent.setup();
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION));
+      renderOnboarding();
+      await user.click(await screen.findByRole('button', { name: 'Nie teraz' }));
+      expect(enableReminders).not.toHaveBeenCalled();
+      expect(localStorage.getItem(REMINDER_OFFER_STORAGE_KEY)).toBe('1');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    // A browser with nothing to offer is settled once, so the push hook stops
+    // running on every landing page.
+    it('records a browser with nothing to offer as answered', async () => {
+      pushSupportState = 'unsupported';
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION));
+      renderOnboarding();
+      await waitFor(() => expect(localStorage.getItem(REMINDER_OFFER_STORAGE_KEY)).toBe('1'));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     // Onboarding is mounted on every page; the push hook touches the service
-    // worker and IndexedDB, so it must not run where no sheet is shown.
-    it('does not run the push hook when no sheet is shown', () => {
+    // worker and IndexedDB, so it must not run once there is nothing to show.
+    it('does not run the push hook once everything is answered', () => {
       localStorage.setItem(ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION));
+      localStorage.setItem(REMINDER_OFFER_STORAGE_KEY, '1');
       renderOnboarding();
       expect(usePushReminderMock).not.toHaveBeenCalled();
     });

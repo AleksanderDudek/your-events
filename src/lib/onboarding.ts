@@ -4,6 +4,12 @@
 
 export const ONBOARDING_STORAGE_KEY = 'go-to-city.onboarding';
 
+// Set once the visitor has answered the "turn on notifications" step, either
+// way. Separate from the tour version on purpose: everyone who saw the tour
+// before reminders existed still gets asked once, without being shown the
+// whole tour again.
+export const REMINDER_OFFER_STORAGE_KEY = 'idznamiasto.onboarding.reminder';
+
 // Bump this after a redesign to re-offer the welcome sheet to everyone. That is
 // the whole reason the stored value is a version rather than a boolean.
 //

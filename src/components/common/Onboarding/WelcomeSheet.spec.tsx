@@ -10,6 +10,7 @@ function renderSheet(
 ) {
   const onSkip = overrides.onSkip ?? vi.fn();
   const onStart = overrides.onStart ?? vi.fn();
+  const onReminderAnswered = vi.fn();
   const result = render(
     <LocaleProvider>
       <WelcomeSheet
@@ -17,10 +18,11 @@ function renderSheet(
         onSkip={onSkip}
         onStart={onStart}
         reminder={overrides.reminder}
+        onReminderAnswered={onReminderAnswered}
       />
     </LocaleProvider>
   );
-  return { ...result, onSkip, onStart };
+  return { ...result, onSkip, onStart, onReminderAnswered };
 }
 
 function reminder(overrides: Partial<OnboardingReminder> = {}): OnboardingReminder {
@@ -33,7 +35,9 @@ function reminder(overrides: Partial<OnboardingReminder> = {}): OnboardingRemind
   };
 }
 
-const OPT_IN = 'Przypominaj mi o nowych wydarzeniach';
+const STEP_TITLE = { name: 'Nie przegap nowych wydarzeń' };
+const ENABLE = { name: 'Włącz powiadomienia' };
+const LATER = { name: 'Nie teraz' };
 
 describe('WelcomeSheet', () => {
   it('introduces the site and names the current city', () => {
@@ -78,51 +82,64 @@ describe('WelcomeSheet', () => {
     expect(onSkip).toHaveBeenCalledOnce();
   });
 
-  describe('reminder opt-in', () => {
-    it('is ticked by default where the browser can take reminders', () => {
-      renderSheet({ reminder: reminder() });
-      expect(screen.getByRole('checkbox', { name: OPT_IN })).toBeChecked();
-    });
-
-    // Both buttons are clicks, which is the only moment a browser lets a page
-    // ask for notifications. So both ask, as long as the box stays ticked.
-    it('asks for reminders and starts the tour on "Pokaż mi"', async () => {
+  describe('the notification step', () => {
+    // Skipping the tour is not declining reminders: both buttons lead here.
+    it.each([
+      ['Pokaż mi', 'onStart'],
+      ['Pomiń', 'onSkip'],
+    ] as const)('follows "%s" and only then runs it', async (button, handler) => {
       const user = userEvent.setup();
       const r = reminder();
-      const { onStart } = renderSheet({ reminder: r });
+      const props = renderSheet({ reminder: r });
+      await user.click(screen.getByRole('button', { name: button }));
+      expect(screen.getByRole('heading', STEP_TITLE)).toBeInTheDocument();
+      expect(props[handler]).not.toHaveBeenCalled();
+      expect(r.enable).not.toHaveBeenCalled();
+    });
+
+    // The button is the click the browser needs, so the device's own
+    // permission prompt appears the moment it is pressed.
+    it('asks the device for permission on "Włącz powiadomienia", then carries on', async () => {
+      const user = userEvent.setup();
+      const r = reminder();
+      const { onStart, onReminderAnswered } = renderSheet({ reminder: r });
       await user.click(screen.getByRole('button', { name: 'Pokaż mi' }));
+      await user.click(screen.getByRole('button', ENABLE));
       expect(r.enable).toHaveBeenCalledOnce();
       expect(onStart).toHaveBeenCalledOnce();
+      expect(onReminderAnswered).toHaveBeenCalledOnce();
     });
 
-    it('asks for reminders and closes on "Pomiń"', async () => {
+    it('carries on without asking on "Nie teraz"', async () => {
       const user = userEvent.setup();
       const r = reminder();
-      const { onSkip } = renderSheet({ reminder: r });
+      const { onSkip, onReminderAnswered } = renderSheet({ reminder: r });
       await user.click(screen.getByRole('button', { name: 'Pomiń' }));
-      expect(r.enable).toHaveBeenCalledOnce();
+      await user.click(screen.getByRole('button', LATER));
+      expect(r.enable).not.toHaveBeenCalled();
       expect(onSkip).toHaveBeenCalledOnce();
+      expect(onReminderAnswered).toHaveBeenCalledOnce();
     });
 
-    it('does not ask once the box is unticked', async () => {
+    it('treats Escape on the step as "not now"', async () => {
       const user = userEvent.setup();
       const r = reminder();
-      const { onStart } = renderSheet({ reminder: r });
-      await user.click(screen.getByRole('checkbox', { name: OPT_IN }));
+      const { onStart, onReminderAnswered } = renderSheet({ reminder: r });
       await user.click(screen.getByRole('button', { name: 'Pokaż mi' }));
+      await user.keyboard('{Escape}');
       expect(r.enable).not.toHaveBeenCalled();
       expect(onStart).toHaveBeenCalledOnce();
+      expect(onReminderAnswered).toHaveBeenCalledOnce();
     });
 
-    // Escape and the backdrop mean "not now"; a permission prompt on top of
-    // a dismissal would be the opposite of what the visitor asked for.
-    it('does not ask when the sheet is dismissed with Escape', async () => {
+    // Escape on the welcome page is a dismissal of everything.
+    it('is skipped when the welcome sheet itself is dismissed with Escape', async () => {
       const user = userEvent.setup();
       const r = reminder();
       const { onSkip } = renderSheet({ reminder: r });
       await user.keyboard('{Escape}');
       expect(onSkip).toHaveBeenCalledOnce();
-      expect(r.enable).not.toHaveBeenCalled();
+      expect(screen.queryByRole('heading', STEP_TITLE)).not.toBeInTheDocument();
     });
 
     it.each([
@@ -131,25 +148,33 @@ describe('WelcomeSheet', () => {
       ['support is still being checked', { support: 'checking' as const }],
       ['the browser blocked notifications', { support: 'blocked' as const }],
       ['the browser cannot do push', { support: 'unsupported' as const }],
-    ])('is not offered when %s', (_label, overrides) => {
-      renderSheet({ reminder: reminder(overrides) });
-      expect(screen.queryByRole('checkbox', { name: OPT_IN })).not.toBeInTheDocument();
+    ])('is not shown when %s', async (_label, overrides) => {
+      const user = userEvent.setup();
+      const { onStart } = renderSheet({ reminder: reminder(overrides) });
+      await user.click(screen.getByRole('button', { name: 'Pokaż mi' }));
+      expect(onStart).toHaveBeenCalledOnce();
+      expect(screen.queryByRole('heading', STEP_TITLE)).not.toBeInTheDocument();
     });
 
     // iOS Safari in a tab has no push at all: the honest offer is the way to
-    // get it, not a box that cannot do anything.
-    it('offers the iPhone instructions instead of the box in iOS Safari', async () => {
+    // get it, not a button that cannot do anything.
+    it('offers the iPhone instructions in iOS Safari', async () => {
       const user = userEvent.setup();
       const r = reminder({ support: 'ios-install-first' });
-      renderSheet({ reminder: r });
-      expect(screen.queryByRole('checkbox', { name: OPT_IN })).not.toBeInTheDocument();
+      const { onSkip } = renderSheet({ reminder: r });
+      await user.click(screen.getByRole('button', { name: 'Pomiń' }));
+      expect(screen.queryByRole('button', ENABLE)).not.toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Jak włączyć na iPhonie' }));
       expect(screen.getByRole('heading', { name: 'Przypomnienia na iPhonie' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Rozumiem' }));
+      expect(onSkip).toHaveBeenCalledOnce();
       expect(r.enable).not.toHaveBeenCalled();
     });
 
-    it('passes accessibility check with the box', async () => {
+    it('passes accessibility check', async () => {
+      const user = userEvent.setup();
       const { baseElement } = renderSheet({ reminder: reminder() });
+      await user.click(screen.getByRole('button', { name: 'Pokaż mi' }));
       const results = await axe(baseElement);
       expect(results).toHaveNoViolations();
     });

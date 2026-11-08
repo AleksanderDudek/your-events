@@ -441,7 +441,14 @@ const pl = {
   ONBOARDING_BULLET_PRESET: 'Zapisz swoje filtry i wracaj do nich jednym kliknięciem',
   ONBOARDING_SKIP: 'Pomiń',
   ONBOARDING_START: 'Pokaż mi',
-  ONBOARDING_REMINDER: 'Przypominaj mi o nowych wydarzeniach',
+  ONBOARDING_REMINDER_TITLE: 'Nie przegap nowych wydarzeń',
+  ONBOARDING_REMINDER_BODY:
+    'Kilka razy w tygodniu, w południe, przypomnimy Ci, żeby zajrzeć, co nowego w okolicy. Wyłączysz to jednym kliknięciem w „Moje filtry”.',
+  ONBOARDING_REMINDER_HINT: 'Urządzenie zapyta o zgodę na powiadomienia — wybierz „Zezwól”.',
+  ONBOARDING_REMINDER_IOS_HINT:
+    'Na iPhonie powiadomienia działają, gdy strona jest dodana do ekranu początkowego. Pokażemy, jak to zrobić.',
+  ONBOARDING_REMINDER_ENABLE: 'Włącz powiadomienia',
+  ONBOARDING_REMINDER_LATER: 'Nie teraz',
   ONBOARDING_FOOTER_LINK: 'Jak to działa?',
   ONBOARDING_TOUR_LABEL: 'Przewodnik po serwisie',
   ONBOARDING_STEP_COUNT: (current: number, total: number) => `Krok ${current} z ${total}`,
@@ -888,7 +895,14 @@ const en: Messages = {
   ONBOARDING_BULLET_PRESET: 'Save your filters and return to them in one click',
   ONBOARDING_SKIP: 'Skip',
   ONBOARDING_START: 'Show me',
-  ONBOARDING_REMINDER: 'Remind me about new events',
+  ONBOARDING_REMINDER_TITLE: "Don't miss new events",
+  ONBOARDING_REMINDER_BODY:
+    "A few times a week, at noon, we'll remind you to look at what's new nearby. Switch it off in one click under My filters.",
+  ONBOARDING_REMINDER_HINT: 'Your device will ask for permission to show notifications — choose "Allow".',
+  ONBOARDING_REMINDER_IOS_HINT:
+    "On an iPhone, notifications work once the site is on your Home Screen. We'll show you how.",
+  ONBOARDING_REMINDER_ENABLE: 'Turn on notifications',
+  ONBOARDING_REMINDER_LATER: 'Not now',
   ONBOARDING_FOOTER_LINK: 'How this works',
   ONBOARDING_TOUR_LABEL: 'Site walkthrough',
   ONBOARDING_STEP_COUNT: (current: number, total: number) => `Step ${current} of ${total}`,

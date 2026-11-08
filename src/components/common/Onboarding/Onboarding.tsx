@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { useOnboarding } from '@/components/service/useOnboarding';
-import { useConsent } from '@/components/service/useConsent';
 import { usePushReminder } from '@/components/service/usePushReminder';
+import { useReminderOffer } from '@/components/service/useReminderOffer';
+import { IS_PUSH_ENABLED } from '@/config/site';
 import { useCity } from '@/config/CityProvider';
 import { isCityId } from '@/config/cities';
 import { useTranslation } from '@/i18n';
@@ -14,6 +15,7 @@ import { isOnboardingRoute, isTourRoute, tourPath } from '@/lib/onboarding';
 import { visibleSteps, type TourStep } from '@/lib/tourSteps';
 import type { FilterPreset } from '@/types/preset.types';
 import WelcomeSheet from './WelcomeSheet';
+import { ReminderSheet, canOfferReminder } from './ReminderStep';
 import StoryRunner from './StoryRunner';
 
 // The controls the story points at mount with the page, but a client-side
@@ -31,16 +33,37 @@ interface WelcomeProps {
   cityLocative: string;
   onSkip: () => void;
   onStart: () => void;
+  onReminderAnswered: () => void;
 }
 
 /**
- * The sheet plus its reminder offer. A component of its own so the push hook
- * (a service-worker lookup and an IndexedDB read) runs only while the sheet is
- * on screen, not on every page of the site, where Onboarding is mounted.
+ * The sheet plus its notification page. A component of its own so the push
+ * hook (a service-worker lookup and an IndexedDB read) runs only while the
+ * sheet is on screen, not on every page of the site, where Onboarding is
+ * mounted.
  */
 function Welcome(props: WelcomeProps) {
   const reminder = usePushReminder(NO_PRESETS);
   return <WelcomeSheet {...props} reminder={reminder} />;
+}
+
+/**
+ * The notification step on its own, for a visitor who saw the welcome sheet
+ * before it asked (everyone from before reminders shipped). Shown at most
+ * until it is answered; a browser with nothing to offer is recorded as
+ * answered once it is known, so the push hook stops running here.
+ */
+function ReminderOnly({ onAnswered }: { onAnswered: () => void }) {
+  const reminder = usePushReminder(NO_PRESETS);
+  const offer = canOfferReminder(reminder);
+  const settled = reminder.support !== 'checking';
+
+  useEffect(() => {
+    if (settled && !offer) onAnswered();
+  }, [settled, offer, onAnswered]);
+
+  if (!offer) return null;
+  return <ReminderSheet reminder={reminder} onFinish={onAnswered} />;
 }
 
 /**
@@ -52,18 +75,13 @@ function Welcome(props: WelcomeProps) {
  * the tour.
  */
 export default function Onboarding() {
-  const {
-    isReady,
-    hasSeen,
-    isTourPending,
-    markSeen,
-    requestTour,
-    clearTourRequest,
-  } = useOnboarding();
-  // The cookie banner outranks onboarding: it is a legal choice, it is already
-  // on screen, and two stacked overlays on a first visit is the failure this
-  // design most wants to avoid.
-  const { isOpen: isConsentOpen } = useConsent();
+  const { isReady, hasSeen, isTourPending, markSeen, requestTour, clearTourRequest } =
+    useOnboarding();
+  // Not gated on the cookie banner: onboarding stores nothing but its own
+  // "seen" flags, which need no consent, and waiting for an answer meant a
+  // visitor who ignored the banner was never welcomed at all. The sheet is a
+  // modal on top; the banner is still there, unanswered, once it closes.
+  const { answered: reminderAnswered, markAnswered: markReminderAnswered } = useReminderOffer();
   const pathname = usePathname();
   const router = useRouter();
   const { city } = useCity();
@@ -137,19 +155,23 @@ export default function Onboarding() {
     return <StoryRunner steps={steps} onFinish={handleStoryFinish} />;
   }
 
-  const showSheet =
-    !hasSeen &&
-    !isConsentOpen &&
-    !isTourPending &&
-    !hasIncomingFilters &&
-    isOnboardingRoute(pathname, isCityId);
-  if (!showSheet) return null;
+  const onLandingPage =
+    !isTourPending && !hasIncomingFilters && isOnboardingRoute(pathname, isCityId);
+  if (!onLandingPage) return null;
 
-  return (
-    <Welcome
-      cityLocative={city.locativeForm[locale]}
-      onSkip={markSeen}
-      onStart={handleStart}
-    />
-  );
+  if (!hasSeen) {
+    return (
+      <Welcome
+        cityLocative={city.locativeForm[locale]}
+        onSkip={markSeen}
+        onStart={handleStart}
+        onReminderAnswered={markReminderAnswered}
+      />
+    );
+  }
+
+  if (IS_PUSH_ENABLED && !reminderAnswered) {
+    return <ReminderOnly onAnswered={markReminderAnswered} />;
+  }
+  return null;
 }
