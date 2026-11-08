@@ -100,13 +100,23 @@ Rotating it is the same three commands plus deleting the old key
 
 ```bash
 gh api -X PUT repos/AleksanderDudek/your-events/environments/dev
-gh api -X PUT repos/AleksanderDudek/your-events/environments/prod \
-  -F 'reviewers[][type]=User' \
-  -F "reviewers[][id]=$(gh api user --jq .id)"
+echo '{"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}}' \
+  | gh api -X PUT repos/AleksanderDudek/your-events/environments/prod --input -
+gh api -X POST repos/AleksanderDudek/your-events/environments/prod/deployment-branch-policies \
+  -f name=main -f type=branch
 ```
 
-The reviewer rule on `prod` is what makes a release deliberate: every production
-run waits for an approval in the Actions tab.
+`prod` has **no reviewer rule**, on purpose. Production deploys always build the
+`production` branch, so what code ships is decided by moving that branch
+(*Release to production*, run by hand) — not by approving a deploy. Rebuilds on
+cron and on the scraper's `events-updated` exist to get fresh data live as soon
+as possible; an approval gate only delays them. The one thing that stops a
+production deploy is a failed build.
+
+The branch policy keeps `PROD_DEPLOY_KEY` out of reach of workflows running on
+any branch other than `main`. Every production run starts from `main`: cron and
+`repository_dispatch` run on the default branch, and *Release to production*
+dispatches the deploy with `--ref main`.
 
 ### 5. Environment variables
 
@@ -228,8 +238,8 @@ Actions → **Release to production** → *Run workflow*:
 - `force` — leave off.
 
 The workflow moves `production` and then dispatches the production deploy, which
-appears in the Actions tab waiting for approval. Approve it there
-(*Review deployments* → `prod` → *Approve and deploy*).
+starts straight away. Running the release is the decision; there is no second
+approval.
 
 What is waiting to be released, at any time:
 
@@ -258,18 +268,18 @@ commit and is not a recovery mechanism.
 | Trigger | Dev | Prod |
 | --- | --- | --- |
 | Push to `main` | Deploys | — |
-| *Release to production* | — | Deploys the released commit, after approval |
-| Cron, every 3 hours (UTC) | Rebuilds | Rebuilds, after approval |
-| `repository_dispatch: events-updated` from the scraper | Rebuilds | Rebuilds, after approval |
+| *Release to production* | — | Deploys the released commit |
+| Cron, every 3 hours (UTC) | Rebuilds | Rebuilds `production` |
+| `repository_dispatch: events-updated` from the scraper | Rebuilds | Rebuilds `production` |
 | Manual dispatch | Yes | Yes |
 
 Both rebuild on a schedule because the site is a static export: event detail
 pages exist only for the events present in the database at build time, so events
 the scraper adds later would 404 until the next build.
 
-Production rebuilds also wait for approval, cron included. If approving
-data-only rebuilds becomes tiresome, remove the reviewer rule from the `prod`
-environment and accept that a release then deploys unattended.
+None of these wait for an approval. A rebuild only ever rebuilds the commit
+already on `production`, so it brings new data, never new code; a build that
+fails publishes nothing and the previous site stays up.
 
 Every pull request also builds the site exactly as `deploy-dev.yml` does (`CI`
 → *Static export build*, in the `dev` environment). It is a required status

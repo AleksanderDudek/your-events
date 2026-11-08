@@ -66,7 +66,7 @@ jobs:
         continue-on-error: true # insights only — never fail the job
         env:
           # Anon key is public (RLS-protected) and already a repo secret used by
-          # deploy.yml. Serve the app at the domain root for the tests.
+          # the deploy workflows. Serve the app at the domain root for the tests.
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           # Per-city (multi-city): Wrocław events endpoint. Without these the
