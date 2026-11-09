@@ -132,6 +132,18 @@ describe('WeekPlanView', () => {
     expect(b.getAllByRole('article')).toHaveLength(DAYS.length);
     expect(b.queryAllByRole('button', { name: /Wybierz wydarzenie/ })).toHaveLength(0);
     expect(screen.getByText(`W planie: ${DAYS.length} z ${DAYS.length}`)).toBeInTheDocument();
+    // Every test event costs 30 zł: each day says so, the week adds them up.
+    expect(b.getAllByText('ok. 30 zł')).toHaveLength(DAYS.length);
+    expect(screen.getByText(`ok. ${30 * DAYS.length} zł`)).toBeInTheDocument();
+  });
+
+  it('turns a mood tile on and off', async () => {
+    const user = userEvent.setup();
+    await board();
+    const music = screen.getByRole('button', { name: /Muzyka/ });
+    expect(music).toHaveAttribute('aria-pressed', 'false');
+    await user.click(music);
+    expect(music).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('opens a shared plan read-only and says what has gone', async () => {

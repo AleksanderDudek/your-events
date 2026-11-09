@@ -23,6 +23,13 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import TheaterComedyIcon from '@mui/icons-material/TheaterComedy';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import CelebrationIcon from '@mui/icons-material/Celebration';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import ChildCareIcon from '@mui/icons-material/ChildCare';
+import HandymanIcon from '@mui/icons-material/Handyman';
+import SavingsIcon from '@mui/icons-material/Savings';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import { useCategories } from '@/components/service/useCategories';
@@ -48,6 +55,8 @@ import {
   parseStoredPlan,
   PlanAction,
   PlanCandidate,
+  PlanCost,
+  planCost,
   planDates,
   planReducer,
   PlanSettings,
@@ -113,8 +122,26 @@ export default function WeekPlanView() {
   );
 }
 
-function dayLabel(t: ReturnType<typeof useTranslation>['t'], date: string, locale: string): string {
+type Messages = ReturnType<typeof useTranslation>['t'];
+
+function dayLabel(t: Messages, date: string, locale: string): string {
   return `${t.WEEKDAY_LONG[weekdayOf(date)]}, ${formatDateShort(date, locale)}`;
+}
+
+/** "ok. 125 zł + 1 bez ceny", "za darmo", "cena w opisie". */
+function costLabel(t: Messages, cost: PlanCost): string {
+  if (cost.paid === 0) return cost.unknown > 0 ? t.WEEK_COST_UNKNOWN : t.WEEK_COST_FREE;
+  const amount = t.WEEK_COST_AMOUNT(Math.round(cost.total));
+  return cost.unknown > 0 ? `${amount} ${t.WEEK_COST_PLUS_UNKNOWN(cost.unknown)}` : amount;
+}
+
+// Long enough to read "Wybrane!" on the card before the dialog closes.
+const PICK_ANIMATION_MS = 450;
+// How long a freshly placed tile keeps its entrance class.
+const FRESH_MS = 1600;
+
+function prefersReducedMotion(): boolean {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 // ── Building a plan ──────────────────────────────────────────────────────────
@@ -136,6 +163,13 @@ function Planner({ today }: { today: string }) {
     stored ? { ...emptyPlan(stored.settings), chosen: stored.chosen } : emptyPlan(defaultSettings(today))
   );
   const [picking, setPicking] = useState<string | null>(null);
+  // Slots that just got an event: their tiles play the entrance animation,
+  // one after another for "Zaskocz mnie" (the order is the stagger).
+  const [fresh, setFresh] = useState<string[]>([]);
+  const markFresh = useCallback((ids: string[]) => {
+    setFresh(ids);
+    window.setTimeout(() => setFresh([]), FRESH_MS + ids.length * 120);
+  }, []);
   const withRoutine = wantsRoutine(state.settings.moods);
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -189,11 +223,15 @@ function Planner({ today }: { today: string }) {
           disableElevation
           startIcon={<CasinoIcon />}
           disabled={!ready || openSlots === 0}
-          onClick={() => dispatch({ type: 'autofill' })}
+          onClick={() => {
+            markFresh(slots.filter((s) => !state.chosen[s.id] && (state.proposals[s.id]?.length ?? 0) > 0).map((s) => s.id));
+            dispatch({ type: 'autofill' });
+          }}
         >
           {t.WEEK_SURPRISE}
         </Button>
-        <p className={styles.toolbarHint}>{openSlots > 0 ? t.WEEK_SURPRISE_HINT : t.WEEK_BOARD_FULL}</p>
+        {/* Until candidates load, stored choices cannot be shown yet: do not call the plan "ready". */}
+        <p className={styles.toolbarHint}>{!ready || openSlots > 0 ? t.WEEK_SURPRISE_HINT : t.WEEK_BOARD_FULL}</p>
       </div>
 
       <PlanFilters
@@ -230,8 +268,13 @@ function Planner({ today }: { today: string }) {
                     .filter((slot) => slot.date === day.date)
                     .map((slot, index) => {
                       const event = state.chosen[slot.id] ? candidates.get(state.chosen[slot.id])?.event : undefined;
+                      const freshAt = fresh.indexOf(slot.id);
                       return (
-                        <li key={slot.id} className={styles.daySlot}>
+                        <li
+                          key={slot.id}
+                          className={`${styles.daySlot} ${event && freshAt >= 0 ? styles.daySlotFresh : ''}`}
+                          style={freshAt >= 0 ? ({ '--stagger': freshAt } as React.CSSProperties) : undefined}
+                        >
                           {event ? (
                             <PlanEventCard event={event} href={hrefOf(event)} variant="compact">
                               <Button
@@ -292,6 +335,7 @@ function Planner({ today }: { today: string }) {
                     {t.WEEK_ADD_SLOT}
                   </Button>
                 )}
+                <DayCost events={chosen.filter((e) => e.date === day.date)} />
               </li>
             ))}
         </ol>
@@ -318,6 +362,7 @@ function Planner({ today }: { today: string }) {
         candidates={candidates}
         hrefOf={hrefOf}
         dispatch={dispatch}
+        onChosen={(id) => markFresh([id])}
         onClose={() => setPicking(null)}
       />
 
@@ -371,30 +416,80 @@ function PlanFilters({ settings, dates, onChange }: PlanFiltersProps) {
       </fieldset>
       <fieldset className={styles.fieldset}>
         <legend className={styles.legend}>{t.WEEK_MOODS_LABEL}</legend>
-        <div className={styles.chips}>
+        <div className={styles.moods}>
           {MOODS.map((mood) => (
-            <button
+            <MoodTile
               key={mood}
-              type="button"
-              className={`${styles.chip} ${settings.moods.includes(mood) ? styles.chipOn : ''}`}
-              aria-pressed={settings.moods.includes(mood)}
+              mood={mood}
+              icon={MOOD_ICONS[mood]}
+              title={t.WEEK_MOOD[mood]}
+              sub={t.WEEK_MOOD_SUB[mood]}
+              on={settings.moods.includes(mood)}
               onClick={() => toggleMood(mood)}
-            >
-              {t.WEEK_MOOD[mood]}
-            </button>
+            />
           ))}
-          <button
-            type="button"
-            className={`${styles.chip} ${settings.freeOnly ? styles.chipOn : ''}`}
-            aria-pressed={settings.freeOnly}
+          <MoodTile
+            mood="free"
+            icon={<SavingsIcon />}
+            title={t.WEEK_FREE_ONLY}
+            sub={t.WEEK_FREE_SUB}
+            on={settings.freeOnly}
             onClick={() => onChange({ ...settings, freeOnly: !settings.freeOnly })}
-          >
-            {t.WEEK_FREE_ONLY}
-          </button>
+          />
         </div>
         <p className={styles.hint}>{t.WEEK_MOODS_HINT}</p>
       </fieldset>
     </section>
+  );
+}
+
+const MOOD_ICONS: Record<Mood, React.ReactNode> = {
+  culture: <TheaterComedyIcon />,
+  music: <MusicNoteIcon />,
+  party: <CelebrationIcon />,
+  active: <DirectionsRunIcon />,
+  kids: <ChildCareIcon />,
+  learn: <HandymanIcon />,
+};
+
+interface MoodTileProps {
+  mood: Mood | 'free';
+  icon: React.ReactNode;
+  title: string;
+  sub: string;
+  on: boolean;
+  onClick: () => void;
+}
+
+/** A mood as a small coloured tile — the same visual language as the home tiles. */
+function MoodTile({ mood, icon, title, sub, on, onClick }: MoodTileProps) {
+  return (
+    <button
+      type="button"
+      className={`${styles.mood} ${styles[`mood-${mood}`]} ${on ? styles.moodOn : ''}`}
+      aria-pressed={on}
+      onClick={onClick}
+    >
+      <span className={styles.moodIcon} aria-hidden="true">
+        {icon}
+      </span>
+      <span className={styles.moodText}>
+        <span className={styles.moodTitle}>{title}</span>
+        <span className={styles.moodSub}>{sub}</span>
+      </span>
+      {on && <CheckIcon className={styles.moodCheck} fontSize="small" aria-hidden="true" />}
+    </button>
+  );
+}
+
+function DayCost({ events }: { events: Event[] }) {
+  const { t } = useTranslation();
+  if (events.length === 0) return null;
+  return (
+    <p className={styles.dayCost}>
+      <span>{t.WEEK_COST_DAY}</span>
+      <strong>{costLabel(t, planCost(events))}</strong>
+    </p>
   );
 }
 
@@ -406,18 +501,37 @@ interface ChooserDialogProps {
   candidates: ReadonlyMap<string, PlanCandidate>;
   hrefOf: (event: Event) => string;
   dispatch: (action: PlanAction) => void;
+  onChosen: (slotId: string) => void;
   onClose: () => void;
 }
 
 /**
- * Three proposals for one slot. "Wybieram" puts the event on the board and
- * closes; "Pomiń" swaps that card only; the time of day redraws the three.
+ * Three proposals for one slot. "Wybieram" marks the card, then puts the
+ * event on the board and closes; "Pomiń" swaps that card only; the time of
+ * day redraws the three.
  */
-function ChooserDialog({ slot, state, candidates, hrefOf, dispatch, onClose }: ChooserDialogProps) {
+function ChooserDialog({ slot, state, candidates, hrefOf, dispatch, onChosen, onClose }: ChooserDialogProps) {
   const { t, locale } = useTranslation();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const offered = slot ? (state.proposals[slot.id] ?? []) : [];
+  const [picked, setPicked] = useState<string | null>(null);
+
+  const pick = (slotId: string, eventId: string) => {
+    if (picked) return;
+    const finish = () => {
+      dispatch({ type: 'choose', slotId, eventId });
+      onChosen(slotId);
+      setPicked(null);
+      onClose();
+    };
+    if (prefersReducedMotion()) {
+      finish();
+      return;
+    }
+    setPicked(eventId);
+    window.setTimeout(finish, PICK_ANIMATION_MS);
+  };
 
   return (
     <Dialog
@@ -460,22 +574,26 @@ function ChooserDialog({ slot, state, candidates, hrefOf, dispatch, onClose }: C
                   const candidate = candidates.get(id);
                   if (!candidate) return null;
                   return (
-                    <PlanEventCard key={id} event={candidate.event} href={hrefOf(candidate.event)}>
+                    <PlanEventCard
+                      key={id}
+                      event={candidate.event}
+                      href={hrefOf(candidate.event)}
+                      picked={picked === id ? t.WEEK_PICKED : undefined}
+                      dimmed={picked !== null && picked !== id}
+                    >
                       <Button
                         size="small"
                         variant="contained"
                         disableElevation
                         startIcon={<CheckIcon />}
-                        onClick={() => {
-                          dispatch({ type: 'choose', slotId: slot.id, eventId: id });
-                          onClose();
-                        }}
+                        onClick={() => pick(slot.id, id)}
                       >
                         {t.WEEK_CHOOSE}
                       </Button>
                       <Button
                         size="small"
                         startIcon={<SkipNextIcon />}
+                        disabled={picked !== null}
                         onClick={() => dispatch({ type: 'skip', slotId: slot.id, eventId: id })}
                       >
                         {t.WEEK_SKIP}
@@ -529,9 +647,17 @@ function SummaryBar({ chosen, total }: SummaryBarProps) {
 
   return (
     <div className={styles.summary} role="region" aria-label={t.WEEK_SUMMARY_LABEL}>
-      <p className={styles.summaryText}>
-        {chosen.length > 0 ? t.WEEK_SUMMARY(chosen.length, total) : t.WEEK_SUMMARY_EMPTY}
-      </p>
+      <div>
+        <p className={styles.summaryText}>
+          {chosen.length > 0 ? t.WEEK_SUMMARY(chosen.length, total) : t.WEEK_SUMMARY_EMPTY}
+        </p>
+        {chosen.length > 0 && (
+          <p className={styles.summaryCost}>
+            {t.WEEK_COST_WEEK}: <strong>{costLabel(t, planCost(chosen))}</strong>{' '}
+            <span className={styles.summaryCostNote}>{t.WEEK_COST_PER_PERSON}</span>
+          </p>
+        )}
+      </div>
       <div className={styles.summaryActions}>
         {ics ? (
           <Button

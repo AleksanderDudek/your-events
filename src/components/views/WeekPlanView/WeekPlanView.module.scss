@@ -64,11 +64,6 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-surface);
-
-  @include md {
-    grid-template-columns: auto 1fr;
-    gap: 24px;
-  }
 }
 
 .fieldset {
@@ -521,4 +516,221 @@
 
 .sharedCta {
   margin-top: 32px;
+}
+
+// ── Moods ───────────────────────────────────────────────────────────────────
+
+.moods {
+  display: grid;
+  // As many tiles a row as fit at a readable width: 2 on a phone, 4 on a
+  // tablet, all 7 on a wide screen.
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+// Each mood carries its own accent; "on" fills the tile with it, like the
+// gradient tiles on the home page.
+.mood-culture { --mood: #8b5cf6; --mood-2: #ec4899; }
+.mood-music { --mood: #ec4899; --mood-2: #f43f5e; }
+.mood-party { --mood: #f97316; --mood-2: #f59e0b; }
+.mood-active { --mood: #10b981; --mood-2: #06b6d4; }
+.mood-kids { --mood: #f59e0b; --mood-2: #eab308; }
+.mood-learn { --mood: #3b82f6; --mood-2: #8b5cf6; }
+.mood-free { --mood: #22c55e; --mood-2: #10b981; }
+
+.mood {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--mood) 45%, var(--color-border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--mood) 8%, transparent);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+
+  @include motion-safe {
+    transition: transform var(--transition-base), background var(--transition-base),
+      box-shadow var(--transition-base);
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--mood) 16%, transparent);
+  }
+
+  @include focus-visible;
+}
+
+.moodOn {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--mood) 0%, var(--mood-2) 100%);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--mood) 40%, transparent);
+  color: #ffffff;
+
+  &:hover {
+    background: linear-gradient(135deg, var(--mood) 0%, var(--mood-2) 100%);
+  }
+
+  .moodIcon {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+  }
+
+  .moodSub {
+    color: rgba(255, 255, 255, 0.85);
+  }
+}
+
+.moodIcon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--mood) 18%, transparent);
+  color: var(--mood);
+}
+
+.moodText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.moodTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.moodSub {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--color-text-secondary);
+}
+
+.moodCheck {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+// ── Cost ────────────────────────────────────────────────────────────────────
+
+.dayCost {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: auto 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--color-border);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+
+  strong {
+    color: var(--color-text-primary);
+    text-align: right;
+  }
+}
+
+.summaryCost {
+  margin: 2px 0 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+
+  strong {
+    color: var(--color-text-primary);
+  }
+}
+
+.summaryCostNote {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+// ── Animations ──────────────────────────────────────────────────────────────
+
+// The chosen card in the dialog: a quick lift and glow with "Wybrane!".
+.cardPicked {
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 3px var(--color-accent-tint-strong), var(--shadow-elevated);
+
+  @include motion-safe {
+    animation: card-picked 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
+
+.cardDimmed {
+  opacity: 0.4;
+
+  @include motion-safe {
+    transition: opacity 200ms ease;
+  }
+}
+
+.cardPickedBadge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: color-mix(in srgb, var(--color-accent-primary) 70%, transparent);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+
+  @include motion-safe {
+    animation: badge-in 300ms ease-out both;
+  }
+}
+
+// A tile that just landed on the board: drops in and glows, one after another
+// when "Zaskocz mnie" fills the week (--stagger is its place in that order).
+.daySlotFresh .mini {
+  @include motion-safe {
+    animation: tile-in 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both,
+      tile-glow 1400ms ease-out both;
+    animation-delay: calc(var(--stagger, 0) * 120ms);
+  }
+}
+
+@keyframes card-picked {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.04) translateY(-4px); }
+  100% { transform: scale(1.02) translateY(-2px); }
+}
+
+@keyframes badge-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes tile-in {
+  from { opacity: 0; transform: translateY(-12px) scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tile-glow {
+  0%, 30% { box-shadow: 0 0 0 4px var(--color-accent-tint-strong); }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }

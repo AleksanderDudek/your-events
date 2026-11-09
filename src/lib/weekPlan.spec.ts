@@ -15,6 +15,7 @@ import {
   MAX_SHARED_EVENTS,
   parseStoredPlan,
   planDates,
+  planCost,
   planReducer,
   planSlots,
   PlanCandidate,
@@ -449,5 +450,22 @@ describe('planReducer: board actions', () => {
     const offered = s.proposals[slotId(MON, 0)].map((id) => ctx.candidates.get(id)!.event.startTime);
     expect(offered.every((t) => t < '12:00')).toBe(true);
     expect(s.proposals[slotId(WED, 0)]).toEqual(state.proposals[slotId(WED, 0)]);
+  });
+});
+
+describe('planCost', () => {
+  const price = (amount: number | null, showLabel = false) =>
+    makeEvent({ price: { amount, currency: 'PLN', label: '', showLabel } });
+
+  it('adds known prices and counts free and unknown apart', () => {
+    expect(planCost([price(40), price(0), price(35), price(null)])).toEqual({ total: 75, paid: 2, free: 1, unknown: 1 });
+  });
+
+  it('does not read a membership label or a ticket id as a price', () => {
+    expect(planCost([price(149, true), price(196331)])).toEqual({ total: 0, paid: 0, free: 0, unknown: 2 });
+  });
+
+  it('is zero for an empty plan', () => {
+    expect(planCost([])).toEqual({ total: 0, paid: 0, free: 0, unknown: 0 });
   });
 });

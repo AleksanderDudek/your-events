@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
+import CheckIcon from '@mui/icons-material/Check';
 import { Event } from '@/types/event.types';
 import CategoryChip from '@/components/ui/CategoryChip/CategoryChip';
 import MediaFill from '@/components/ui/MediaFill/MediaFill';
@@ -19,6 +20,10 @@ interface PlanEventCardProps {
   variant?: 'full' | 'compact';
   /** Buttons under the card: choose / skip, or change. */
   children?: React.ReactNode;
+  /** The card was just chosen: this label shows over it while it animates. */
+  picked?: string;
+  /** Another card was chosen: this one steps back. */
+  dimmed?: boolean;
 }
 
 /**
@@ -27,7 +32,14 @@ interface PlanEventCardProps {
  * their own buttons — a button inside a link is invalid and a tap meant for
  * "Pomiń" would open the event. The title links instead.
  */
-export default function PlanEventCard({ event, href, variant = 'full', children }: PlanEventCardProps) {
+export default function PlanEventCard({
+  event,
+  href,
+  variant = 'full',
+  children,
+  picked,
+  dimmed = false,
+}: PlanEventCardProps) {
   const name = useTranslated(event.name);
   const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
 
@@ -52,10 +64,18 @@ export default function PlanEventCard({ event, href, variant = 'full', children 
   }
 
   return (
-    <article className={styles.card} aria-label={name}>
+    <article
+      className={`${styles.card} ${picked ? styles.cardPicked : ''} ${dimmed ? styles.cardDimmed : ''}`}
+      aria-label={name}
+    >
       <div className={styles.cardImage}>
         <CardImage event={event} />
         {time && <span className={styles.cardTime}>{time}</span>}
+        {picked && (
+          <span className={styles.cardPickedBadge} role="status">
+            <CheckIcon fontSize="small" aria-hidden="true" /> {picked}
+          </span>
+        )}
       </div>
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>

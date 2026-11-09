@@ -684,3 +684,41 @@ export function decodePlanParam(param: string | null): string[] {
   const ids = param.split('.').filter((id) => /^\d{1,12}$/.test(id));
   return [...new Set(ids)].slice(0, MAX_SHARED_EVENTS);
 }
+
+// ── Cost ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Prices above this are scraped noise (a ticket id read as a price), not a
+ * night out — the list's isRealisticPrice draws the same line.
+ */
+const MAX_PLAUSIBLE_PRICE = 2000;
+
+export interface PlanCost {
+  /** Sum of the known prices, per person. */
+  total: number;
+  /** Events counted in `total` with a price above zero. */
+  paid: number;
+  free: number;
+  /** No usable price: none given, a membership label, or an implausible one. */
+  unknown: number;
+}
+
+/**
+ * What the plan costs one person. A membership label ("Karnet od 149 zł") is
+ * not the price of one visit, so it counts as unknown rather than as 149.
+ */
+export function planCost(events: readonly Event[]): PlanCost {
+  const cost: PlanCost = { total: 0, paid: 0, free: 0, unknown: 0 };
+  for (const { price } of events) {
+    const amount = price.amount;
+    if (price.showLabel || amount === null || amount < 0 || amount > MAX_PLAUSIBLE_PRICE) {
+      cost.unknown += 1;
+    } else if (amount === 0) {
+      cost.free += 1;
+    } else {
+      cost.total += amount;
+      cost.paid += 1;
+    }
+  }
+  return cost;
+}
