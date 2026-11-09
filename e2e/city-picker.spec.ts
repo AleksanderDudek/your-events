@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { CITY } from './support/helpers';
+import { CITY, skipFirstVisitPrompts } from './support/helpers';
+
+// Every first-visit prompt answered up front: the welcome sheet is a modal on
+// any city page and would swallow the clicks this file is about.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // The root route ("/") is now a fullscreen city picker rather than a city's
 // landing page. It links into each available city's own subtree.

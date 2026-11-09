@@ -54,6 +54,12 @@ vi.mock('@/components/common/EventsMap/EventsMap', () => ({
 import HomeView from './HomeView';
 
 describe('HomeView', () => {
+  it('leads the tiles with "Twój tydzień"', () => {
+    render(<HomeView />);
+    const tile = screen.getByRole('link', { name: /Ułóż swój tydzień/ });
+    expect(tile).toHaveAttribute('href', '/szczecin/moj-tydzien');
+  });
+
   it('renders the headline prompt and tagline', () => {
     render(<HomeView />);
     expect(screen.getByText('Chcesz zrobić coś fajnego?')).toBeInTheDocument();

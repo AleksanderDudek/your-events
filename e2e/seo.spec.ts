@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, CITY, firstCard, gotoEvents } from './support/helpers';
+import { TEXT, CITY, firstCard, gotoEvents, skipFirstVisitPrompts } from './support/helpers';
+
+// Every first-visit prompt answered up front: the welcome sheet is a modal on
+// any city page and would swallow the clicks this file is about.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // Metadata is invisible to users but load-bearing for search/social (commit
 // 2b081a9). generateMetadata runs per-route, so these assert the rendered <head>

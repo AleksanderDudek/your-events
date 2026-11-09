@@ -1,6 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { TEXT, CITY, firstCard, gotoEvents } from './support/helpers';
+import { TEXT, gotoEvents, openFirstEvent, skipFirstVisitPrompts } from './support/helpers';
+
+// Every first-visit prompt answered up front: the welcome sheet is a modal on
+// any city page and would swallow the clicks this file is about.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // Derive the violation type from AxeBuilder's own result rather than importing
 // `axe-core` directly — under pnpm's strict node_modules it is a transitive dep
@@ -56,9 +62,7 @@ test.describe('Accessibility (axe)', () => {
 
   test('event detail has no serious violations', async ({ page }) => {
     await gotoEvents(page);
-    await firstCard(page).click();
-    await expect(page).toHaveURL(new RegExp(`/${CITY}/`));
-    await expect(page.getByRole('heading', { level: 1 })).not.toBeEmpty();
+    await openFirstEvent(page);
     // Wait for the async metadata title to land before scanning: in `next dev`
     // client navigation updates document.title a beat after the DOM, and an
     // empty title trips axe's document-title rule (a dev-only race — the static

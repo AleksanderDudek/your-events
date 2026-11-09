@@ -14,6 +14,7 @@ import RestaurantIcon from '@mui/icons-material/Restaurant';
 import NightlifeIcon from '@mui/icons-material/Nightlife';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
+import CasinoIcon from '@mui/icons-material/Casino';
 import { useTranslation } from '@/i18n';
 import { Translated } from '@/i18n/translation';
 import { useCity } from '@/config/CityProvider';
@@ -115,6 +116,17 @@ export default function HomeView() {
   }, [city.id]);
 
   const tiles = [
+    // "Twój tydzień" leads: the one tile that answers "what should I do?"
+    // rather than "what is on?". Its URL carries no date, so no upgrade needed.
+    {
+      key: 'week',
+      href: `/${city.id}/moj-tydzien` as Route,
+      title: t.HOME_WEEK_TITLE,
+      sub: t.HOME_WEEK_SUB,
+      cta: t.HOME_WEEK_CTA,
+      icon: <CasinoIcon />,
+      className: styles.tileWeek,
+    },
     {
       key: 'now',
       href: urls.now,

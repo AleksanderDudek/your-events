@@ -71,16 +71,31 @@ test.describe('Map: shows every match, not one page of them', () => {
       timeout: 25000,
     });
 
-    const represented = await page.evaluate(() => {
-      const clustered = Array.from(document.querySelectorAll('.marker-cluster span')).reduce(
-        (sum, el) => sum + Number(el.textContent || 0),
-        0
-      );
-      const single = document.querySelectorAll(
-        '.leaflet-marker-icon:not(.marker-cluster)'
-      ).length;
-      return clustered + single;
-    });
+    const count = () =>
+      page.evaluate(() => {
+        const clustered = Array.from(document.querySelectorAll('.marker-cluster span')).reduce(
+          (sum, el) => sum + Number(el.textContent || 0),
+          0
+        );
+        const single = document.querySelectorAll(
+          '.leaflet-marker-icon:not(.marker-cluster)'
+        ).length;
+        return clustered + single;
+      });
+    // Leaflet animates the fit to the pins, and for that half second the
+    // clusters of both zoom levels are in the DOM: 1994 counted for 1000 pins
+    // (Wrocław, 9.11.2026). Read once two looks in a row agree.
+    let represented = -1;
+    await expect
+      .poll(
+        async () => {
+          const previous = represented;
+          represented = await count();
+          return represented === previous;
+        },
+        { timeout: 15000, intervals: [400] }
+      )
+      .toBe(true);
 
     const resultText = await page.getByText(TEXT.resultsCount).first().textContent();
     const total = Number(resultText?.match(/\d+/)?.[0] ?? 0);

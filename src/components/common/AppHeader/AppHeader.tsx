@@ -43,6 +43,7 @@ export default function AppHeader() {
   const navItems = [
     { label: t.NAV_HOME, href: `/${city.id}` as Route },
     { label: t.NAV_EVENTS, href: `/${city.id}/wydarzenia` as Route },
+    { label: t.NAV_WEEK, href: `/${city.id}/moj-tydzien` as Route },
     // City-agnostic: these live outside the /{city} subtree.
     { label: t.NAV_PRESETS, href: MY_FILTERS_PATH as Route },
     { label: t.NAV_GROW, href: GROW_WITH_US_PATH as Route },

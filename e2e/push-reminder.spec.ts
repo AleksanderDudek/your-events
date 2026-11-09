@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { markFirstVisitAnswered } from './support/helpers';
 
 // The browser's push service cannot be reached from CI, so the service worker
 // and PushManager are stubbed. What this proves is everything around them: the
@@ -56,6 +57,9 @@ test.describe('Push reminders on /moje-filtry', () => {
         ])
       );
     });
+    // The onboarding's own notification step is a different surface; answered
+    // here so this file is about the card and the bell only.
+    await markFirstVisitAnswered(page);
     await page.reload();
   });
 
