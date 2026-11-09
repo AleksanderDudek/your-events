@@ -1,23 +1,26 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { CITY, TEXT } from './support/helpers';
+import { CONSENT_STORAGE_KEY } from '../src/lib/consent';
 
 // First-run onboarding. Every test starts from a browser that has never been
 // here (Playwright gives each test a fresh context), which is the only state
 // this feature reacts to.
 //
-// The cookie banner comes first by design — onboarding stays closed until a
-// consent choice exists — so answering it is the precondition for everything
-// below, not incidental setup.
+// Since 8.11.2026 the welcome sheet no longer waits for the cookie banner: it
+// opens on any city page as a modal over it, whatever the consent choice, and
+// either of its buttons leads to a notification step ("Nie teraz" / "Włącz
+// powiadomienia") before the page is the visitor's again.
 
 const sheet = (page: Page) => page.getByRole('heading', { name: TEXT.onboardingTitle });
 const tour = (page: Page) => page.getByRole('dialog');
 
-// Hydration signal, deliberately NOT the result count: onboarding has nothing
-// to do with whether events loaded, and gating on live data would make this
-// suite fail for reasons that have nothing to do with the feature. The cookie
-// banner is client-rendered from localStorage alone, so its appearance means
-// "the client tree is alive" and nothing more.
+// Hydration signal where no sheet is expected, deliberately NOT the result
+// count: onboarding has nothing to do with whether events loaded, and gating on
+// live data would make this suite fail for reasons that have nothing to do with
+// the feature. The cookie banner is client-rendered from localStorage alone, so
+// its appearance means "the client tree is alive" and nothing more. (Under an
+// open sheet the banner is aria-hidden; there the sheet itself is the signal.)
 const banner = (page: Page) => page.getByRole('region', { name: TEXT.cookieRegion });
 
 async function waitForHydration(page: Page): Promise<void> {
@@ -38,13 +41,27 @@ async function waitForSettled(page: Page): Promise<void> {
 
 async function arriveAsNewVisitor(page: Page): Promise<void> {
   await page.goto(`/${CITY}/wydarzenia`);
-  await waitForHydration(page);
-  await page.getByRole('button', { name: TEXT.cookieAccept }).click();
+  await expect(sheet(page)).toBeVisible({ timeout: 20000 });
+}
+
+/**
+ * "Nie teraz" on the notification step that follows the welcome buttons. A
+ * browser with nothing to offer settles that step on its own, so it may never
+ * show — waited for briefly, then carried on without.
+ */
+async function answerReminderStep(page: Page): Promise<void> {
+  const notNow = page.getByRole('button', { name: TEXT.reminderNotNow });
+  const shown = await notNow
+    .waitFor({ state: 'visible', timeout: 5000 })
+    .then(() => true)
+    .catch(() => false);
+  if (shown) await notNow.click();
 }
 
 async function startStory(page: Page): Promise<void> {
   await arriveAsNewVisitor(page);
   await page.getByRole('button', { name: TEXT.onboardingStart }).click();
+  await answerReminderStep(page);
   await expect(tour(page)).toBeVisible();
 }
 
@@ -60,20 +77,18 @@ async function savedPresets(page: Page) {
 }
 
 test.describe('First-run onboarding', () => {
-  test('greets a new visitor once the cookie choice is made', async ({ page }) => {
+  test('greets a new visitor whether or not the cookie banner is answered', async ({ page }) => {
     await page.goto(`/${CITY}/wydarzenia`);
-    await waitForHydration(page);
-
-    // Not before: two stacked overlays is exactly what the sequencing avoids.
-    await expect(sheet(page)).toBeHidden();
-
-    await page.getByRole('button', { name: TEXT.cookieAccept }).click();
-    await expect(sheet(page)).toBeVisible();
+    // The banner is still unanswered underneath: the sheet does not wait for it.
+    await expect(sheet(page)).toBeVisible({ timeout: 20000 });
+    const consent = await page.evaluate((key) => window.localStorage.getItem(key), CONSENT_STORAGE_KEY);
+    expect(consent).toBeNull();
   });
 
   test('a skip is remembered across a reload', async ({ page }) => {
     await arriveAsNewVisitor(page);
     await page.getByRole('button', { name: TEXT.onboardingSkip }).click();
+    await answerReminderStep(page);
     await expect(sheet(page)).toBeHidden();
 
     await page.reload();
@@ -144,6 +159,7 @@ test.describe('First-run onboarding', () => {
   test('the footer link replays it', async ({ page }) => {
     await arriveAsNewVisitor(page);
     await page.getByRole('button', { name: TEXT.onboardingSkip }).click();
+    await answerReminderStep(page);
     await expect(sheet(page)).toBeHidden();
 
     await page.getByRole('button', { name: TEXT.onboardingFooterLink }).click();

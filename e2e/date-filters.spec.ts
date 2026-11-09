@@ -1,12 +1,11 @@
 import { test, expect } from '@playwright/test';
-import {
-  TEXT,
-  CITY,
-  closeFilters,
-  openFilters,
-  skipFirstVisitPrompts,
-  waitForList,
-} from './support/helpers';
+import { TEXT, CITY, closeFilters, openFilters, skipFirstVisitPrompts, waitForList } from './support/helpers';
+
+// Every first-visit prompt answered up front: the welcome sheet is a modal on
+// any city page and would swallow the clicks this file is about.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // The home quick-filter tiles encode date/hour windows (buildNowUrl,
 // buildWeekendUrl). Those hrefs are computed client-side from the user's clock,
@@ -56,10 +55,6 @@ test.describe('Home quick-filter date windows', () => {
 test.describe('Default date window and quick picks', () => {
   const pad2 = (n: number) => String(n).padStart(2, '0');
   const ymd = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-
-  test.beforeEach(async ({ page }) => {
-    await skipFirstVisitPrompts(page);
-  });
 
   test('with no date picked, the list asks only for today onwards', async ({ page }) => {
     // The test and the browser share a clock and a timezone, so "today" is the

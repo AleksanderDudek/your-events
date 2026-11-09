@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { firstCard, gotoEvents } from './support/helpers';
+import { gotoEvents, openFirstEvent, skipFirstVisitPrompts } from './support/helpers';
+
+// Every first-visit prompt answered up front: the welcome sheet is a modal on
+// any city page and would swallow the clicks this file is about.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // The menu entries are plain anchors, so the whole contract is observable from
 // their href — no need to follow the link out to Google or Outlook, which would
@@ -7,8 +13,7 @@ import { firstCard, gotoEvents } from './support/helpers';
 test.describe('Add to calendar', () => {
   test('the detail page offers three calendar destinations', async ({ page }) => {
     await gotoEvents(page);
-    await firstCard(page).click();
-    await expect(page.getByRole('heading', { level: 1 })).not.toBeEmpty();
+    await openFirstEvent(page);
 
     await page.getByRole('button', { name: 'Dodaj do kalendarza' }).click();
 

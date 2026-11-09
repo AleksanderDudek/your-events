@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, CITY } from './support/helpers';
+import { TEXT, CITY, skipFirstVisitPrompts } from './support/helpers';
+
+// Every first-visit prompt answered up front: the welcome sheet is a modal on
+// any city page and would swallow the clicks this file is about.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // The city landing page is that city's front door: hero + quick-filter tiles
 // that deep link into the pre-filtered events list. The root "/" is now a

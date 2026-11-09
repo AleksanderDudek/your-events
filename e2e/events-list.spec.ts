@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, CITY, firstCard, gotoEvents } from './support/helpers';
+import { TEXT, CITY, firstCard, gotoEvents, skipFirstVisitPrompts } from './support/helpers';
+
+// Every first-visit prompt answered up front: the welcome sheet is a modal on
+// any city page and would swallow the clicks this file is about.
+test.beforeEach(async ({ page }) => {
+  await skipFirstVisitPrompts(page);
+});
 
 // Core browsing surface: the events list renders cards from Supabase and lets
 // the user switch between grid / list / map presentations.

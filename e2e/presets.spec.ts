@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { TEXT, CITY } from './support/helpers';
+import { TEXT, CITY, markFirstVisitAnswered } from './support/helpers';
 
 // Saved filters live in localStorage and are written by one component, read by
 // another, on a different route. Only a real browser run proves that round
@@ -11,6 +11,8 @@ test.describe('My filters (saved presets)', () => {
     // navigation and wipe the preset the test had just saved.
     await page.goto('/moje-filtry');
     await page.evaluate(() => window.localStorage.clear());
+    // ...except the first-visit answers, or the welcome sheet takes the page.
+    await markFirstVisitAnswered(page);
   });
 
   test('saving from the list produces a tile that reopens those filters', async ({ page }) => {

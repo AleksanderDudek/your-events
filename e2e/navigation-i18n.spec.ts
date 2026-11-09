@@ -73,7 +73,9 @@ test.describe('Navigation, i18n and city switching', () => {
     // city's own landing page.
     await gotoEvents(page);
     await page.getByRole('banner').getByText('Idź na miasto').click();
-    await expect(page.getByText(TEXT.cityPickerTitle)).toBeVisible();
+    // By role: after a client navigation Next's route announcer repeats the
+    // page title, and a bare text match then finds two elements.
+    await expect(page.getByRole('heading', { name: TEXT.cityPickerTitle })).toBeVisible();
     expect(new URL(page.url()).pathname).toBe('/');
   });
 });

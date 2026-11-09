@@ -1,6 +1,10 @@
 import { expect, type Page } from '@playwright/test';
 import { CONSENT_STORAGE_KEY } from '../../src/lib/consent';
-import { ONBOARDING_STORAGE_KEY, ONBOARDING_VERSION } from '../../src/lib/onboarding';
+import {
+  ONBOARDING_STORAGE_KEY,
+  ONBOARDING_VERSION,
+  REMINDER_OFFER_STORAGE_KEY,
+} from '../../src/lib/onboarding';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // These e2e tests run the real app against the real (multi-city) Supabase
@@ -120,6 +124,9 @@ export const TEXT = {
   storyPresetName: 'Po pracy',
   onboardingStepCount: /Krok \d+ z \d+/,
   onboardingFooterLink: 'Jak to działa?',
+  // The notification step that follows either welcome button (and is offered
+  // on its own to anyone who saw the tour before reminders existed).
+  reminderNotNow: 'Nie teraz',
   // The "W pobliżu" (nearby) filter section, its controls, and how its chip
   // names a point.
   nearSection: 'W pobliżu',
@@ -145,6 +152,23 @@ export function firstCard(page: Page) {
 export async function gotoEvents(page: Page): Promise<void> {
   await page.goto(`/${CITY}/wydarzenia`);
   await expect(firstCard(page)).toBeVisible({ timeout: 20000 });
+}
+
+/** An event permalink: /{city}/{category}/{name}-{shortid}. */
+export const EVENT_PERMALINK = new RegExp(`/${CITY}/[a-z0-9-]+/[a-z0-9-]+-[0-9a-f]{8}/?$`);
+
+/**
+ * Open the first card's event page and wait until it is really there.
+ *
+ * The detail route is the heaviest one under `next dev`: its first hit compiles
+ * the page and reads every event of the city for its static params. The specs
+ * that happen to open it first in a run waited 10 s for the heading while the
+ * click was still compiling — so the URL gets a cold-start budget of its own.
+ */
+export async function openFirstEvent(page: Page): Promise<void> {
+  await firstCard(page).click();
+  await expect(page).toHaveURL(EVENT_PERMALINK, { timeout: 45000 });
+  await expect(page.getByRole('heading', { level: 1 })).not.toBeEmpty({ timeout: 20000 });
 }
 
 /**
@@ -284,19 +308,33 @@ export function activeChip(page: Page, label: string | RegExp) {
   return page.locator('.MuiChip-root').filter({ hasText: label });
 }
 
+const FIRST_VISIT_ANSWERS = [
+  [CONSENT_STORAGE_KEY, 'rejected'],
+  [ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION)],
+  [REMINDER_OFFER_STORAGE_KEY, '1'],
+] as const;
+
 /**
- * Answer both first-visit prompts before the page loads, for tests about
+ * Answer every first-visit prompt before the page loads, for tests about
  * something else. On a phone the cookie banner covers the bottom of the
- * screen — the filters button, map pins — and the onboarding sheet opens the
- * moment the banner is answered. cookie-consent.spec and onboarding.spec are
- * the ones that test the prompts themselves, and do not call this.
+ * screen — the filters button, map pins — and the onboarding sheet is a modal
+ * that opens on any city page, whatever the cookie choice, followed by its
+ * notification step: left open, it swallows every click on the page.
+ * cookie-consent.spec and onboarding.spec are the ones that test the prompts
+ * themselves, and do not call this.
  */
 export async function skipFirstVisitPrompts(page: Page): Promise<void> {
-  await page.addInitScript(
-    ([consentKey, onboardingKey, version]) => {
-      window.localStorage.setItem(consentKey, 'rejected');
-      window.localStorage.setItem(onboardingKey, version);
-    },
-    [CONSENT_STORAGE_KEY, ONBOARDING_STORAGE_KEY, String(ONBOARDING_VERSION)] as const
-  );
+  await page.addInitScript((answers) => {
+    for (const [key, value] of answers) window.localStorage.setItem(key, value);
+  }, FIRST_VISIT_ANSWERS);
+}
+
+/**
+ * The same answers, written now, into the current document — for a test that
+ * has just cleared localStorage and is about to reload.
+ */
+export async function markFirstVisitAnswered(page: Page): Promise<void> {
+  await page.evaluate((answers) => {
+    for (const [key, value] of answers) window.localStorage.setItem(key, value);
+  }, FIRST_VISIT_ANSWERS);
 }
