@@ -61,4 +61,10 @@ export const eventsKeys = {
     ['events', cityId, 'map', mapQueryShape(filters)] as const,
   categories: () => ['categories'] as const,
   seasons: (cityId: CityId | string, today: string) => ['seasons', cityId, today] as const,
+  // The whole plannable week, read once: day and mood changes are applied in
+  // the browser, so only a change of the week (or of routine on/off) refetches.
+  planCandidates: (cityId: CityId | string, dates: readonly string[], withRoutine: boolean) =>
+    ['events', cityId, 'plan', dates.join(','), withRoutine] as const,
+  sharedPlan: (cityId: CityId | string, ids: readonly string[]) =>
+    ['events', cityId, 'shared-plan', ids.join('.')] as const,
 };

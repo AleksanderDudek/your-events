@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CalendarEvent } from './calendarEvent';
-import { buildIcs, escapeIcsText, foldIcsLine, icsDataUri } from './ics';
+import { buildIcs, buildIcsCalendar, escapeIcsText, foldIcsLine, icsDataUri } from './ics';
 
 function makeCalendarEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
   return {
@@ -160,5 +160,25 @@ describe('icsDataUri', () => {
     const uri = icsDataUri('BEGIN:VCALENDAR');
     expect(uri.startsWith('data:text/calendar;charset=utf-8,')).toBe(true);
     expect(decodeURIComponent(uri.split(',').slice(1).join(','))).toBe('BEGIN:VCALENDAR');
+  });
+});
+
+describe('buildIcsCalendar', () => {
+  it('wraps several events in one calendar', () => {
+    const ics = buildIcsCalendar([
+      makeCalendarEvent({ uid: 'a@idznamiasto' }),
+      makeCalendarEvent({ uid: 'b@idznamiasto', title: 'Spektakl' }),
+    ]);
+    expect(ics.match(/BEGIN:VCALENDAR/g)).toHaveLength(1);
+    expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+    expect(ics.match(/END:VEVENT/g)).toHaveLength(2);
+    expect(ics).toContain('UID:a@idznamiasto');
+    expect(ics).toContain('SUMMARY:Spektakl');
+    expect(ics.endsWith('END:VCALENDAR\r\n')).toBe(true);
+  });
+
+  it('writes a single event exactly as buildIcs does', () => {
+    const event = makeCalendarEvent();
+    expect(buildIcsCalendar([event])).toBe(buildIcs(event));
   });
 });

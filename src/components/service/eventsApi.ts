@@ -9,6 +9,7 @@ import { boundingBox, distanceMeters } from '@/lib/geo';
 import { defaultDateWindow } from '@/lib/dateWindows';
 import { isSeasonUpcoming, parseSeasonSlug, seasonsInWindow } from '@/lib/seasons';
 import { OfferedSeason, Season } from '@/types/season.types';
+import { PlanCandidate, ROUTINE_CATEGORIES } from '@/lib/weekPlan';
 
 interface SupabaseEventRow {
   id: number;
@@ -512,6 +513,76 @@ export async function fetchEvent(cityId: CityId | string, id: string): Promise<E
   if (error) throw new ServerError(error.message);
 
   return mapRow(data as SupabaseEventRow, city.displayName.pl);
+}
+
+// The enrichment columns "Twój tydzień" weighs its draw by. Not on the shared
+// row type: no other view reads them, and the list's select('*') would carry
+// them for nothing.
+interface PlanCandidateRow extends SupabaseEventRow {
+  popularity: number | null;
+  image_kind: string | null;
+  seasons: string[] | null;
+  audience: string[] | null;
+  is_last_day: boolean | null;
+  sold_out: boolean | null;
+}
+
+// Named rather than '*': the whole week is read at once (~1100 rows in a city),
+// and all_urls / scraped_at are dead weight for a card.
+const PLAN_CANDIDATE_COLUMNS =
+  'id,event_key,source,sources,venue,date,time_start,time_end,duration_min,name,description,' +
+  'url,category_main,category_sub,price,price_max,price_label,is_free,lat,lng,image_url,updated_at,' +
+  'popularity,image_kind,seasons,audience,is_last_day,sold_out';
+const PLAN_MAX_PAGES = 10;
+
+/**
+ * Every event "Twój tydzień" may propose on the given days.
+ *
+ * Classes (ROUTINE_CATEGORIES) are left out at the source unless
+ * `withRoutine`: they are a third of a week's rows and the draw would skip
+ * them anyway, so fetching them only costs bandwidth.
+ */
+export async function fetchPlanCandidates(
+  cityId: CityId | string,
+  dates: readonly string[],
+  withRoutine: boolean
+): Promise<PlanCandidate[]> {
+  if (dates.length === 0) return [];
+  const city = getCity(cityId);
+  const supabase = getSupabaseForCity(city.id);
+  const cityName = city.displayName.pl;
+  const rows: PlanCandidateRow[] = [];
+  for (let page = 0; page < PLAN_MAX_PAGES; page += 1) {
+    const from = page * SCAN_PAGE_SIZE;
+    let query = supabase.from('events').select(PLAN_CANDIDATE_COLUMNS).in('date', [...dates]);
+    if (!withRoutine) {
+      query = query.not('category_main', 'in', `(${ROUTINE_CATEGORIES.map(quoteForOr).join(',')})`);
+    }
+    const { data, error } = await query.order('id', { ascending: true }).range(from, from + SCAN_PAGE_SIZE - 1);
+    if (error) throw new ServerError(error.message);
+    const batch = (data as unknown as PlanCandidateRow[] | null) ?? [];
+    rows.push(...batch);
+    if (batch.length < SCAN_PAGE_SIZE) break;
+  }
+  return rows.map((row) => ({
+    event: mapRow(row, cityName),
+    popularity: row.popularity ?? 1,
+    imageKind: row.image_kind,
+    seasons: row.seasons ?? [],
+    audience: row.audience ?? [],
+    isLastDay: row.is_last_day === true,
+    soldOut: row.sold_out === true,
+  }));
+}
+
+/**
+ * The events of a shared plan, in link order. An id whose event has gone
+ * (passed, or rewritten by the scraper) is skipped — the caller says so.
+ */
+export async function fetchEventsByIds(cityId: CityId | string, ids: readonly string[]): Promise<Event[]> {
+  const city = getCity(cityId);
+  const supabase = getSupabaseForCity(city.id);
+  return fetchRowsInOrder(supabase, ids.map(Number), city.displayName.pl);
 }
 
 export async function fetchCategories(): Promise<DbCategory[]> {

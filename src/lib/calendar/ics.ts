@@ -79,11 +79,24 @@ export function formatIcsDate(date: Date): string {
 }
 
 export function buildIcs(event: CalendarEvent): string {
+  return buildIcsCalendar([event]);
+}
+
+/** One calendar file holding several events — a whole "Twój tydzień" plan. */
+export function buildIcsCalendar(events: readonly CalendarEvent[]): string {
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Idz na miasto//Events//PL',
     'CALSCALE:GREGORIAN',
+    ...events.flatMap(veventLines),
+    'END:VCALENDAR',
+  ];
+  return lines.map(foldIcsLine).join(CRLF) + CRLF;
+}
+
+function veventLines(event: CalendarEvent): string[] {
+  const lines: string[] = [
     'BEGIN:VEVENT',
     `UID:${escapeIcsText(event.uid)}`,
     `DTSTAMP:${formatIcsDateTime(event.stamp)}`,
@@ -100,9 +113,8 @@ export function buildIcs(event: CalendarEvent): string {
   if (event.description) lines.push(`DESCRIPTION:${escapeIcsText(event.description)}`);
   if (event.url) lines.push(`URL:${sanitiseUri(event.url)}`);
 
-  lines.push('END:VEVENT', 'END:VCALENDAR');
-
-  return lines.map(foldIcsLine).join(CRLF) + CRLF;
+  lines.push('END:VEVENT');
+  return lines;
 }
 
 /**
