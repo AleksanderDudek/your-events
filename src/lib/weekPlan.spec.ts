@@ -389,3 +389,65 @@ describe('share link', () => {
     expect(decodePlanParam(many)).toHaveLength(MAX_SHARED_EVENTS);
   });
 });
+
+describe('planReducer: board actions', () => {
+  const MON = TODAY;
+  const WED = '2026-11-11';
+
+  function setup(parts: PlanSettings['days'][number]['parts'] = ['any']) {
+    const evs = [
+      ...Array.from({ length: 8 }, (_, i) => cand({ date: MON, startTime: `${String(8 + i).padStart(2, '0')}:00`, name: `Pon ${i}` })),
+      ...Array.from({ length: 8 }, (_, i) => cand({ date: WED, startTime: `${String(8 + i).padStart(2, '0')}:00`, name: `Śr ${i}` })),
+    ];
+    const ctx = ctxOf(evs, 9);
+    const settings = settingsFor([[MON, parts], [WED, ['any']]]);
+    return { ctx, state: planReducer(emptyPlan(settings), { type: 'settings', settings }, ctx) };
+  }
+
+  it('fills every open slot at once and leaves decided ones alone', () => {
+    const { ctx, state } = setup(['any', 'any']);
+    const kept = state.proposals[slotId(MON, 1)][2];
+    const decided = planReducer(state, { type: 'choose', slotId: slotId(MON, 1), eventId: kept }, ctx);
+    const full = planReducer(decided, { type: 'autofill' }, ctx);
+    expect(Object.keys(full.chosen).sort()).toEqual([slotId(MON, 0), slotId(MON, 1), slotId(WED, 0)].sort());
+    expect(full.chosen[slotId(MON, 1)]).toBe(kept);
+    expect(new Set(Object.values(full.chosen)).size).toBe(3);
+  });
+
+  it('moves the later slots of a day up when one is removed', () => {
+    const { ctx, state } = setup(['morning', 'afternoon', 'evening']);
+    const pick = state.proposals[slotId(MON, 2)][0];
+    let s = planReducer(state, { type: 'choose', slotId: slotId(MON, 2), eventId: pick }, ctx);
+    s = planReducer(s, { type: 'removeSlot', slotId: slotId(MON, 0) }, ctx);
+    expect(s.settings.days.find((d) => d.date === MON)!.parts).toEqual(['afternoon', 'evening']);
+    // The evening choice followed its slot from #2 to #1.
+    expect(s.chosen).toEqual({ [slotId(MON, 1)]: pick });
+    expect(s.proposals[slotId(MON, 2)]).toBeUndefined();
+  });
+
+  it('drops the whole day with its last slot', () => {
+    const { ctx, state } = setup();
+    const s = planReducer(state, { type: 'removeSlot', slotId: slotId(MON, 0) }, ctx);
+    expect(s.settings.days.map((d) => d.date)).toEqual([WED]);
+    expect(s.proposals[slotId(MON, 0)]).toBeUndefined();
+  });
+
+  it('adds a slot to a day, up to the limit', () => {
+    const { ctx, state } = setup(['any', 'any', 'any']);
+    expect(planReducer(state, { type: 'addSlot', date: MON }, ctx)).toBe(state);
+    const more = planReducer(state, { type: 'addSlot', date: WED }, ctx);
+    expect(more.settings.days.find((d) => d.date === WED)!.parts).toEqual(['any', 'any']);
+    expect(more.proposals[slotId(WED, 1)]).toHaveLength(3);
+  });
+
+  it('redraws one slot for a new time of day, forgetting its choice', () => {
+    const { ctx, state } = setup();
+    const pick = state.proposals[slotId(MON, 0)][0];
+    let s = planReducer(state, { type: 'choose', slotId: slotId(MON, 0), eventId: pick }, ctx);
+    s = planReducer(s, { type: 'setPart', slotId: slotId(MON, 0), part: 'morning' }, ctx);
+    expect(s.chosen[slotId(MON, 0)]).toBeUndefined();
+    const offered = s.proposals[slotId(MON, 0)].map((id) => ctx.candidates.get(id)!.event.startTime);
+    expect(offered.every((t) => t < '12:00')).toBe(true);
+    expect(s.proposals[slotId(WED, 0)]).toEqual(state.proposals[slotId(WED, 0)]);
+  });
+});

@@ -327,7 +327,15 @@ export type PlanAction =
   | { type: 'reroll'; slotId?: string }
   | { type: 'skip'; slotId: string; eventId: string }
   | { type: 'choose'; slotId: string; eventId: string }
-  | { type: 'unchoose'; slotId: string };
+  | { type: 'unchoose'; slotId: string }
+  /** Fill every open slot with its first proposal ("Zaskocz mnie"). */
+  | { type: 'autofill' }
+  /** A new time of day for one slot; its choice and shortlist start over. */
+  | { type: 'setPart'; slotId: string; part: DayPart }
+  /** A day's extra slot, appended at the end. */
+  | { type: 'addSlot'; date: string }
+  /** Drop one slot of a day; the day's later slots move up a place. */
+  | { type: 'removeSlot'; slotId: string };
 
 export interface PlanContext {
   candidates: ReadonlyMap<string, PlanCandidate>;
@@ -503,7 +511,76 @@ export function planReducer(state: PlanState, action: PlanAction, ctx: PlanConte
       delete chosen[action.slotId];
       return fillSlots({ ...state, chosen }, ctx, action.slotId);
     }
+    case 'autofill': {
+      let next = state;
+      for (const slot of planSlots(state.settings)) {
+        const first = next.proposals[slot.id]?.[0];
+        if (!next.chosen[slot.id] && first) {
+          next = planReducer(next, { type: 'choose', slotId: slot.id, eventId: first }, ctx);
+        }
+      }
+      return next;
+    }
+    case 'setPart': {
+      const [date, index] = splitSlotId(action.slotId);
+      const days = state.settings.days.map((d) =>
+        d.date === date ? { ...d, parts: d.parts.map((p, i) => (i === index ? action.part : p)) } : d
+      );
+      const cleared = withoutSlot(state, action.slotId);
+      return fillSlots({ ...cleared, settings: { ...state.settings, days } }, ctx, action.slotId);
+    }
+    case 'addSlot': {
+      const day = state.settings.days.find((d) => d.date === action.date);
+      if (!day || day.parts.length >= MAX_SLOTS_PER_DAY) return state;
+      const days = state.settings.days.map((d) =>
+        d.date === action.date ? { ...d, parts: [...d.parts, 'any' as DayPart] } : d
+      );
+      return fillSlots(
+        { ...state, settings: { ...state.settings, days } },
+        ctx,
+        slotId(action.date, day.parts.length)
+      );
+    }
+    case 'removeSlot': {
+      const [date, index] = splitSlotId(action.slotId);
+      const day = state.settings.days.find((d) => d.date === date);
+      if (!day) return state;
+      // The last slot of a day takes the day with it.
+      const days =
+        day.parts.length === 1
+          ? state.settings.days.filter((d) => d.date !== date)
+          : state.settings.days.map((d) =>
+              d.date === date ? { ...d, parts: d.parts.filter((_, i) => i !== index) } : d
+            );
+      // Slot ids are positional, so everything after the removed one moves up.
+      const shift = <T,>(record: Record<string, T>) =>
+        Object.fromEntries(
+          Object.entries(record).flatMap(([id, value]) => {
+            const [d, i] = splitSlotId(id);
+            if (d !== date) return [[id, value]];
+            if (i === index) return [];
+            return [[slotId(d, i > index ? i - 1 : i), value]];
+          })
+        );
+      return {
+        settings: { ...state.settings, days },
+        proposals: shift(state.proposals),
+        chosen: shift(state.chosen),
+        skipped: shift(state.skipped),
+      };
+    }
   }
+}
+
+function splitSlotId(id: string): [string, number] {
+  const [date, index] = id.split('#');
+  return [date, Number(index)];
+}
+
+function withoutSlot(state: PlanState, id: string): PlanState {
+  const drop = <T,>(record: Record<string, T>) =>
+    Object.fromEntries(Object.entries(record).filter(([key]) => key !== id));
+  return { ...state, proposals: drop(state.proposals), chosen: drop(state.chosen), skipped: drop(state.skipped) };
 }
 
 /** Replaces open proposals that the plan's choices have ruled out. */

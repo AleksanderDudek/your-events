@@ -1,17 +1,17 @@
 @use '../../../styles/mixins' as *;
 
 .container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   // Room at the bottom for the sticky summary bar.
   padding: 24px 16px 120px;
 
   @include sm {
-    padding: 40px 24px 140px;
+    padding: 40px 24px 120px;
   }
 
   @include md {
-    padding: 48px 32px 140px;
+    padding: 48px 32px 120px;
   }
 }
 
@@ -38,45 +38,42 @@
   color: var(--color-text-secondary);
 }
 
-// ── Settings ────────────────────────────────────────────────────────────────
+// ── Toolbar and filters ─────────────────────────────────────────────────────
 
-.settings {
-  margin-bottom: 24px;
-}
-
-.settingsBar {
+.toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 20px;
 }
 
-.accordion {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md) !important;
-  background: var(--color-bg-surface);
-  box-shadow: none;
+.toolbarHint {
+  margin: 0;
+  max-width: 34rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
 
-  &::before {
-    display: none;
+.filters {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+
+  @include md {
+    grid-template-columns: auto 1fr;
+    gap: 24px;
   }
 }
 
-.accordionTitle {
-  font-family: var(--font-body);
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.accordionMeta {
-  margin-left: 12px;
-  font-family: var(--font-body);
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-}
-
 .fieldset {
-  margin: 0 0 16px;
+  min-width: 0;
+  margin: 0;
   padding: 0;
   border: 0;
 }
@@ -98,9 +95,9 @@
 
 .chip {
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
-  min-height: 40px;
+  justify-content: center;
+  min-height: 36px;
   padding: 6px 14px;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-pill);
@@ -118,6 +115,13 @@
   }
 
   @include focus-visible;
+}
+
+.dayChip {
+  flex-direction: column;
+  min-width: 52px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
 }
 
 .chipOn {
@@ -142,94 +146,216 @@
   color: var(--color-text-muted);
 }
 
-.dayRows {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.dayRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-}
-
-.dayRowLabel {
-  min-width: 88px;
-  font-family: var(--font-body);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.dayRowParts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.partPicker {
-  display: inline-flex;
-  align-items: center;
-}
-
-.select {
-  min-height: 36px;
-  padding: 4px 8px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-surface);
-  color: var(--color-text-primary);
-  font-family: var(--font-body);
-  font-size: 0.875rem;
-
-  @include focus-visible;
-}
-
-// ── Slots ───────────────────────────────────────────────────────────────────
-
 .notice {
   margin: 32px 0;
   font-family: var(--font-body);
   color: var(--color-text-secondary);
 }
 
-.slots {
+// ── Board: a card per day ───────────────────────────────────────────────────
+
+.board {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include sm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include lg {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.day {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.dayTitle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-display);
+}
+
+.dayName {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.dayDate {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.daySlots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.slotHeader {
+.daySlot {
+  min-width: 0;
+}
+
+.dayAdd {
+  align-self: flex-start;
+}
+
+.emptySlot {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 4px;
 }
 
-.slotTitle {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
+.emptySlotButton {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-accent-primary);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-base), border-color var(--transition-base);
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-accent-primary);
+    background: var(--color-accent-tint-soft);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+
+  @include focus-visible;
 }
 
-.slotPart {
-  font-weight: 500;
+.emptySlotLabel {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.emptySlotPart {
+  display: block;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
 }
 
-.empty {
+.clearRow {
+  margin-top: 16px;
+}
+
+// ── Compact tile (board) ────────────────────────────────────────────────────
+
+.mini {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  grid-template-areas:
+    'image body'
+    'actions actions';
+  gap: 8px 12px;
+  padding: 10px;
+  border: 1px solid var(--color-accent-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-tint-soft);
+}
+
+.miniImage {
+  position: relative;
+  grid-area: image;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.miniBody {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.miniTime {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent-primary);
+}
+
+.miniTitle {
   margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.miniActions {
+  grid-area: actions;
+  display: flex;
+  gap: 4px;
+}
+
+// ── Chooser dialog ──────────────────────────────────────────────────────────
+
+.chooserTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+}
+
+.chooserSub {
+  margin: 0 0 12px;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.chooserActions {
+  justify-content: space-between !important;
+  padding: 8px 24px 16px !important;
+}
+
+.empty {
+  margin: 16px 0 0;
   padding: 16px;
   border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-md);
@@ -242,17 +368,14 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
+  margin-top: 16px;
 
   @include sm {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @include md {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-// ── Card ────────────────────────────────────────────────────────────────────
+// ── Full card (chooser) ─────────────────────────────────────────────────────
 
 .card {
   display: flex;
@@ -262,11 +385,6 @@
   border-radius: var(--radius-lg);
   background: var(--color-bg-surface);
   box-shadow: var(--shadow-card);
-}
-
-.cardChosen {
-  border-color: var(--color-accent-primary);
-  box-shadow: 0 0 0 2px var(--color-accent-tint-strong), var(--shadow-card);
 }
 
 .cardImage {
@@ -281,27 +399,17 @@
   height: 100%;
 }
 
-.cardTime,
-.cardRibbon {
+.cardTime {
   position: absolute;
   top: 10px;
+  right: 10px;
   padding: 3px 10px;
   border-radius: var(--radius-pill);
+  background: rgba(15, 12, 24, 0.75);
+  color: #ffffff;
   font-family: var(--font-body);
   font-size: 0.8125rem;
   font-weight: 600;
-}
-
-.cardTime {
-  right: 10px;
-  background: rgba(15, 12, 24, 0.75);
-  color: #ffffff;
-}
-
-.cardRibbon {
-  left: 10px;
-  background: var(--color-accent-primary);
-  color: #ffffff;
 }
 
 .cardBody {
@@ -334,7 +442,7 @@
 .cardVenue {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
   @include text-ellipsis;
 }

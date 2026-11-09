@@ -6,11 +6,13 @@ import type { Route } from 'next';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import Snackbar from '@mui/material/Snackbar';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import CasinoIcon from '@mui/icons-material/Casino';
 import CheckIcon from '@mui/icons-material/Check';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
@@ -19,6 +21,7 @@ import EventIcon from '@mui/icons-material/Event';
 import ShareIcon from '@mui/icons-material/Share';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
@@ -48,17 +51,18 @@ import {
   planDates,
   planReducer,
   PlanSettings,
+  PlanSlot,
   planSlots,
   PlanState,
   StoredPlan,
   wantsRoutine,
   weekdayOf,
 } from '@/lib/weekPlan';
+import { Event } from '@/types/event.types';
 import PlanEventCard from './PlanEventCard';
 import styles from './WeekPlanView.module.scss';
 
 export const WEEK_PLAN_STORAGE_PREFIX = 'go-to-city.week-plan.';
-export const WEEK_PLAN_PATH = 'moj-tydzien';
 
 function readStored(cityId: string, today: string): StoredPlan | null {
   try {
@@ -109,7 +113,16 @@ export default function WeekPlanView() {
   );
 }
 
+function dayLabel(t: ReturnType<typeof useTranslation>['t'], date: string, locale: string): string {
+  return `${t.WEEKDAY_LONG[weekdayOf(date)]}, ${formatDateShort(date, locale)}`;
+}
+
 // ── Building a plan ──────────────────────────────────────────────────────────
+//
+// The page is the week itself: a board with a card per chosen day and a tile
+// per slot. Choosing happens in a dialog opened from an empty tile, so the
+// shortlist never sits in the board's flow — a first version laid the three
+// cards of every day one under another and the days ran into each other.
 
 function Planner({ today }: { today: string }) {
   const { t, locale } = useTranslation();
@@ -122,14 +135,15 @@ function Planner({ today }: { today: string }) {
   const [state, setState] = useState<PlanState>(() =>
     stored ? { ...emptyPlan(stored.settings), chosen: stored.chosen } : emptyPlan(defaultSettings(today))
   );
+  const [picking, setPicking] = useState<string | null>(null);
   const withRoutine = wantsRoutine(state.settings.moods);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: eventsKeys.planCandidates(city.id, dates, withRoutine),
     queryFn: () => fetchPlanCandidates(city.id, dates, withRoutine),
     staleTime: 10 * 60_000,
-    // Gym classes arrive only once "Aktywnie" is on; until that read lands the
-    // previous candidates (a subset) keep the cards on screen.
+    // Classes arrive only once "Aktywnie" is on; until that read lands the
+    // previous candidates (a subset) keep the board and the dialog working.
     placeholderData: keepPreviousData,
   });
   const candidates = useMemo(() => new Map((data ?? []).map((c) => [c.event.id, c])), [data]);
@@ -139,7 +153,7 @@ function Planner({ today }: { today: string }) {
     [candidates]
   );
 
-  // New candidates (first load, routine switched on): draw the open slots
+  // New candidates (first load, classes switched on): draw the open slots
   // again around them. A stored choice whose event is gone drops out first.
   useEffect(() => {
     if (!data) return;
@@ -156,10 +170,10 @@ function Planner({ today }: { today: string }) {
 
   const slots = planSlots(state.settings);
   const chosen = chosenInOrder(state, candidates);
-  const hrefOf = (id: string) => {
-    const event = candidates.get(id)?.event;
-    return event ? eventPath(city.id, event, displayNameToSlug) : '#';
-  };
+  const openSlots = slots.filter((s) => !state.chosen[s.id]).length;
+  const pickingSlot = slots.find((s) => s.id === picking) ?? null;
+  const hrefOf = (event: Event) => eventPath(city.id, event, displayNameToSlug);
+  const ready = candidates.size > 0;
 
   return (
     <>
@@ -168,16 +182,24 @@ function Planner({ today }: { today: string }) {
         <p className={styles.subtitle}>{t.WEEK_SUB(cityLocative)}</p>
       </header>
 
-      <SettingsPanel
+      <div className={styles.toolbar}>
+        <Button
+          variant="contained"
+          size="large"
+          disableElevation
+          startIcon={<CasinoIcon />}
+          disabled={!ready || openSlots === 0}
+          onClick={() => dispatch({ type: 'autofill' })}
+        >
+          {t.WEEK_SURPRISE}
+        </Button>
+        <p className={styles.toolbarHint}>{openSlots > 0 ? t.WEEK_SURPRISE_HINT : t.WEEK_BOARD_FULL}</p>
+      </div>
+
+      <PlanFilters
         settings={state.settings}
         dates={dates}
         onChange={(settings) => dispatch({ type: 'settings', settings })}
-        onReroll={() => dispatch({ type: 'reroll' })}
-        onReset={() => {
-          // A clean slate: default days, nothing chosen, nothing skipped.
-          const settings = defaultSettings(today);
-          setState(planReducer(emptyPlan(settings), { type: 'settings', settings }, { candidates, rng: Math.random }));
-        }}
       />
 
       {isError ? (
@@ -187,102 +209,134 @@ function Planner({ today }: { today: string }) {
             {t.WEEK_RETRY}
           </Button>
         </div>
-      ) : isLoading && candidates.size === 0 ? (
+      ) : isLoading && !ready ? (
         <p className={styles.notice} role="status">
           {t.WEEK_LOADING}
         </p>
-      ) : slots.length === 0 ? (
+      ) : state.settings.days.length === 0 ? (
         <p className={styles.notice}>{t.WEEK_NO_DAYS}</p>
       ) : (
-        <ol className={styles.slots}>
-          {slots.map((slot) => {
-            const decided = state.chosen[slot.id];
-            const offered = state.proposals[slot.id] ?? [];
-            const dayLabel = `${t.WEEKDAY_LONG[weekdayOf(slot.date)]}, ${formatDateShort(slot.date, locale)}`;
-            return (
-              <li key={slot.id} className={styles.slot}>
-                <div className={styles.slotHeader}>
-                  <h2 className={styles.slotTitle}>
-                    {dayLabel}
-                    {slot.part !== 'any' && <span className={styles.slotPart}> · {t.WEEK_PART[slot.part]}</span>}
-                  </h2>
-                  {!decided && offered.length > 0 && (
-                    <Button
-                      size="small"
-                      startIcon={<CasinoIcon />}
-                      onClick={() => dispatch({ type: 'reroll', slotId: slot.id })}
-                    >
-                      {t.WEEK_REROLL_SLOT}
-                    </Button>
-                  )}
-                </div>
-                {decided && candidates.get(decided) ? (
-                  <div className={styles.cards}>
-                    <PlanEventCard event={candidates.get(decided)!.event} href={hrefOf(decided)} chosen>
-                      <Button
-                        size="small"
-                        startIcon={<EditIcon />}
-                        onClick={() => dispatch({ type: 'unchoose', slotId: slot.id })}
-                      >
-                        {t.WEEK_CHANGE}
-                      </Button>
-                    </PlanEventCard>
-                  </div>
-                ) : offered.length === 0 ? (
-                  <p className={styles.empty}>{t.WEEK_EMPTY_SLOT}</p>
-                ) : (
-                  <div className={styles.cards}>
-                    {offered.map((id) => {
-                      const candidate = candidates.get(id);
-                      if (!candidate) return null;
+        <ol className={styles.board} aria-label={t.WEEK_TITLE}>
+          {[...state.settings.days]
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .map((day) => (
+              <li key={day.date} className={styles.day}>
+                <h2 className={styles.dayTitle}>
+                  <span className={styles.dayName}>{t.WEEKDAY_LONG[weekdayOf(day.date)]}</span>
+                  <span className={styles.dayDate}>{formatDateShort(day.date, locale)}</span>
+                </h2>
+                <ul className={styles.daySlots}>
+                  {slots
+                    .filter((slot) => slot.date === day.date)
+                    .map((slot, index) => {
+                      const event = state.chosen[slot.id] ? candidates.get(state.chosen[slot.id])?.event : undefined;
                       return (
-                        <PlanEventCard key={id} event={candidate.event} href={hrefOf(id)}>
-                          <Button
-                            size="small"
-                            variant="contained"
-                            disableElevation
-                            startIcon={<CheckIcon />}
-                            onClick={() => dispatch({ type: 'choose', slotId: slot.id, eventId: id })}
-                          >
-                            {t.WEEK_CHOOSE}
-                          </Button>
-                          <Button
-                            size="small"
-                            startIcon={<SkipNextIcon />}
-                            onClick={() => dispatch({ type: 'skip', slotId: slot.id, eventId: id })}
-                          >
-                            {t.WEEK_SKIP}
-                          </Button>
-                        </PlanEventCard>
+                        <li key={slot.id} className={styles.daySlot}>
+                          {event ? (
+                            <PlanEventCard event={event} href={hrefOf(event)} variant="compact">
+                              <Button
+                                size="small"
+                                startIcon={<EditIcon />}
+                                onClick={() => {
+                                  dispatch({ type: 'unchoose', slotId: slot.id });
+                                  setPicking(slot.id);
+                                }}
+                              >
+                                {t.WEEK_CHANGE}
+                              </Button>
+                              <Button
+                                size="small"
+                                color="inherit"
+                                startIcon={<DeleteOutlineIcon />}
+                                onClick={() => dispatch({ type: 'unchoose', slotId: slot.id })}
+                              >
+                                {t.WEEK_REMOVE_EVENT}
+                              </Button>
+                            </PlanEventCard>
+                          ) : (
+                            <div className={styles.emptySlot}>
+                              <button
+                                type="button"
+                                className={styles.emptySlotButton}
+                                disabled={!ready}
+                                onClick={() => setPicking(slot.id)}
+                              >
+                                <AddIcon fontSize="small" />
+                                <span>
+                                  <span className={styles.emptySlotLabel}>{t.WEEK_PICK}</span>
+                                  {slot.part !== 'any' && (
+                                    <span className={styles.emptySlotPart}>{t.WEEK_PART[slot.part]}</span>
+                                  )}
+                                </span>
+                              </button>
+                              <IconButton
+                                size="small"
+                                aria-label={t.WEEK_REMOVE_SLOT(index + 1)}
+                                onClick={() => dispatch({ type: 'removeSlot', slotId: slot.id })}
+                              >
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            </div>
+                          )}
+                        </li>
                       );
                     })}
-                  </div>
+                </ul>
+                {day.parts.length < MAX_SLOTS_PER_DAY && (
+                  <Button
+                    size="small"
+                    startIcon={<AddIcon />}
+                    className={styles.dayAdd}
+                    onClick={() => dispatch({ type: 'addSlot', date: day.date })}
+                  >
+                    {t.WEEK_ADD_SLOT}
+                  </Button>
                 )}
               </li>
-            );
-          })}
+            ))}
         </ol>
       )}
+
+      <div className={styles.clearRow}>
+        <Button
+          size="small"
+          color="inherit"
+          startIcon={<RestartAltIcon />}
+          onClick={() => {
+            // A clean slate: default days, nothing chosen, nothing skipped.
+            const settings = defaultSettings(today);
+            setState(planReducer(emptyPlan(settings), { type: 'settings', settings }, { candidates, rng: Math.random }));
+          }}
+        >
+          {t.WEEK_RESET}
+        </Button>
+      </div>
+
+      <ChooserDialog
+        slot={pickingSlot}
+        state={state}
+        candidates={candidates}
+        hrefOf={hrefOf}
+        dispatch={dispatch}
+        onClose={() => setPicking(null)}
+      />
 
       <SummaryBar chosen={chosen} total={slots.length} />
     </>
   );
 }
 
-// ── Settings ─────────────────────────────────────────────────────────────────
+// ── Filters: days and moods ──────────────────────────────────────────────────
 
-interface SettingsPanelProps {
+interface PlanFiltersProps {
   settings: PlanSettings;
   dates: string[];
   onChange: (settings: PlanSettings) => void;
-  onReroll: () => void;
-  onReset: () => void;
 }
 
-function SettingsPanel({ settings, dates, onChange, onReroll, onReset }: SettingsPanelProps) {
+function PlanFilters({ settings, dates, onChange }: PlanFiltersProps) {
   const { t, locale } = useTranslation();
-  const picked = new Map(settings.days.map((d) => [d.date, d]));
-  const slotCount = settings.days.reduce((sum, d) => sum + d.parts.length, 0);
+  const picked = new Set(settings.days.map((d) => d.date));
 
   const toggleDay = (date: string) => {
     const days = picked.has(date)
@@ -290,8 +344,6 @@ function SettingsPanel({ settings, dates, onChange, onReroll, onReset }: Setting
       : [...settings.days, { date, parts: ['any' as DayPart] }].sort((a, b) => a.date.localeCompare(b.date));
     onChange({ ...settings, days });
   };
-  const setParts = (date: string, parts: DayPart[]) =>
-    onChange({ ...settings, days: settings.days.map((d) => (d.date === date ? { ...d, parts } : d)) });
   const toggleMood = (mood: Mood) =>
     onChange({
       ...settings,
@@ -299,123 +351,157 @@ function SettingsPanel({ settings, dates, onChange, onReroll, onReset }: Setting
     });
 
   return (
-    <section className={styles.settings} aria-label={t.WEEK_SETTINGS}>
-      <div className={styles.settingsBar}>
-        <Button variant="contained" disableElevation startIcon={<CasinoIcon />} onClick={onReroll}>
-          {t.WEEK_REROLL_ALL}
-        </Button>
-        <Button startIcon={<RestartAltIcon />} onClick={onReset}>
-          {t.WEEK_RESET}
-        </Button>
-      </div>
-      <Accordion disableGutters className={styles.accordion}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <span className={styles.accordionTitle}>{t.WEEK_SETTINGS}</span>
-          <span className={styles.accordionMeta}>{t.WEEK_SETTINGS_SUMMARY(settings.days.length, slotCount)}</span>
-        </AccordionSummary>
-        <AccordionDetails>
-          <fieldset className={styles.fieldset}>
-            <legend className={styles.legend}>{t.WEEK_DAYS_LABEL}</legend>
-            <div className={styles.chips}>
-              {dates.map((date) => (
-                <button
-                  key={date}
-                  type="button"
-                  className={`${styles.chip} ${picked.has(date) ? styles.chipOn : ''}`}
-                  aria-pressed={picked.has(date)}
-                  onClick={() => toggleDay(date)}
-                >
-                  <span className={styles.chipDay}>{t.WEEKDAY_SHORT[weekdayOf(date)]}</span>
-                  <span className={styles.chipDate}>{formatDateShort(date, locale)}</span>
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          {settings.days.length > 0 && (
-            <div className={styles.dayRows}>
-              {settings.days.map((day) => (
-                <div key={day.date} className={styles.dayRow}>
-                  <span className={styles.dayRowLabel}>
-                    {t.WEEKDAY_SHORT[weekdayOf(day.date)]} {formatDateShort(day.date, locale)}
-                  </span>
-                  <div className={styles.dayRowParts}>
-                    {day.parts.map((part, i) => (
-                      <span key={i} className={styles.partPicker}>
-                        <select
-                          className={styles.select}
-                          aria-label={t.WEEK_PART_LABEL(i + 1)}
-                          value={part}
-                          onChange={(e) =>
-                            setParts(
-                              day.date,
-                              day.parts.map((p, j) => (j === i ? (e.target.value as DayPart) : p))
-                            )
-                          }
-                        >
-                          {DAY_PARTS.map((p) => (
-                            <option key={p} value={p}>
-                              {t.WEEK_PART[p]}
-                            </option>
-                          ))}
-                        </select>
-                        {day.parts.length > 1 && (
-                          <IconButton
-                            size="small"
-                            aria-label={t.WEEK_REMOVE_SLOT(i + 1)}
-                            onClick={() => setParts(day.date, day.parts.filter((_, j) => j !== i))}
-                          >
-                            <CloseIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </span>
-                    ))}
-                    {day.parts.length < MAX_SLOTS_PER_DAY && (
-                      <Button size="small" startIcon={<AddIcon />} onClick={() => setParts(day.date, [...day.parts, 'any'])}>
-                        {t.WEEK_ADD_SLOT}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <fieldset className={styles.fieldset}>
-            <legend className={styles.legend}>{t.WEEK_MOODS_LABEL}</legend>
-            <div className={styles.chips}>
-              {MOODS.map((mood) => (
-                <button
-                  key={mood}
-                  type="button"
-                  className={`${styles.chip} ${settings.moods.includes(mood) ? styles.chipOn : ''}`}
-                  aria-pressed={settings.moods.includes(mood)}
-                  onClick={() => toggleMood(mood)}
-                >
-                  {t.WEEK_MOOD[mood]}
-                </button>
-              ))}
-              <button
-                type="button"
-                className={`${styles.chip} ${settings.freeOnly ? styles.chipOn : ''}`}
-                aria-pressed={settings.freeOnly}
-                onClick={() => onChange({ ...settings, freeOnly: !settings.freeOnly })}
-              >
-                {t.WEEK_FREE_ONLY}
-              </button>
-            </div>
-            <p className={styles.hint}>{t.WEEK_MOODS_HINT}</p>
-          </fieldset>
-        </AccordionDetails>
-      </Accordion>
+    <section className={styles.filters} aria-label={t.WEEK_FILTERS}>
+      <fieldset className={styles.fieldset}>
+        <legend className={styles.legend}>{t.WEEK_DAYS_LABEL}</legend>
+        <div className={styles.chips}>
+          {dates.map((date) => (
+            <button
+              key={date}
+              type="button"
+              className={`${styles.chip} ${styles.dayChip} ${picked.has(date) ? styles.chipOn : ''}`}
+              aria-pressed={picked.has(date)}
+              onClick={() => toggleDay(date)}
+            >
+              <span className={styles.chipDay}>{t.WEEKDAY_SHORT[weekdayOf(date)]}</span>
+              <span className={styles.chipDate}>{formatDateShort(date, locale)}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className={styles.fieldset}>
+        <legend className={styles.legend}>{t.WEEK_MOODS_LABEL}</legend>
+        <div className={styles.chips}>
+          {MOODS.map((mood) => (
+            <button
+              key={mood}
+              type="button"
+              className={`${styles.chip} ${settings.moods.includes(mood) ? styles.chipOn : ''}`}
+              aria-pressed={settings.moods.includes(mood)}
+              onClick={() => toggleMood(mood)}
+            >
+              {t.WEEK_MOOD[mood]}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`${styles.chip} ${settings.freeOnly ? styles.chipOn : ''}`}
+            aria-pressed={settings.freeOnly}
+            onClick={() => onChange({ ...settings, freeOnly: !settings.freeOnly })}
+          >
+            {t.WEEK_FREE_ONLY}
+          </button>
+        </div>
+        <p className={styles.hint}>{t.WEEK_MOODS_HINT}</p>
+      </fieldset>
     </section>
+  );
+}
+
+// ── The chooser ──────────────────────────────────────────────────────────────
+
+interface ChooserDialogProps {
+  slot: PlanSlot | null;
+  state: PlanState;
+  candidates: ReadonlyMap<string, PlanCandidate>;
+  hrefOf: (event: Event) => string;
+  dispatch: (action: PlanAction) => void;
+  onClose: () => void;
+}
+
+/**
+ * Three proposals for one slot. "Wybieram" puts the event on the board and
+ * closes; "Pomiń" swaps that card only; the time of day redraws the three.
+ */
+function ChooserDialog({ slot, state, candidates, hrefOf, dispatch, onClose }: ChooserDialogProps) {
+  const { t, locale } = useTranslation();
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const offered = slot ? (state.proposals[slot.id] ?? []) : [];
+
+  return (
+    <Dialog
+      open={slot !== null}
+      onClose={onClose}
+      fullScreen={fullScreen}
+      maxWidth="lg"
+      fullWidth
+      aria-labelledby="week-chooser-title"
+    >
+      {slot && (
+        <>
+          <DialogTitle id="week-chooser-title" className={styles.chooserTitle}>
+            <span>{dayLabel(t, slot.date, locale)}</span>
+            <IconButton aria-label={t.WEEK_CLOSE} onClick={onClose} edge="end">
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <p className={styles.chooserSub}>{t.WEEK_PICK_SUB}</p>
+            <div className={styles.chips} role="radiogroup" aria-label={t.WEEK_PART_TITLE}>
+              {DAY_PARTS.map((part) => (
+                <button
+                  key={part}
+                  type="button"
+                  role="radio"
+                  aria-checked={slot.part === part}
+                  className={`${styles.chip} ${slot.part === part ? styles.chipOn : ''}`}
+                  onClick={() => dispatch({ type: 'setPart', slotId: slot.id, part })}
+                >
+                  {t.WEEK_PART[part]}
+                </button>
+              ))}
+            </div>
+            {offered.length === 0 ? (
+              <p className={styles.empty}>{t.WEEK_EMPTY_SLOT}</p>
+            ) : (
+              <div className={styles.cards}>
+                {offered.map((id) => {
+                  const candidate = candidates.get(id);
+                  if (!candidate) return null;
+                  return (
+                    <PlanEventCard key={id} event={candidate.event} href={hrefOf(candidate.event)}>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        disableElevation
+                        startIcon={<CheckIcon />}
+                        onClick={() => {
+                          dispatch({ type: 'choose', slotId: slot.id, eventId: id });
+                          onClose();
+                        }}
+                      >
+                        {t.WEEK_CHOOSE}
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<SkipNextIcon />}
+                        onClick={() => dispatch({ type: 'skip', slotId: slot.id, eventId: id })}
+                      >
+                        {t.WEEK_SKIP}
+                      </Button>
+                    </PlanEventCard>
+                  );
+                })}
+              </div>
+            )}
+          </DialogContent>
+          <DialogActions className={styles.chooserActions}>
+            <Button startIcon={<CasinoIcon />} onClick={() => dispatch({ type: 'reroll', slotId: slot.id })}>
+              {t.WEEK_REROLL_SLOT}
+            </Button>
+            <Button onClick={onClose}>{t.WEEK_CLOSE}</Button>
+          </DialogActions>
+        </>
+      )}
+    </Dialog>
   );
 }
 
 // ── Summary: calendar, share ─────────────────────────────────────────────────
 
 interface SummaryBarProps {
-  chosen: PlanCandidate['event'][];
+  chosen: Event[];
   total: number;
 }
 
@@ -442,7 +528,7 @@ function SummaryBar({ chosen, total }: SummaryBarProps) {
   };
 
   return (
-    <div className={styles.summary} role="region" aria-label={t.WEEK_SUMMARY(chosen.length, total)}>
+    <div className={styles.summary} role="region" aria-label={t.WEEK_SUMMARY_LABEL}>
       <p className={styles.summaryText}>
         {chosen.length > 0 ? t.WEEK_SUMMARY(chosen.length, total) : t.WEEK_SUMMARY_EMPTY}
       </p>
@@ -490,10 +576,11 @@ function SharedPlan({ ids }: { ids: string[] }) {
   });
 
   const today = toLocalDateString(new Date());
-  const events = (data ?? []).filter((e) => e.date >= today).sort((a, b) =>
-    `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`)
-  );
+  const events = (data ?? [])
+    .filter((e) => e.date >= today)
+    .sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`));
   const missing = data ? ids.length - events.length : 0;
+  const days = [...new Set(events.map((e) => e.date))];
 
   return (
     <>
@@ -518,15 +605,26 @@ function SharedPlan({ ids }: { ids: string[] }) {
           ) : (
             <>
               {missing > 0 && <p className={styles.hint}>{t.WEEK_SHARED_MISSING(missing)}</p>}
-              <ol className={styles.slots}>
-                {events.map((event) => (
-                  <li key={event.id} className={styles.slot}>
-                    <h2 className={styles.slotTitle}>
-                      {t.WEEKDAY_LONG[weekdayOf(event.date)]}, {formatDateShort(event.date, locale)}
+              <ol className={styles.board}>
+                {days.map((date) => (
+                  <li key={date} className={styles.day}>
+                    <h2 className={styles.dayTitle}>
+                      <span className={styles.dayName}>{t.WEEKDAY_LONG[weekdayOf(date)]}</span>
+                      <span className={styles.dayDate}>{formatDateShort(date, locale)}</span>
                     </h2>
-                    <div className={styles.cards}>
-                      <PlanEventCard event={event} href={eventPath(city.id, event, displayNameToSlug)} />
-                    </div>
+                    <ul className={styles.daySlots}>
+                      {events
+                        .filter((e) => e.date === date)
+                        .map((event) => (
+                          <li key={event.id} className={styles.daySlot}>
+                            <PlanEventCard
+                              event={event}
+                              href={eventPath(city.id, event, displayNameToSlug)}
+                              variant="compact"
+                            />
+                          </li>
+                        ))}
+                    </ul>
                   </li>
                 ))}
               </ol>

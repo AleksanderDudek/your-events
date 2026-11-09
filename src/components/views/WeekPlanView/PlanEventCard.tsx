@@ -9,35 +9,53 @@ import MediaFill from '@/components/ui/MediaFill/MediaFill';
 import PriceLabel from '@/components/ui/PriceLabel/PriceLabel';
 import { categoryColorSolidVar, categoryFallbackImage, formatEventTime } from '@/lib/utils';
 import { useTranslated } from '@/i18n/translation';
-import { useTranslation } from '@/i18n';
 import styles from './WeekPlanView.module.scss';
 
 interface PlanEventCardProps {
   event: Event;
   /** Permalink of the event's own page. */
   href: string;
-  /** "W planie" ribbon on a decided slot. */
-  chosen?: boolean;
+  /** `compact`: a board tile — picture on the side, no category or price row. */
+  variant?: 'full' | 'compact';
   /** Buttons under the card: choose / skip, or change. */
   children?: React.ReactNode;
 }
 
 /**
- * A proposal in "Twój tydzień". Not EventCard: that one is a link as a whole,
- * and these cards carry their own buttons — a button inside a link is invalid
- * and a tap meant for "Pomiń" would open the event. The title links instead.
+ * An event in "Twój tydzień": a proposal in the chooser, or a tile on the
+ * board. Not EventCard: that one is a link as a whole, and these cards carry
+ * their own buttons — a button inside a link is invalid and a tap meant for
+ * "Pomiń" would open the event. The title links instead.
  */
-export default function PlanEventCard({ event, href, chosen = false, children }: PlanEventCardProps) {
-  const { t } = useTranslation();
+export default function PlanEventCard({ event, href, variant = 'full', children }: PlanEventCardProps) {
   const name = useTranslated(event.name);
   const time = formatEventTime(event.startTime, event.endTime, event.durationMin);
 
+  if (variant === 'compact') {
+    return (
+      <article className={styles.mini} aria-label={name}>
+        <div className={styles.miniImage}>
+          <CardImage event={event} />
+        </div>
+        <div className={styles.miniBody}>
+          {time && <span className={styles.miniTime}>{time}</span>}
+          <h3 className={styles.miniTitle}>
+            <Link href={href as Route} className={styles.cardLink}>
+              {name}
+            </Link>
+          </h3>
+          <p className={styles.cardVenue}>{event.location.name}</p>
+        </div>
+        {children && <div className={styles.miniActions}>{children}</div>}
+      </article>
+    );
+  }
+
   return (
-    <article className={`${styles.card} ${chosen ? styles.cardChosen : ''}`} aria-label={name}>
+    <article className={styles.card} aria-label={name}>
       <div className={styles.cardImage}>
         <CardImage event={event} />
         {time && <span className={styles.cardTime}>{time}</span>}
-        {chosen && <span className={styles.cardRibbon}>{t.WEEK_CHOSEN}</span>}
       </div>
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>

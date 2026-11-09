@@ -79,44 +79,59 @@ beforeEach(() => {
 });
 
 describe('WeekPlanView', () => {
-  it('offers three events for each of the default days', async () => {
+  async function board() {
     renderView();
-    const slots = await screen.findAllByRole('listitem');
-    expect(slots).toHaveLength(DAYS.length);
-    for (const [i, slot] of slots.entries()) {
-      const cards = within(slot).getAllByRole('article');
-      expect(cards).toHaveLength(3);
-      expect(cards.every((card) => card.getAttribute('aria-label')!.includes(DAYS[i]))).toBe(true);
-    }
+    return within(await screen.findByRole('list', { name: 'Twój tydzień' }));
+  }
+
+  it('lays out a card per default day, each with an empty slot to fill', async () => {
+    const b = await board();
+    const days = b.getAllByRole('heading', { level: 2 });
+    expect(days).toHaveLength(DAYS.length);
+    expect(b.getAllByRole('button', { name: /Wybierz wydarzenie/ })).toHaveLength(DAYS.length);
+    expect(b.queryAllByRole('article')).toHaveLength(0);
   });
 
-  it('puts a chosen event in the plan and counts it', async () => {
+  it('picks in a dialog and puts the choice on the board', async () => {
     const user = userEvent.setup();
-    renderView();
-    const [first] = await screen.findAllByRole('listitem');
-    const pick = within(first).getAllByRole('article')[1];
-    const name = pick.getAttribute('aria-label')!;
-    await user.click(within(pick).getByRole('button', { name: 'Wybieram' }));
+    const b = await board();
+    await user.click(b.getAllByRole('button', { name: /Wybierz wydarzenie/ })[0]);
+    const dialog = await screen.findByRole('dialog');
+    const cards = within(dialog).getAllByRole('article');
+    expect(cards).toHaveLength(3);
+    expect(cards.every((card) => card.getAttribute('aria-label')!.includes(DAYS[0]))).toBe(true);
+    const name = cards[1].getAttribute('aria-label')!;
+    await user.click(within(cards[1]).getByRole('button', { name: 'Wybieram' }));
 
-    const cards = within(first).getAllByRole('article');
-    expect(cards).toHaveLength(1);
-    expect(cards[0]).toHaveAttribute('aria-label', name);
-    expect(within(cards[0]).getByText('W planie')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(b.getByRole('article', { name })).toBeInTheDocument();
+    expect(b.getAllByRole('button', { name: /Wybierz wydarzenie/ })).toHaveLength(DAYS.length - 1);
     expect(screen.getByText(`W planie: 1 z ${DAYS.length}`)).toBeInTheDocument();
     // ...and the plan survives a reload.
     expect(window.localStorage.getItem('go-to-city.week-plan.szczecin')).toContain(`"${DAYS[0]}#0"`);
   });
 
-  it('swaps only the skipped card for a new one', async () => {
+  it('swaps only the skipped card in the dialog', async () => {
     const user = userEvent.setup();
-    renderView();
-    const [first] = await screen.findAllByRole('listitem');
-    const before = within(first).getAllByRole('article').map((c) => c.getAttribute('aria-label'));
-    await user.click(within(within(first).getAllByRole('article')[0]).getByRole('button', { name: 'Pomiń' }));
-    const after = within(first).getAllByRole('article').map((c) => c.getAttribute('aria-label'));
+    const b = await board();
+    await user.click(b.getAllByRole('button', { name: /Wybierz wydarzenie/ })[0]);
+    const dialog = await screen.findByRole('dialog');
+    const labels = () => within(dialog).getAllByRole('article').map((c) => c.getAttribute('aria-label'));
+    const before = labels();
+    await user.click(within(within(dialog).getAllByRole('article')[0]).getByRole('button', { name: 'Pomiń' }));
+    const after = labels();
     expect(after).toHaveLength(3);
     expect(after[0]).not.toBe(before[0]);
     expect(after.slice(1)).toEqual(before.slice(1));
+  });
+
+  it('fills the whole week with "Zaskocz mnie"', async () => {
+    const user = userEvent.setup();
+    const b = await board();
+    await user.click(screen.getByRole('button', { name: 'Zaskocz mnie' }));
+    expect(b.getAllByRole('article')).toHaveLength(DAYS.length);
+    expect(b.queryAllByRole('button', { name: /Wybierz wydarzenie/ })).toHaveLength(0);
+    expect(screen.getByText(`W planie: ${DAYS.length} z ${DAYS.length}`)).toBeInTheDocument();
   });
 
   it('opens a shared plan read-only and says what has gone', async () => {
