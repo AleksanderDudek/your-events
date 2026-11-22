@@ -75,6 +75,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
           NEXT_PUBLIC_SUPABASE_URL_POZNAN: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_POZNAN }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN }}
+          NEXT_PUBLIC_SUPABASE_URL_WARSZAWA: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WARSZAWA }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WARSZAWA: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WARSZAWA }}
           # What actually separates dev from production: one Supabase project,
           # two schemas. Without this the client falls back to 'public' and the
           # tests read production rows despite `environment: dev` above.
@@ -158,5 +160,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
           NEXT_PUBLIC_SUPABASE_URL_POZNAN: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_POZNAN }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN }}
+          NEXT_PUBLIC_SUPABASE_URL_WARSZAWA: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WARSZAWA }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WARSZAWA: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WARSZAWA }}
           NEXT_PUBLIC_SUPABASE_SCHEMA: ${{ vars.NEXT_PUBLIC_SUPABASE_SCHEMA }}
         run: pnpm test:e2e:export
