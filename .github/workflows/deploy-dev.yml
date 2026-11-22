@@ -62,6 +62,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
           NEXT_PUBLIC_SUPABASE_URL_POZNAN: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_POZNAN }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN }}
+          NEXT_PUBLIC_SUPABASE_URL_WARSZAWA: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WARSZAWA }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WARSZAWA: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WARSZAWA }}
           # Not secrets — they ship in the page source. Kept as environment
           # variables so dev and prod differ by configuration, not by code.
           NEXT_PUBLIC_SITE_ORIGIN: ${{ vars.NEXT_PUBLIC_SITE_ORIGIN }}
