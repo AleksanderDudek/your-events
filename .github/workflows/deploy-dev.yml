@@ -60,6 +60,8 @@ jobs:
           # available:false and is hidden from the picker.
           NEXT_PUBLIC_SUPABASE_URL_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_WROCLAW }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_WROCLAW }}
+          NEXT_PUBLIC_SUPABASE_URL_POZNAN: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_POZNAN }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_POZNAN }}
           # Not secrets — they ship in the page source. Kept as environment
           # variables so dev and prod differ by configuration, not by code.
           NEXT_PUBLIC_SITE_ORIGIN: ${{ vars.NEXT_PUBLIC_SITE_ORIGIN }}
