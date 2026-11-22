@@ -6,6 +6,7 @@ import {
   fetchCategories,
   fetchMapEvents,
   fetchOfferedSeasons,
+  getCityEvents,
   MAP_EVENT_LIMIT,
 } from './eventsApi';
 import { getSupabaseForCity } from '@/lib/supabase';
@@ -532,6 +533,33 @@ describe('eventsApi', () => {
       expect(s.eventsBuilder.order).toHaveBeenCalledWith('time_start', { ascending: true });
     });
 
+    // Rows sharing a date and time (or a name, venue, price) must not trade
+    // places between two page reads: `id` is the last order clause, right
+    // before the page range.
+    it('breaks ties by id before reading a page', async () => {
+      const s = setup();
+
+      await fetchEvents('szczecin', makeFilters());
+
+      const calls = s.eventsBuilder.order.mock.calls;
+      expect(calls[calls.length - 1]).toEqual(['id', { ascending: true }]);
+      expect(s.eventsBuilder.order.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        s.eventsBuilder.range.mock.invocationCallOrder[0]
+      );
+    });
+
+    // The build reads a whole city in 1000-row pages (Warszawa: 2800 rows). The
+    // ordering must be total, or a row on a page boundary is read twice and the
+    // build fails on a duplicate permalink (22.11.2026).
+    it('reads a whole city in a total order (date, time_start, id)', async () => {
+      const s = setup();
+
+      await getCityEvents('warszawa');
+
+      expect(s.eventsBuilder.order.mock.calls.map((c) => c[0])).toEqual(['date', 'time_start', 'id']);
+      expect(s.eventsBuilder.range).toHaveBeenCalledWith(0, 999);
+    });
+
     // sort/dir choose the order clause. The list and the map share this
     // builder, so both change together and can never disagree about "first".
     describe('ordering', () => {
@@ -558,8 +586,11 @@ describe('eventsApi', () => {
 
         await fetchEvents('szczecin', makeFilters({ sort: 'name' }));
 
-        expect(s.eventsBuilder.order).toHaveBeenCalledWith('name', { ascending: true });
-        expect(s.eventsBuilder.order).toHaveBeenCalledTimes(1);
+        // No date/time secondary sort — only `id`, which breaks ties between pages.
+        expect(s.eventsBuilder.order.mock.calls).toEqual([
+          ['name', { ascending: true }],
+          ['id', { ascending: true }],
+        ]);
       });
 
       it('orders by name, descending', async () => {
@@ -575,8 +606,11 @@ describe('eventsApi', () => {
 
         await fetchEvents('szczecin', makeFilters({ sort: 'venue' }));
 
-        expect(s.eventsBuilder.order).toHaveBeenCalledWith('venue', { ascending: true });
-        expect(s.eventsBuilder.order).toHaveBeenCalledTimes(1);
+        // No date/time secondary sort — only `id`, which breaks ties between pages.
+        expect(s.eventsBuilder.order.mock.calls).toEqual([
+          ['venue', { ascending: true }],
+          ['id', { ascending: true }],
+        ]);
       });
 
       // Nulls last in BOTH directions: an unknown price is neither the

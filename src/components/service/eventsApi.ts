@@ -429,10 +429,12 @@ export async function fetchEvents(
     return { events: retry.events, total: retry.total };
   }
 
-  const { data, count, error } = await buildFilteredQuery(supabase, filters, categoryFilter).range(
-    from,
-    to
-  );
+  // `id` breaks ties (as in the scans): rows sharing a date and time — or a name,
+  // venue or price — may otherwise trade places between two page reads, so an
+  // event shows up on two pages or on none.
+  const { data, count, error } = await buildFilteredQuery(supabase, filters, categoryFilter)
+    .order('id', { ascending: true })
+    .range(from, to);
   if (error) throw new ServerError(error.message);
 
   const events = ((data as SupabaseEventRow[] | null) ?? []).map((row) => mapRow(row, cityName));
@@ -697,6 +699,10 @@ export function getCityEvents(cityId: CityId | string): Promise<Event[]> {
         .select('*')
         .order('date')
         .order('time_start')
+        // `id` breaks ties: without it rows sharing a date and time can trade
+        // places between pages, so one row is read twice (and another never) —
+        // which the shortId check below then reports as a duplicate permalink.
+        .order('id')
         .range(from, from + CITY_EVENTS_PAGE_SIZE - 1);
       if (error) throw new ServerError(error.message);
 
