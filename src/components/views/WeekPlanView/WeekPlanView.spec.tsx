@@ -155,11 +155,17 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+// Whole-page tests: a full board, MUI dialogs and menus with their transitions.
+// About a second each alone, but in a full parallel run on a loaded machine
+// some went past the 5 s default (and an overrunning test keeps writing plans
+// into the next one's storage). Hence the longer budget for this file.
+const SLOW = { timeout: 15_000 };
+
 async function board() {
   return within(await screen.findByRole('list', { name: 'Twój tydzień' }));
 }
 
-describe('WeekPlanView: a first plan', () => {
+describe('WeekPlanView: a first plan', SLOW, () => {
   it('lays out a card per default day, and looking around saves nothing', async () => {
     renderView();
     const b = await board();
@@ -251,9 +257,7 @@ describe('WeekPlanView: a first plan', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Przyszły tydzień' })).toBeInTheDocument();
   });
 
-  // The heaviest test here (a full board, two dialogs, the PDF hand-off): on a
-  // loaded machine it has run past the 5 s default, on main too.
-  it('shares the plan as a link with the plan written out, and as a PDF', { timeout: 15_000 }, async () => {
+  it('shares the plan as a link with the plan written out, and as a PDF', async () => {
     const user = userEvent.setup();
     renderView();
     const b = await board();
@@ -290,7 +294,7 @@ describe('WeekPlanView: a first plan', () => {
   });
 });
 
-describe('WeekPlanView: a plan someone sent', () => {
+describe('WeekPlanView: a plan someone sent', SLOW, () => {
   it('opens read-only and says what has gone', async () => {
     api.shared = [makeEvent(TODAY, 'Wspólny koncert')];
     nav.search = `plan=${api.shared[0].id}.999`;
@@ -375,7 +379,7 @@ describe('WeekPlanView: a plan someone sent', () => {
   });
 });
 
-describe('WeekPlanView: the list of plans', () => {
+describe('WeekPlanView: the list of plans', SLOW, () => {
   it('shows each plan with its week, its events, or that it is empty', async () => {
     const concert = makeEvent(DAYS[0], 'Koncert w Filharmonii');
     api.shared = [concert];
@@ -426,7 +430,7 @@ describe('WeekPlanView: the list of plans', () => {
     expect(screen.getByText(/Tak daleko naprzód znamy na razie mniej wydarzeń/)).toBeInTheDocument();
   });
 
-  it('renames a plan, and an empty name gives it its week’s name back', async () => {
+  it('renames a plan', async () => {
     seedPlans(savedPlan());
     nav.search = 'id=mine0001';
     const user = userEvent.setup();
@@ -436,11 +440,19 @@ describe('WeekPlanView: the list of plans', () => {
     await user.click(screen.getByRole('button', { name: 'Opcje planu „Ten tydzień”' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Zmień nazwę' }));
     const field = await screen.findByRole('textbox', { name: 'Nazwa planu' });
-    await user.clear(field);
+    await user.click(field);
     await user.paste('  Weekend   z mamą ');
     await user.click(screen.getByRole('button', { name: 'Zapisz' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Weekend z mamą' })).toBeInTheDocument();
     expect(storedPlans()[0].name).toBe('Weekend z mamą');
+  });
+
+  it('gives a plan its week’s name back when the name is cleared', async () => {
+    seedPlans(savedPlan({ name: 'Weekend z mamą' }));
+    nav.search = 'id=mine0001';
+    const user = userEvent.setup();
+    renderView();
+    await board();
 
     await user.click(screen.getByRole('button', { name: 'Opcje planu „Weekend z mamą”' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Zmień nazwę' }));
