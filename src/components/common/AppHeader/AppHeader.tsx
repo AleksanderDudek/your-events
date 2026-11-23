@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
@@ -25,6 +25,7 @@ import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import { GROW_WITH_US_PATH, MY_FILTERS_PATH } from '@/config/community';
 import { openShareDialog } from '@/components/service/usePromoShare';
+import { isSamePageWithQuery, navigateInPage } from '@/lib/inPageNavigation';
 import LogoMark from '@/components/common/LogoMark/LogoMark';
 import ShareStrip from '@/components/common/ShareStrip/ShareStrip';
 import ThemeToggle from '@/components/common/ThemeToggle/ThemeToggle';
@@ -69,6 +70,16 @@ export default function AppHeader() {
       </Button>
     </Tooltip>
   );
+
+  // A link to the page already open with a query string (a shared plan, one of
+  // my plans, a filtered list) does not navigate in the static export — see
+  // navigateInPage. Plain left clicks only: a new tab keeps the browser's way.
+  const followNav = (href: string) => (e: MouseEvent) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (!isSamePageWithQuery(href, pathname)) return;
+    e.preventDefault();
+    navigateInPage(`${href}/`);
+  };
 
   const isActive = (href: string) => {
     const current = pathname.replace(/\/$/, '') || '/';
@@ -146,6 +157,7 @@ export default function AppHeader() {
                 // the step drops itself (see lib/tourSteps).
                 data-tour={item.href === MY_FILTERS_PATH ? 'presets' : undefined}
                 className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
+                onClick={followNav(item.href)}
               >
                 {item.label}
               </Link>
@@ -229,7 +241,10 @@ export default function AppHeader() {
                       <ListItemButton
                         component={Link}
                         href={item.href}
-                        onClick={() => setDrawerOpen(false)}
+                        onClick={(e: MouseEvent) => {
+                          setDrawerOpen(false);
+                          followNav(item.href)(e);
+                        }}
                         selected={isActive(item.href)}
                         sx={{
                           '&.Mui-selected': {

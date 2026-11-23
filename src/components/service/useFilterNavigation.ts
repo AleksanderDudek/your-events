@@ -9,7 +9,7 @@ import {
   getDefaultFilters,
 } from '@/lib/filterUtils';
 import { useCity } from '@/config/CityProvider';
-import { withBasePath } from '@/lib/constants';
+import { navigateInPage } from '@/lib/inPageNavigation';
 
 // Filter state lives in the query string, and `router.push()` writes it
 // ASYNCHRONOUSLY: anything that reads `window.location` right after a push still
@@ -98,23 +98,10 @@ export function useFilterNavigation() {
       pending.query = nextQuery;
       pending.filters = next;
 
-      // Why not router.push(): in the STATIC EXPORT (what GitHub Pages serves —
-      // dev is fine, which is why this survived) the App Router pins the page's
-      // canonical URL to the query string the document was cold-loaded with. A
-      // push to the same route then does not navigate: it replaceState()s the
-      // loaded query back over the requested one. Land on ?viewMode=row, switch
-      // to grid, click page 2 → the URL snapped back to ?viewMode=row, the list
-      // flipped to rows and stayed on page 1. Clearing filters hit the same wall
-      // from the other side (a push to the query-LESS URL read as "already
-      // here").
-      //
-      // Writing history ourselves and replaying a popstate is what makes the
-      // router re-read the location — a soft navigation, no reload, and immune
-      // to that deduping. history.pushState is not base-path-aware the way
-      // router.push is, so the prefix goes on by hand.
-      const href = withBasePath(`/${city.id}/wydarzenia/${nextQuery ? `?${nextQuery}` : ''}`);
-      window.history.pushState(null, '', href);
-      window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+      // Not router.push(): it does not navigate within the same route in the
+      // static export — see navigateInPage. (Land on ?viewMode=row, switch to
+      // grid, click page 2: the URL snapped back to ?viewMode=row.)
+      navigateInPage(`/${city.id}/wydarzenia/${nextQuery ? `?${nextQuery}` : ''}`);
     },
     [city.id, query]
   );

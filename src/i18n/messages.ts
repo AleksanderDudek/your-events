@@ -16,7 +16,6 @@ function monthsPl(n: number): string {
   return ones >= 2 && ones <= 4 && (tens < 12 || tens > 14) ? `${n} miesiące` : `${n} miesięcy`;
 }
 
-// "1 wydarzenie", "3 wydarzenia", "5 wydarzeń" — the same rule as monthsPl.
 /**
  * "w Szczecinie", but "we Wrocławiu": Polish takes "we" before a word that
  * starts with w or f followed by a consonant, where "w" alone would not be
@@ -27,11 +26,19 @@ export function inCityPl(locative: string): string {
   return /^[wf][^aąeęioóuy]/i.test(locative) ? `we ${locative}` : `w ${locative}`;
 }
 
+// "1 wydarzenie", "3 wydarzenia", "5 wydarzeń" — the same rule as monthsPl.
 function eventsPl(n: number): string {
   if (n === 1) return '1 wydarzenie';
   const ones = n % 10;
   const tens = n % 100;
   return ones >= 2 && ones <= 4 && (tens < 12 || tens > 14) ? `${n} wydarzenia` : `${n} wydarzeń`;
+}
+
+// "za 2 tygodnie", "za 5 tygodni".
+function weeksPl(n: number): string {
+  const ones = n % 10;
+  const tens = n % 100;
+  return ones >= 2 && ones <= 4 && (tens < 12 || tens > 14) ? `${n} tygodnie` : `${n} tygodni`;
 }
 
 const pl = {
@@ -612,16 +619,40 @@ const pl = {
   WEEK_PDF_NO_TIME: 'cały dzień',
   WEEK_PDF_FOOTER: (date: string) => `Plan z idznamiasto.pl · ${date}`,
   WEEK_PDF_PAGE: (n: number, total: number) => `${n}/${total}`,
-  WEEK_SHARED_COPY: 'Skopiuj do mojego planu',
-  WEEK_SHARED_COPY_HINT: 'Trafi do „Twój tydzień” — tam zmienisz, co chcesz.',
+  WEEK_SHARED_COPY: 'Skopiuj do moich planów',
+  WEEK_SHARED_COPY_HINT: 'Powstanie nowy plan, który zmienisz po swojemu. Twoje plany zostaną bez zmian.',
   WEEK_SHARED_FORWARD: 'Wyślij dalej',
-  WEEK_SHARED_REPLACE_TITLE: 'Zastąpić Twój plan?',
-  WEEK_SHARED_REPLACE_BODY: (n: number) =>
-    `Masz już w planie ${eventsPl(n)}. Skopiowany plan zajmie ich miejsce.`,
-  WEEK_SHARED_REPLACE_CONFIRM: 'Zastąp',
-  WEEK_SHARED_CANCEL: 'Anuluj',
   WEEK_SHARED_COPIED: 'Plan skopiowany. Zmieniaj śmiało.',
-  WEEK_SHARED_NOTHING_TO_COPY: 'Z tego planu nic już nie zostało na ten tydzień.',
+  WEEK_SHARED_ALREADY_COPIED: 'Ten plan już masz — oto on.',
+  WEEK_SHARED_NOTHING_TO_COPY: 'Z tego planu nic już nie zostało na przyszłość.',
+  WEEK_PLANS_TITLE: 'Twoje plany',
+  WEEK_PLANS_SUB: (cityLocative: string) =>
+    `Każdy plan to jeden tydzień ${inCityPl(cityLocative)}. Ułóż kilka naprzód albo skopiuj plan od znajomych.`,
+  WEEK_PLANS_NEW: 'Nowy plan',
+  WEEK_PLANS_NEW_TITLE: 'Na który tydzień?',
+  WEEK_PLANS_BACK: 'Twoje plany',
+  WEEK_PLANS_WEEK_TAKEN: 'Masz już plan na ten tydzień',
+  WEEK_PLANS_OTHER_WEEK: 'Zaplanuj inny tydzień',
+  WEEK_PLANS_EVENTS: (n: number) => eventsPl(n),
+  WEEK_PLANS_EMPTY_PLAN: 'Pusty plan — jeszcze nic nie wybrano',
+  WEEK_PLANS_MORE: (n: number) => `i ${eventsPl(n)} więcej`,
+  WEEK_PLAN_NAME_THIS: 'Ten tydzień',
+  WEEK_PLAN_NAME_NEXT: 'Przyszły tydzień',
+  WEEK_PLAN_NAME_AHEAD: (weeks: number) => `Za ${weeksPl(weeks)}`,
+  WEEK_PLAN_NAME_COPY: 'Plan od znajomych',
+  WEEK_PLAN_COPY_BADGE: 'Skopiowany',
+  WEEK_PLAN_OPTIONS: (name: string) => `Opcje planu „${name}”`,
+  WEEK_PLAN_RENAME: 'Zmień nazwę',
+  WEEK_PLAN_RENAME_LABEL: 'Nazwa planu',
+  WEEK_PLAN_RENAME_HINT: 'Zostaw puste, a plan będzie nazwany od tygodnia.',
+  WEEK_PLAN_SAVE: 'Zapisz',
+  WEEK_PLAN_CANCEL: 'Anuluj',
+  WEEK_PLAN_DELETE: 'Usuń plan',
+  WEEK_PLAN_DELETED: (name: string) => `Usunięto „${name}”`,
+  WEEK_PLAN_UNDO: 'Cofnij',
+  WEEK_PLAN_AHEAD_HINT:
+    'Tak daleko naprzód znamy na razie mniej wydarzeń. Z każdym dniem dochodzą nowe, a propozycje odświeżą się same.',
+  WEEK_PLAN_GONE: 'Tego planu już nie ma: jego tydzień minął albo plan został usunięty.',
 };
 
 export type Messages = typeof pl;
@@ -1182,16 +1213,40 @@ const en: Messages = {
   WEEK_PDF_NO_TIME: 'all day',
   WEEK_PDF_FOOTER: (date: string) => `Plan from idznamiasto.pl · ${date}`,
   WEEK_PDF_PAGE: (n: number, total: number) => `${n}/${total}`,
-  WEEK_SHARED_COPY: 'Copy to my plan',
-  WEEK_SHARED_COPY_HINT: 'It goes to "Your week", where you can change anything.',
+  WEEK_SHARED_COPY: 'Copy to my plans',
+  WEEK_SHARED_COPY_HINT: 'It becomes a new plan to change as you like. Your plans stay as they are.',
   WEEK_SHARED_FORWARD: 'Pass it on',
-  WEEK_SHARED_REPLACE_TITLE: 'Replace your plan?',
-  WEEK_SHARED_REPLACE_BODY: (n: number) =>
-    `You already have ${n === 1 ? '1 event' : `${n} events`} in your plan. The copy takes their place.`,
-  WEEK_SHARED_REPLACE_CONFIRM: 'Replace',
-  WEEK_SHARED_CANCEL: 'Cancel',
   WEEK_SHARED_COPIED: 'Plan copied. Change anything you like.',
-  WEEK_SHARED_NOTHING_TO_COPY: 'Nothing in this plan is left for this week.',
+  WEEK_SHARED_ALREADY_COPIED: 'You already have this plan — here it is.',
+  WEEK_SHARED_NOTHING_TO_COPY: 'Nothing in this plan is still ahead.',
+  WEEK_PLANS_TITLE: 'Your plans',
+  WEEK_PLANS_SUB: (cityLocative: string) =>
+    `Each plan is one week in ${cityLocative}. Plan a few ahead, or copy a friend's.`,
+  WEEK_PLANS_NEW: 'New plan',
+  WEEK_PLANS_NEW_TITLE: 'For which week?',
+  WEEK_PLANS_BACK: 'Your plans',
+  WEEK_PLANS_WEEK_TAKEN: 'You already have a plan for this week',
+  WEEK_PLANS_OTHER_WEEK: 'Plan another week',
+  WEEK_PLANS_EVENTS: (n: number) => (n === 1 ? '1 event' : `${n} events`),
+  WEEK_PLANS_EMPTY_PLAN: 'Empty — nothing picked yet',
+  WEEK_PLANS_MORE: (n: number) => `and ${n === 1 ? '1 more event' : `${n} more events`}`,
+  WEEK_PLAN_NAME_THIS: 'This week',
+  WEEK_PLAN_NAME_NEXT: 'Next week',
+  WEEK_PLAN_NAME_AHEAD: (weeks: number) => `In ${weeks} weeks`,
+  WEEK_PLAN_NAME_COPY: "A friend's plan",
+  WEEK_PLAN_COPY_BADGE: 'Copied',
+  WEEK_PLAN_OPTIONS: (name: string) => `Options for "${name}"`,
+  WEEK_PLAN_RENAME: 'Rename',
+  WEEK_PLAN_RENAME_LABEL: 'Plan name',
+  WEEK_PLAN_RENAME_HINT: 'Leave it empty to name the plan after its week.',
+  WEEK_PLAN_SAVE: 'Save',
+  WEEK_PLAN_CANCEL: 'Cancel',
+  WEEK_PLAN_DELETE: 'Delete plan',
+  WEEK_PLAN_DELETED: (name: string) => `Deleted "${name}"`,
+  WEEK_PLAN_UNDO: 'Undo',
+  WEEK_PLAN_AHEAD_HINT:
+    'Fewer events are known this far ahead. More arrive every day, and the suggestions refresh by themselves.',
+  WEEK_PLAN_GONE: 'This plan is gone: its week is over, or it was deleted.',
 };
 
 export const messages: Record<Locale, Messages> = { pl, en };

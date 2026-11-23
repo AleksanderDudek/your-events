@@ -38,7 +38,16 @@ export function weekdayOf(date: string): number {
 const DEFAULT_WEEKDAYS = new Set([1, 3, 5, 0]);
 
 export function defaultPlanDates(today: string): string[] {
-  return planDates(today).filter((date) => DEFAULT_WEEKDAYS.has(weekdayOf(date)));
+  return defaultDaysOf(planDates(today));
+}
+
+/**
+ * The default days among `dates`: Monday, Wednesday, Friday, Sunday — or, in
+ * a week with none of those left, its first open day.
+ */
+export function defaultDaysOf(dates: readonly string[]): string[] {
+  const picked = dates.filter((date) => DEFAULT_WEEKDAYS.has(weekdayOf(date)));
+  return picked.length > 0 ? picked : dates.slice(0, 1);
 }
 
 // ── Time of day ──────────────────────────────────────────────────────────────
@@ -184,11 +193,12 @@ export interface PlanSettings {
 }
 
 export function defaultSettings(today: string): PlanSettings {
-  return {
-    days: defaultPlanDates(today).map((date) => ({ date, parts: ['any'] })),
-    moods: [],
-    freeOnly: false,
-  };
+  return settingsForDays(defaultPlanDates(today));
+}
+
+/** One "any time" slot on each of `dates`, no moods. */
+export function settingsForDays(dates: readonly string[]): PlanSettings {
+  return { days: dates.map((date) => ({ date, parts: ['any'] })), moods: [], freeOnly: false };
 }
 
 export interface PlanSlot {
@@ -626,7 +636,8 @@ export interface StoredPlan {
   chosen: Record<string, string>;
 }
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+/** `YYYY-MM-DD`. */
+export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * A stored plan, or null when there is nothing usable. Days that have passed
@@ -641,20 +652,31 @@ export function parseStoredPlan(raw: string | null, today: string): StoredPlan |
   } catch {
     return null;
   }
+  const plan = sanitizeStoredPlan(data, planDates(today));
+  return plan && plan.settings.days.length > 0 ? plan : null;
+}
+
+/**
+ * Settings and choices read back from storage, kept to what still makes sense:
+ * only days among `openDates`, known times of day and moods, and choices that
+ * sit in a slot that still exists. Null when it is not a plan at all; a plan
+ * whose days have all gone comes back with no days.
+ */
+export function sanitizeStoredPlan(data: unknown, openDates: readonly string[]): StoredPlan | null {
   if (!data || typeof data !== 'object') return null;
   const { settings, chosen } = data as Partial<StoredPlan>;
   if (!settings || !Array.isArray(settings.days)) return null;
-  const window = new Set(planDates(today));
+  const open = new Set(openDates);
+  const seen = new Set<string>();
   const days: DaySettings[] = settings.days.flatMap((day) => {
-    if (!day || typeof day.date !== 'string' || !DATE_RE.test(day.date) || !window.has(day.date)) {
-      return [];
-    }
+    if (!day || typeof day.date !== 'string' || !DATE_RE.test(day.date) || !open.has(day.date)) return [];
+    if (seen.has(day.date)) return [];
+    seen.add(day.date);
     const parts = Array.isArray(day.parts)
       ? day.parts.filter((p): p is DayPart => DAY_PARTS.includes(p as DayPart)).slice(0, MAX_SLOTS_PER_DAY)
       : [];
     return parts.length > 0 ? [{ date: day.date, parts }] : [];
   });
-  if (days.length === 0) return null;
   const moods = Array.isArray(settings.moods)
     ? settings.moods.filter((m): m is Mood => MOODS.includes(m as Mood))
     : [];

@@ -1,18 +1,48 @@
 import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import type { Event } from '@/types/event.types';
 import type { PlanCandidate } from '@/lib/weekPlan';
-import { defaultPlanDates } from '@/lib/weekPlan';
-import { toLocalDateString } from '@/lib/dateWindows';
+import { settingsForDays } from '@/lib/weekPlan';
+import type { SavedPlan } from '@/lib/weekPlans';
 
-const nav = vi.hoisted(() => ({ search: '', replace: vi.fn() }));
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: nav.replace, back: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(nav.search),
-  usePathname: () => '/szczecin/moj-tydzien',
-}));
+// The URL is the page's state (?plan=, ?id=, nothing), and the view moves
+// between them with navigateInPage. Here that is a tiny store: a navigation
+// changes the query and every useSearchParams reader re-renders, as the real
+// router does on the popstate navigateInPage replays.
+const nav = vi.hoisted(() => {
+  const state = {
+    search: '',
+    listeners: new Set<() => void>(),
+    go: (path: string) => {
+      state.search = path.includes('?') ? path.slice(path.indexOf('?') + 1) : '';
+      state.listeners.forEach((listener) => listener());
+    },
+  };
+  return state;
+});
+
+vi.mock('next/navigation', async () => {
+  const { useMemo, useSyncExternalStore } = await import('react');
+  return {
+    useSearchParams: () => {
+      const search = useSyncExternalStore(
+        (onChange: () => void) => {
+          nav.listeners.add(onChange);
+          return () => nav.listeners.delete(onChange);
+        },
+        () => nav.search
+      );
+      return useMemo(() => new URLSearchParams(search), [search]);
+    },
+    usePathname: () => '/szczecin/moj-tydzien',
+    useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  };
+});
+
+const navigateInPage = vi.hoisted(() => vi.fn((path: string) => nav.go(path)));
+vi.mock('@/lib/inPageNavigation', () => ({ navigateInPage, isSamePageWithQuery: () => false }));
 
 vi.mock('@/components/service/useCategories', () => ({
   useCategories: () => ({ displayNameToSlug: new Map<string, string>(), byDisplayName: new Map() }),
@@ -37,6 +67,12 @@ vi.mock('@/lib/planPdf', () => ({
 
 import WeekPlanView from './WeekPlanView';
 import { buildPlanPdf as buildPlanPdfMock } from '@/lib/planPdf';
+
+// A Monday, so this week's draft has all four default days.
+const TODAY = '2026-11-23';
+const DAYS = ['2026-11-23', '2026-11-25', '2026-11-27', '2026-11-29'];
+const PLANS_KEY = 'go-to-city.week-plans.szczecin';
+const LIST_PATH = '/szczecin/moj-tydzien/';
 
 let nextId = 1;
 function makeEvent(date: string, name: string, overrides: Partial<Event> = {}): Event {
@@ -66,6 +102,28 @@ function candidate(event: Event): PlanCandidate {
   return { event, popularity: 1, imageKind: 'poster', seasons: [], audience: [], isLastDay: false, soldOut: false };
 }
 
+function savedPlan(overrides: Partial<SavedPlan> = {}): SavedPlan {
+  return {
+    id: 'mine0001',
+    name: null,
+    start: TODAY,
+    origin: 'own',
+    sourceKey: null,
+    createdAt: 1,
+    settings: settingsForDays([DAYS[0]]),
+    chosen: {},
+    ...overrides,
+  };
+}
+
+function seedPlans(...plans: SavedPlan[]) {
+  window.localStorage.setItem(PLANS_KEY, JSON.stringify({ version: 2, plans }));
+}
+
+function storedPlans(): SavedPlan[] {
+  return JSON.parse(window.localStorage.getItem(PLANS_KEY) ?? '{"plans":[]}').plans;
+}
+
 function renderView() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -75,11 +133,11 @@ function renderView() {
   );
 }
 
-const DAYS = defaultPlanDates(toLocalDateString(new Date()));
-
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 10, 23, 10, 0));
   nav.search = '';
-  nav.replace.mockClear();
+  navigateInPage.mockClear();
   window.localStorage.clear();
   window.sessionStorage.clear();
   // jsdom has no object URLs.
@@ -93,22 +151,36 @@ beforeEach(() => {
   api.shared = [];
 });
 
-describe('WeekPlanView', () => {
-  async function board() {
-    renderView();
-    return within(await screen.findByRole('list', { name: 'Twój tydzień' }));
-  }
+afterEach(() => {
+  vi.useRealTimers();
+});
 
-  it('lays out a card per default day, each with an empty slot to fill', async () => {
+// Whole-page tests: a full board, MUI dialogs and menus with their transitions.
+// About a second each alone, but in a full parallel run on a loaded machine
+// some went past the 5 s default (and an overrunning test keeps writing plans
+// into the next one's storage). Hence the longer budget for this file.
+const SLOW = { timeout: 15_000 };
+
+async function board() {
+  return within(await screen.findByRole('list', { name: 'Twój tydzień' }));
+}
+
+describe('WeekPlanView: a first plan', SLOW, () => {
+  it('lays out a card per default day, and looking around saves nothing', async () => {
+    renderView();
     const b = await board();
     const days = b.getAllByRole('heading', { level: 2 });
     expect(days).toHaveLength(DAYS.length);
     expect(b.getAllByRole('button', { name: /Wybierz wydarzenie/ })).toHaveLength(DAYS.length);
     expect(b.queryAllByRole('article')).toHaveLength(0);
+    expect(screen.getByText('Ten tydzień · 23 lis – 29 lis')).toBeInTheDocument();
+    expect(window.localStorage.getItem(PLANS_KEY)).toBeNull();
+    expect(navigateInPage).not.toHaveBeenCalled();
   });
 
-  it('picks in a dialog and puts the choice on the board', async () => {
+  it('picks in a dialog, and the first choice saves the plan under its own address', async () => {
     const user = userEvent.setup();
+    renderView();
     const b = await board();
     await user.click(b.getAllByRole('button', { name: /Wybierz wydarzenie/ })[0]);
     const dialog = await screen.findByRole('dialog');
@@ -122,12 +194,20 @@ describe('WeekPlanView', () => {
     expect(b.getByRole('article', { name })).toBeInTheDocument();
     expect(b.getAllByRole('button', { name: /Wybierz wydarzenie/ })).toHaveLength(DAYS.length - 1);
     expect(screen.getByText(`W planie: 1 z ${DAYS.length}`)).toBeInTheDocument();
-    // ...and the plan survives a reload.
-    expect(window.localStorage.getItem('go-to-city.week-plan.szczecin')).toContain(`"${DAYS[0]}#0"`);
+
+    const [plan] = storedPlans();
+    expect(plan).toMatchObject({ start: TODAY, origin: 'own', name: null });
+    expect(plan.chosen).toEqual({ [`${DAYS[0]}#0`]: expect.any(String) });
+    expect(navigateInPage).toHaveBeenCalledWith(`${LIST_PATH}?id=${plan.id}`, { replace: true });
+    // Same planner, now a saved plan: its name, the way back to the list.
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ten tydzień' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Twoje plany' })).toBeInTheDocument();
+    expect(b.getByRole('article', { name })).toBeInTheDocument();
   });
 
   it('swaps only the skipped card in the dialog', async () => {
     const user = userEvent.setup();
+    renderView();
     const b = await board();
     await user.click(b.getAllByRole('button', { name: /Wybierz wydarzenie/ })[0]);
     const dialog = await screen.findByRole('dialog');
@@ -142,6 +222,7 @@ describe('WeekPlanView', () => {
 
   it('fills the whole week with "Zaskocz mnie"', async () => {
     const user = userEvent.setup();
+    renderView();
     const b = await board();
     await user.click(screen.getByRole('button', { name: 'Zaskocz mnie' }));
     expect(b.getAllByRole('article')).toHaveLength(DAYS.length);
@@ -154,6 +235,7 @@ describe('WeekPlanView', () => {
 
   it('turns a mood tile on and off', async () => {
     const user = userEvent.setup();
+    renderView();
     await board();
     const music = screen.getByRole('button', { name: /Muzyka/ });
     expect(music).toHaveAttribute('aria-pressed', 'false');
@@ -161,22 +243,23 @@ describe('WeekPlanView', () => {
     expect(music).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('opens a shared plan read-only and says what has gone', async () => {
-    const today = toLocalDateString(new Date());
-    api.shared = [makeEvent(today, 'Wspólny koncert')];
-    nav.search = `plan=${api.shared[0].id}.999`;
+  it('starts a plan for another week from the first one', async () => {
     const user = userEvent.setup();
     renderView();
-    expect(await screen.findByRole('heading', { name: 'Plan, który ktoś Ci podesłał' })).toBeInTheDocument();
-    expect(await screen.findByRole('article', { name: 'Wspólny koncert' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Wybieram' })).not.toBeInTheDocument();
-    expect(screen.getByText(/1 wydarzenie z tego planu już się odbyło/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Ułóż własny tydzień' }));
-    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/szczecin/moj-tydzien'));
+    await board();
+    await user.click(screen.getByRole('button', { name: 'Zaplanuj inny tydzień' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Na który tydzień?' });
+    await user.click(within(dialog).getByRole('button', { name: /Przyszły tydzień/ }));
+
+    const [plan] = storedPlans();
+    expect(plan.start).toBe('2026-11-30');
+    expect(navigateInPage).toHaveBeenLastCalledWith(`${LIST_PATH}?id=${plan.id}`);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Przyszły tydzień' })).toBeInTheDocument();
   });
 
   it('shares the plan as a link with the plan written out, and as a PDF', async () => {
     const user = userEvent.setup();
+    renderView();
     const b = await board();
     await user.click(screen.getByRole('button', { name: 'Zaskocz mnie' }));
     const chosen = b.getAllByRole('article').map((a) => a.getAttribute('aria-label')!);
@@ -209,64 +292,213 @@ describe('WeekPlanView', () => {
     expect(pdf).toHaveAttribute('href', 'blob:plan');
     expect(pdf.getAttribute('download')).toMatch(/^idznamiasto-plan-szczecin-\d{4}-\d{2}-\d{2}\.pdf$/);
   });
+});
 
-  it('copies a shared plan into the visitor’s own planner', async () => {
+describe('WeekPlanView: a plan someone sent', SLOW, () => {
+  it('opens read-only and says what has gone', async () => {
+    api.shared = [makeEvent(TODAY, 'Wspólny koncert')];
+    nav.search = `plan=${api.shared[0].id}.999`;
+    const user = userEvent.setup();
+    renderView();
+    expect(await screen.findByRole('heading', { name: 'Plan, który ktoś Ci podesłał' })).toBeInTheDocument();
+    expect(await screen.findByRole('article', { name: 'Wspólny koncert' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Wybieram' })).not.toBeInTheDocument();
+    expect(screen.getByText(/1 wydarzenie z tego planu już się odbyło/)).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Ułóż własny tydzień' }));
+    expect(navigateInPage).toHaveBeenCalledWith(LIST_PATH);
+  });
+
+  it('copies into a new plan of the visitor’s own and opens it', async () => {
     const event = makeEvent(DAYS[1], 'Wspólny koncert', { startTime: '20:00' });
     api.shared = [event];
     nav.search = `plan=${event.id}`;
     const user = userEvent.setup();
     renderView();
-    await user.click(await screen.findByRole('button', { name: 'Skopiuj do mojego planu' }));
+    await user.click(await screen.findByRole('button', { name: 'Skopiuj do moich planów' }));
 
-    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/szczecin/moj-tydzien'));
-    const stored = JSON.parse(window.localStorage.getItem('go-to-city.week-plan.szczecin')!);
-    expect(stored.settings.days).toEqual([{ date: DAYS[1], parts: ['evening'] }]);
-    expect(stored.chosen).toEqual({ [`${DAYS[1]}#0`]: event.id });
+    const [copy] = storedPlans();
+    expect(copy).toMatchObject({ origin: 'copy', start: DAYS[1], sourceKey: event.id });
+    expect(copy.settings.days).toEqual([{ date: DAYS[1], parts: ['evening'] }]);
+    expect(copy.chosen).toEqual({ [`${DAYS[1]}#0`]: event.id });
+    expect(navigateInPage).toHaveBeenCalledWith(`${LIST_PATH}?id=${copy.id}`, { replace: true });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Plan od znajomych' })).toBeInTheDocument();
+    expect(screen.getByText('Skopiowany')).toBeInTheDocument();
+    expect(await (await board()).findByRole('article', { name: 'Wspólny koncert' })).toBeInTheDocument();
+    expect(screen.getByText('Plan skopiowany. Zmieniaj śmiało.')).toBeInTheDocument();
   });
 
-  it('asks before a copy replaces a plan the visitor already has', async () => {
-    const mine = { settings: { days: [{ date: DAYS[0], parts: ['any'] }], moods: [], freeOnly: false }, chosen: { [`${DAYS[0]}#0`]: '1' } };
-    window.localStorage.setItem('go-to-city.week-plan.szczecin', JSON.stringify(mine));
+  it('leaves the visitor’s own plans as they are', async () => {
+    const mine = savedPlan({ chosen: { [`${DAYS[0]}#0`]: '1' } });
+    seedPlans(mine);
     const event = makeEvent(DAYS[1], 'Wspólny koncert');
     api.shared = [event];
     nav.search = `plan=${event.id}`;
     const user = userEvent.setup();
     renderView();
-    await user.click(await screen.findByRole('button', { name: 'Skopiuj do mojego planu' }));
+    await user.click(await screen.findByRole('button', { name: 'Skopiuj do moich planów' }));
 
-    const confirm = await screen.findByRole('dialog', { name: 'Zastąpić Twój plan?' });
-    expect(within(confirm).getByText(/Masz już w planie 1 wydarzenie/)).toBeInTheDocument();
-    await user.click(within(confirm).getByRole('button', { name: 'Anuluj' }));
-    expect(JSON.parse(window.localStorage.getItem('go-to-city.week-plan.szczecin')!)).toEqual(mine);
-    expect(nav.replace).not.toHaveBeenCalled();
-
-    // The page is aria-hidden until the dialog's exit transition ends.
-    await user.click(await screen.findByRole('button', { name: 'Skopiuj do mojego planu' }));
-    await user.click(within(await screen.findByRole('dialog', { name: 'Zastąpić Twój plan?' })).getByRole('button', { name: 'Zastąp' }));
-    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/szczecin/moj-tydzien'));
-    expect(JSON.parse(window.localStorage.getItem('go-to-city.week-plan.szczecin')!).chosen).toEqual({
-      [`${DAYS[1]}#0`]: event.id,
-    });
+    const plans = storedPlans();
+    expect(plans).toHaveLength(2);
+    expect(plans.find((p) => p.id === mine.id)).toEqual(mine);
   });
 
-  it('keeps a copied choice the week’s draw would not offer, and says it was copied', async () => {
+  it('opens the copy already made when the same link is copied again', async () => {
+    const event = makeEvent(DAYS[1], 'Wspólny koncert');
+    const copy = savedPlan({ id: 'copy0001', origin: 'copy', sourceKey: event.id, start: DAYS[1] });
+    seedPlans(copy);
+    api.shared = [event];
+    nav.search = `plan=${event.id}`;
+    const user = userEvent.setup();
+    renderView();
+    await user.click(await screen.findByRole('button', { name: 'Skopiuj do moich planów' }));
+
+    expect(storedPlans()).toHaveLength(1);
+    expect(navigateInPage).toHaveBeenCalledWith(`${LIST_PATH}?id=copy0001`, { replace: true });
+    expect(await screen.findByText('Ten plan już masz — oto on.')).toBeInTheDocument();
+  });
+
+  it('keeps a copied choice the week’s draw would not offer', async () => {
     // A gym class: classes are not read while "Aktywnie" is off.
     const gym = makeEvent(DAYS[0], 'Joga poranna', { categoryMain: 'Sport i Fitness', startTime: '08:00' });
     api.shared = [gym];
-    window.localStorage.setItem(
-      'go-to-city.week-plan.szczecin',
-      JSON.stringify({
+    seedPlans(
+      savedPlan({
+        id: 'copy0001',
+        origin: 'copy',
         settings: { days: [{ date: DAYS[0], parts: ['morning'] }], moods: [], freeOnly: false },
         chosen: { [`${DAYS[0]}#0`]: gym.id },
       })
     );
-    window.sessionStorage.setItem('go-to-city.week-plan.copied', '1');
+    nav.search = 'id=copy0001';
+    window.sessionStorage.setItem('go-to-city.week-plan.copied', 'new');
     renderView();
-    const b = within(await screen.findByRole('list', { name: 'Twój tydzień' }));
-    expect(await b.findByRole('article', { name: 'Joga poranna' })).toBeInTheDocument();
+    expect(await (await board()).findByRole('article', { name: 'Joga poranna' })).toBeInTheDocument();
     expect(screen.getByText('Plan skopiowany. Zmieniaj śmiało.')).toBeInTheDocument();
-    expect(JSON.parse(window.localStorage.getItem('go-to-city.week-plan.szczecin')!).chosen).toEqual({
-      [`${DAYS[0]}#0`]: gym.id,
-    });
+    expect(storedPlans()[0].chosen).toEqual({ [`${DAYS[0]}#0`]: gym.id });
+  });
+});
+
+describe('WeekPlanView: the list of plans', SLOW, () => {
+  it('shows each plan with its week, its events, or that it is empty', async () => {
+    const concert = makeEvent(DAYS[0], 'Koncert w Filharmonii');
+    api.shared = [concert];
+    seedPlans(
+      savedPlan({ chosen: { [`${DAYS[0]}#0`]: concert.id } }),
+      savedPlan({ id: 'next0001', start: '2026-11-30', settings: settingsForDays(['2026-11-30']) })
+    );
+    const user = userEvent.setup();
+    renderView();
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Twoje plany' })).toBeInTheDocument();
+    const list = within(screen.getByRole('list', { name: 'Twoje plany' }));
+    const [thisWeek, nextWeek] = list.getAllByRole('link');
+    expect(thisWeek).toHaveTextContent('Ten tydzień');
+    expect(thisWeek).toHaveTextContent('1 wydarzenie');
+    expect(await within(thisWeek).findByText('Koncert w Filharmonii')).toBeInTheDocument();
+    expect(nextWeek).toHaveTextContent('Przyszły tydzień');
+    expect(nextWeek).toHaveTextContent('30 lis – 6 gru');
+    expect(nextWeek).toHaveTextContent('Pusty plan');
+    expect(nextWeek).toHaveAttribute('href', '/your-events/szczecin/moj-tydzien/?id=next0001');
+
+    await user.click(nextWeek);
+    expect(navigateInPage).toHaveBeenCalledWith(`${LIST_PATH}?id=next0001`);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Przyszły tydzień' })).toBeInTheDocument();
+  });
+
+  it('makes a new plan for the week chosen', async () => {
+    seedPlans(savedPlan());
+    const user = userEvent.setup();
+    renderView();
+    await user.click(await screen.findByRole('button', { name: 'Nowy plan' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Na który tydzień?' });
+    const options = within(dialog).getAllByRole('button').filter((b) => b.textContent !== 'Anuluj');
+    expect(options.map((o) => o.textContent)).toEqual([
+      expect.stringContaining('Ten tydzień'),
+      expect.stringContaining('Przyszły tydzień'),
+      expect.stringContaining('Za 2 tygodnie'),
+      expect.stringContaining('Za 3 tygodnie'),
+    ]);
+    expect(options[0]).toHaveTextContent('Masz już plan na ten tydzień');
+    await user.click(options[2]);
+
+    const created = storedPlans().find((p) => p.id !== 'mine0001')!;
+    expect(created.start).toBe('2026-12-07');
+    expect(created.settings.days.map((d) => d.date)).toEqual(['2026-12-07', '2026-12-09', '2026-12-11', '2026-12-13']);
+    expect(navigateInPage).toHaveBeenCalledWith(`${LIST_PATH}?id=${created.id}`);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Za 2 tygodnie' })).toBeInTheDocument();
+    expect(screen.getByText(/Tak daleko naprzód znamy na razie mniej wydarzeń/)).toBeInTheDocument();
+  });
+
+  it('renames a plan', async () => {
+    seedPlans(savedPlan());
+    nav.search = 'id=mine0001';
+    const user = userEvent.setup();
+    renderView();
+    await board();
+
+    await user.click(screen.getByRole('button', { name: 'Opcje planu „Ten tydzień”' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Zmień nazwę' }));
+    const field = await screen.findByRole('textbox', { name: 'Nazwa planu' });
+    await user.click(field);
+    await user.paste('  Weekend   z mamą ');
+    await user.click(screen.getByRole('button', { name: 'Zapisz' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Weekend z mamą' })).toBeInTheDocument();
+    expect(storedPlans()[0].name).toBe('Weekend z mamą');
+  });
+
+  it('gives a plan its week’s name back when the name is cleared', async () => {
+    seedPlans(savedPlan({ name: 'Weekend z mamą' }));
+    nav.search = 'id=mine0001';
+    const user = userEvent.setup();
+    renderView();
+    await board();
+
+    await user.click(screen.getByRole('button', { name: 'Opcje planu „Weekend z mamą”' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Zmień nazwę' }));
+    await user.clear(await screen.findByRole('textbox', { name: 'Nazwa planu' }));
+    await user.click(screen.getByRole('button', { name: 'Zapisz' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ten tydzień' })).toBeInTheDocument();
+    expect(storedPlans()[0].name).toBeNull();
+  });
+
+  it('deletes a plan, and the delete can be undone', async () => {
+    seedPlans(savedPlan({ name: 'Weekend z mamą' }));
+    nav.search = 'id=mine0001';
+    const user = userEvent.setup();
+    renderView();
+    await board();
+
+    await user.click(screen.getByRole('button', { name: 'Opcje planu „Weekend z mamą”' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Usuń plan' }));
+    expect(storedPlans()).toEqual([]);
+    expect(navigateInPage).toHaveBeenLastCalledWith(LIST_PATH, { replace: true });
+    expect(await screen.findByText('Usunięto „Weekend z mamą”')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cofnij' }));
+    expect(storedPlans().map((p) => p.name)).toEqual(['Weekend z mamą']);
+    expect(await screen.findByRole('link', { name: /Weekend z mamą/ })).toBeInTheDocument();
+  });
+
+  it('moves the single plan kept before there were several into the list', async () => {
+    window.localStorage.setItem(
+      'go-to-city.week-plan.szczecin',
+      JSON.stringify({ settings: settingsForDays([DAYS[1]]), chosen: { [`${DAYS[1]}#0`]: '77' } })
+    );
+    renderView();
+    expect(await screen.findByRole('link', { name: /Ten tydzień/ })).toHaveTextContent('1 wydarzenie');
+    expect(window.localStorage.getItem('go-to-city.week-plan.szczecin')).toBeNull();
+    expect(storedPlans()).toEqual([
+      expect.objectContaining({ start: DAYS[1], chosen: { [`${DAYS[1]}#0`]: '77' }, origin: 'own' }),
+    ]);
+  });
+
+  it('says so when a plan is no longer there', async () => {
+    nav.search = 'id=gone0001';
+    const user = userEvent.setup();
+    renderView();
+    expect(await screen.findByText(/Tego planu już nie ma/)).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Twoje plany' }));
+    expect(navigateInPage).toHaveBeenCalledWith(LIST_PATH);
   });
 });

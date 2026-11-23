@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import type { Route } from 'next';
+import { useSearchParams } from 'next/navigation';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -20,9 +19,11 @@ import EditIcon from '@mui/icons-material/Edit';
 import EventIcon from '@mui/icons-material/Event';
 import ShareIcon from '@mui/icons-material/Share';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import DateRangeIcon from '@mui/icons-material/DateRange';
 import TheaterComedyIcon from '@mui/icons-material/TheaterComedy';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import CelebrationIcon from '@mui/icons-material/Celebration';
@@ -37,8 +38,11 @@ import { useCategories } from '@/components/service/useCategories';
 import { fetchEventsByIds, fetchPlanCandidates } from '@/components/service/eventsApi';
 import { eventsKeys } from '@/components/service/queryKeys';
 import { trackEvent } from '@/lib/analytics';
+import { withBasePath } from '@/lib/constants';
+import { navigateInPage } from '@/lib/inPageNavigation';
 import { planCostLabel, planFromEvents, sortPlanEvents } from '@/lib/planShare';
 import { toLocalDateString } from '@/lib/dateWindows';
+import { shiftDateString } from '@/lib/calendar/warsawTime';
 import { formatDateShort } from '@/lib/utils';
 import { eventPath } from '@/lib/slug';
 import { toCalendarEvent } from '@/lib/calendar/calendarEvent';
@@ -48,76 +52,76 @@ import {
   DAY_PARTS,
   DayPart,
   decodePlanParam,
-  defaultSettings,
+  defaultDaysOf,
   emptyPlan,
   MAX_SLOTS_PER_DAY,
   Mood,
   MOODS,
-  parseStoredPlan,
   PlanAction,
   PlanCandidate,
   PlanCost,
   planCost,
-  planDates,
   planReducer,
   PlanSettings,
   PlanSlot,
   planSlots,
   PlanState,
-  StoredPlan,
+  settingsForDays,
   wantsRoutine,
   weekdayOf,
 } from '@/lib/weekPlan';
+import {
+  copySourceKey,
+  createPlan,
+  isPlanId,
+  mondayOf,
+  newPlanId,
+  openDates,
+  SavedPlan,
+} from '@/lib/weekPlans';
 import { Event } from '@/types/event.types';
 import PlanEventCard from './PlanEventCard';
 import PlanShareDialog from './PlanShareDialog';
+import PlansList, { followInPage, planPath } from './PlansList';
+import PlanMenu from './PlanMenu';
+import PlanNameDialog from './PlanNameDialog';
+import NewPlanDialog from './NewPlanDialog';
+import { planRange, planTitle } from './planLabels';
+import { PlansStore, usePlans } from './usePlans';
 import styles from './WeekPlanView.module.scss';
 
-export const WEEK_PLAN_STORAGE_PREFIX = 'go-to-city.week-plan.';
-
-function readStored(cityId: string, today: string): StoredPlan | null {
-  try {
-    return parseStoredPlan(window.localStorage.getItem(WEEK_PLAN_STORAGE_PREFIX + cityId), today);
-  } catch {
-    // Private mode / sandboxed iframe: a fresh plan every visit.
-    return null;
-  }
-}
-
-function writeStored(cityId: string, { settings, chosen }: StoredPlan): void {
-  try {
-    const stored: StoredPlan = { settings, chosen };
-    window.localStorage.setItem(WEEK_PLAN_STORAGE_PREFIX + cityId, JSON.stringify(stored));
-  } catch {
-    // Storage full or blocked — the plan still works, it just will not survive a reload.
-  }
-}
-
-// Set by "Skopiuj do mojego planu" for the planner it hands over to, which
-// says "copied" once and clears it. Session-scoped: a later visit is quiet.
+// Set by "Skopiuj do moich planów" for the planner it hands over to, which
+// says "copied" (or "you already had it") once and clears it. Session-scoped:
+// a later visit is quiet.
 const COPIED_FLAG = 'go-to-city.week-plan.copied';
+type CopiedFlag = 'new' | 'again';
 
-function setCopiedFlag(): void {
+function setCopiedFlag(flag: CopiedFlag): void {
   try {
-    window.sessionStorage.setItem(COPIED_FLAG, '1');
+    window.sessionStorage.setItem(COPIED_FLAG, flag);
   } catch {
-    // No toast, then — the copy itself is in localStorage.
+    // No toast, then — the copy itself is saved.
   }
 }
 
-function takeCopiedFlag(): boolean {
+function takeCopiedFlag(): CopiedFlag | null {
   try {
-    const set = window.sessionStorage.getItem(COPIED_FLAG) === '1';
+    const flag = window.sessionStorage.getItem(COPIED_FLAG);
     window.sessionStorage.removeItem(COPIED_FLAG);
-    return set;
+    // '1' is what a copy made before there were several plans left behind.
+    return flag === 'again' ? 'again' : flag === 'new' || flag === '1' ? 'new' : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
 /** A chosen event the week's read did not bring, read on its own by id. */
 function pinnedCandidate(event: Event): PlanCandidate {
   return { event, popularity: 1, imageKind: null, seasons: [], audience: [], isLastDay: false, soldOut: false };
+}
+
+function sameSettings(a: PlanSettings, b: PlanSettings): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 // "Today" exists only in the visitor's browser: the static HTML is built once
@@ -133,20 +137,140 @@ function useToday(): string | null {
 }
 
 /**
- * "Twój tydzień". A `?plan=` link opens someone else's plan read-only;
- * without one the visitor builds their own.
+ * "Twój tydzień" / "Twoje plany". What the URL says decides what is shown:
+ *
+ * - `?plan=1.2.3` — someone else's plan, read-only, to copy;
+ * - `?id=k3x9q2ab` — one of my plans, in the planner;
+ * - nothing, and no plans yet — the planner on a draft for this week, saved
+ *   (and given its `?id=`) on its first real change;
+ * - nothing, with plans — the list of them.
  *
  * Everything here starts after mount: the page is a static export, and both
- * "today" and the stored plan only exist in the visitor's browser.
+ * "today" and the plans only exist in the visitor's browser. Moving between
+ * these goes through navigateInPage, never the router (see there why).
  */
 export default function WeekPlanView() {
+  const { t } = useTranslation();
+  const { city } = useCity();
   const searchParams = useSearchParams();
   const sharedIds = useMemo(() => decodePlanParam(searchParams.get('plan')), [searchParams]);
+  const idParam = searchParams.get('id');
   const today = useToday();
+  const store = usePlans(city.id, today);
+
+  const [draftId] = useState(() => newPlanId());
+  // Once the URL names the draft it is an ordinary plan, and the bare URL
+  // shows the list again. (State adjusted during render, not in an effect.)
+  const [draftLanded, setDraftLanded] = useState(false);
+  if (idParam === draftId && !draftLanded) setDraftLanded(true);
+  const draft = useMemo(
+    () => (today ? createPlan(draftId, mondayOf(today), today, 0) : null),
+    [draftId, today]
+  );
+
+  // The plan just deleted, for "Cofnij".
+  const [removed, setRemoved] = useState<SavedPlan | null>(null);
+
+  const listPath = planPath(city.id);
+  const actions: PlanActions | null = store && {
+    create: (start) => {
+      if (!today) return;
+      const plan = createPlan(newPlanId(), start, today, Date.now());
+      store.save(plan);
+      trackEvent('week_plan_create');
+      navigateInPage(planPath(city.id, plan.id));
+    },
+    rename: (plan, name) => {
+      store.save({ ...plan, name });
+      trackEvent('week_plan_rename');
+    },
+    remove: (plan, leaving) => {
+      store.remove(plan.id);
+      setRemoved(plan);
+      trackEvent('week_plan_delete');
+      if (leaving) navigateInPage(listPath, { replace: true });
+    },
+  };
+
+  let view: React.ReactNode = null;
+  if (sharedIds.length > 0) {
+    view = <SharedPlan ids={sharedIds} store={store} />;
+  } else if (today && store && actions && draft) {
+    const current = isPlanId(idParam) ? store.plans.find((p) => p.id === idParam) : undefined;
+    const draftSaved = store.plans.find((p) => p.id === draftId);
+    // Every planner sits in this one slot under its plan's id, so the draft
+    // keeps its state (shortlists, skips) when it is saved and gets its ?id=.
+    if (current) {
+      view = <Planner key={current.id} plan={current} saved today={today} store={store} actions={actions} />;
+    } else if (idParam) {
+      // Just deleted from its own planner: the list is on its way.
+      view = removed?.id === idParam ? null : <PlanGone listPath={listPath} />;
+    } else if (!draftLanded && (store.plans.length === 0 || draftSaved)) {
+      view = (
+        <Planner
+          key={draftId}
+          plan={draftSaved ?? draft}
+          saved={draftSaved !== undefined}
+          today={today}
+          store={store}
+          actions={actions}
+        />
+      );
+    } else {
+      view = (
+        <PlansList
+          plans={store.plans}
+          today={today}
+          onCreate={actions.create}
+          onRename={actions.rename}
+          onDelete={(plan) => actions.remove(plan, false)}
+        />
+      );
+    }
+  }
 
   return (
     <div className={styles.container}>
-      {sharedIds.length > 0 ? <SharedPlan ids={sharedIds} /> : today && <Planner today={today} />}
+      {view}
+      <Snackbar
+        open={removed !== null}
+        autoHideDuration={6000}
+        onClose={(_, reason) => {
+          if (reason !== 'clickaway') setRemoved(null);
+        }}
+        message={removed && today ? t.WEEK_PLAN_DELETED(planTitle(t, removed, today)) : ''}
+        action={
+          <Button
+            color="inherit"
+            size="small"
+            onClick={() => {
+              if (removed) store?.save(removed);
+              setRemoved(null);
+            }}
+          >
+            {t.WEEK_PLAN_UNDO}
+          </Button>
+        }
+      />
+    </div>
+  );
+}
+
+interface PlanActions {
+  create: (start: string) => void;
+  rename: (plan: SavedPlan, name: string | null) => void;
+  /** `leaving`: deleted from its own planner, which then gives way to the list. */
+  remove: (plan: SavedPlan, leaving: boolean) => void;
+}
+
+function PlanGone({ listPath }: { listPath: string }) {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.notice} role="status">
+      <p>{t.WEEK_PLAN_GONE}</p>
+      <Button variant="contained" disableElevation href={withBasePath(listPath)} onClick={followInPage(listPath)}>
+        {t.WEEK_PLANS_BACK}
+      </Button>
     </div>
   );
 }
@@ -177,17 +301,27 @@ function prefersReducedMotion(): boolean {
 // shortlist never sits in the board's flow — a first version laid the three
 // cards of every day one under another and the days ran into each other.
 
-function Planner({ today }: { today: string }) {
+interface PlannerProps {
+  plan: SavedPlan;
+  /** False for the draft a visitor with no plans starts on. */
+  saved: boolean;
+  today: string;
+  store: PlansStore;
+  actions: PlanActions;
+}
+
+function Planner({ plan, saved, today, store, actions }: PlannerProps) {
   const { t, locale } = useTranslation();
   const { city } = useCity();
   const { displayNameToSlug } = useCategories();
   const cityLocative = city.locativeForm[locale];
 
-  const dates = useMemo(() => planDates(today), [today]);
-  const stored = useMemo(() => readStored(city.id, today), [city.id, today]);
-  const [state, setState] = useState<PlanState>(() =>
-    stored ? { ...emptyPlan(stored.settings), chosen: stored.chosen } : emptyPlan(defaultSettings(today))
-  );
+  const dates = useMemo(() => openDates(plan.start, today), [plan.start, today]);
+  // What the plan held when it opened: a draft untouched since is not saved.
+  const [initial] = useState(() => ({ ...plan }));
+  const [state, setState] = useState<PlanState>(() => ({ ...emptyPlan(initial.settings), chosen: initial.chosen }));
+  const [renaming, setRenaming] = useState(false);
+  const [choosingWeek, setChoosingWeek] = useState(false);
   const [picking, setPicking] = useState<string | null>(null);
   // Slots that just got an event: their tiles play the entrance animation,
   // one after another for "Zaskocz mnie" (the order is the stagger).
@@ -235,9 +369,10 @@ function Planner({ today }: { today: string }) {
   // Until the by-id read answers, an absent choice may just be unread.
   const pinnedSettled = missingIds.length === 0 || (pinned.isSuccess && !pinned.isPlaceholderData);
 
-  const [copiedToast, setCopiedToast] = useState(false);
+  const [copiedToast, setCopiedToast] = useState<CopiedFlag | null>(null);
   useEffect(() => {
-    if (takeCopiedFlag()) setCopiedToast(true);
+    const flag = takeCopiedFlag();
+    if (flag) setCopiedToast(flag);
   }, []);
 
   const dispatch = useCallback(
@@ -258,7 +393,27 @@ function Planner({ today }: { today: string }) {
     });
   }, [data, candidates, pinnedSettled]);
 
-  useEffect(() => writeStored(city.id, state), [city.id, state]);
+  // Every change is saved. A draft is saved on its first real change — a
+  // choice, or other days or moods — and only then gets its address (?id=),
+  // so a visitor who only looks around leaves no empty plan behind.
+  useEffect(() => {
+    const { settings, chosen } = state;
+    if (saved) {
+      // The stored plan, not `initial`: it may have been renamed since. Gone
+      // (deleted here or in another tab) means it stays gone.
+      const latest = store.plans.find((p) => p.id === initial.id);
+      if (latest) store.save({ ...latest, settings, chosen });
+      return;
+    }
+    if (Object.keys(chosen).length === 0 && sameSettings(settings, initial.settings)) return;
+    store.save({ ...initial, settings, chosen, createdAt: Date.now() });
+    navigateInPage(planPath(city.id, initial.id), { replace: true });
+  }, [city.id, initial, saved, state, store]);
+
+  const title = planTitle(t, plan, today);
+  const range = planRange(plan.start, locale);
+  // Past the week the events table holds densely, fewer events are known yet.
+  const ahead = dates.some((date) => date > shiftDateString(today, 6));
 
   const slots = planSlots(state.settings);
   const chosen = chosenInOrder(state, candidates);
@@ -270,8 +425,43 @@ function Planner({ today }: { today: string }) {
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t.WEEK_TITLE}</h1>
-        <p className={styles.subtitle}>{t.WEEK_SUB(cityLocative)}</p>
+        {saved && (
+          <Button
+            size="small"
+            startIcon={<ArrowBackIcon />}
+            className={styles.back}
+            href={withBasePath(planPath(city.id))}
+            onClick={followInPage(planPath(city.id))}
+          >
+            {t.WEEK_PLANS_BACK}
+          </Button>
+        )}
+        <div className={styles.titleRow}>
+          <h1 className={styles.title}>{saved ? title : t.WEEK_TITLE}</h1>
+          {saved && (
+            <PlanMenu
+              title={title}
+              onRename={() => setRenaming(true)}
+              onDelete={() => actions.remove(plan, true)}
+            />
+          )}
+        </div>
+        <p className={styles.rangeLine}>
+          {saved ? range : `${title} · ${range}`}
+          {plan.origin === 'copy' && <span className={styles.badge}>{t.WEEK_PLAN_COPY_BADGE}</span>}
+        </p>
+        {!saved && <p className={styles.subtitle}>{t.WEEK_SUB(cityLocative)}</p>}
+        {ahead && <p className={styles.hint}>{t.WEEK_PLAN_AHEAD_HINT}</p>}
+        {!saved && (
+          <Button
+            size="small"
+            startIcon={<DateRangeIcon />}
+            className={styles.otherWeek}
+            onClick={() => setChoosingWeek(true)}
+          >
+            {t.WEEK_PLANS_OTHER_WEEK}
+          </Button>
+        )}
       </header>
 
       <div className={styles.toolbar}>
@@ -406,7 +596,7 @@ function Planner({ today }: { today: string }) {
           startIcon={<RestartAltIcon />}
           onClick={() => {
             // A clean slate: default days, nothing chosen, nothing skipped.
-            const settings = defaultSettings(today);
+            const settings = settingsForDays(defaultDaysOf(dates));
             setState(planReducer(emptyPlan(settings), { type: 'settings', settings }, { candidates, rng: Math.random }));
           }}
         >
@@ -427,10 +617,30 @@ function Planner({ today }: { today: string }) {
       <SummaryBar chosen={chosen} total={slots.length} />
 
       <Snackbar
-        open={copiedToast}
+        open={copiedToast !== null}
         autoHideDuration={5000}
-        onClose={() => setCopiedToast(false)}
-        message={t.WEEK_SHARED_COPIED}
+        onClose={() => setCopiedToast(null)}
+        message={copiedToast === 'again' ? t.WEEK_SHARED_ALREADY_COPIED : t.WEEK_SHARED_COPIED}
+      />
+      <PlanNameDialog
+        open={renaming}
+        name={plan.name ?? ''}
+        fallback={planTitle(t, { ...plan, name: null }, today)}
+        onSave={(name) => {
+          actions.rename(plan, name);
+          setRenaming(false);
+        }}
+        onClose={() => setRenaming(false)}
+      />
+      <NewPlanDialog
+        open={choosingWeek}
+        today={today}
+        plans={store.plans}
+        onChoose={(start) => {
+          setChoosingWeek(false);
+          actions.create(start);
+        }}
+        onClose={() => setChoosingWeek(false)}
       />
     </>
   );
@@ -749,12 +959,10 @@ function SummaryBar({ chosen, total }: SummaryBarProps) {
 
 // ── Someone else's plan ──────────────────────────────────────────────────────
 
-function SharedPlan({ ids }: { ids: string[] }) {
+function SharedPlan({ ids, store }: { ids: string[]; store: PlansStore | null }) {
   const { t, locale } = useTranslation();
   const { city } = useCity();
   const { displayNameToSlug } = useCategories();
-  const router = useRouter();
-  const pathname = usePathname();
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: eventsKeys.sharedPlan(city.id, ids),
     queryFn: () => fetchEventsByIds(city.id, ids),
@@ -766,26 +974,31 @@ function SharedPlan({ ids }: { ids: string[] }) {
   const days = [...new Set(events.map((e) => e.date))];
   const ics = usePlanIcs(events);
   const [sharing, setSharing] = useState(false);
-  const [replacing, setReplacing] = useState<{ plan: StoredPlan; mine: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  // The recipient's own copy: into their planner, where everything can change.
-  const adopt = (plan: StoredPlan) => {
-    writeStored(city.id, plan);
-    setCopiedFlag();
-    trackEvent('shared_plan_copy');
-    router.replace(pathname as Route);
-  };
-
+  // The recipient's own copy: a new plan next to theirs (nothing of theirs
+  // changes), opened in the planner, where everything can change. The same
+  // link copied twice opens the first copy instead of making another.
   const copyToMine = () => {
-    const plan = planFromEvents(events, today);
-    if (!plan) {
+    if (!store) return;
+    const copy = planFromEvents(events, today);
+    if (!copy) {
       setToast(t.WEEK_SHARED_NOTHING_TO_COPY);
       return;
     }
-    const mine = Object.keys(readStored(city.id, today)?.chosen ?? {}).length;
-    if (mine > 0) setReplacing({ plan, mine });
-    else adopt(plan);
+    const sourceKey = copySourceKey(ids);
+    const existing = store.plans.find((p) => p.sourceKey === sourceKey);
+    if (existing) {
+      setCopiedFlag('again');
+      trackEvent('shared_plan_copy_again');
+      navigateInPage(planPath(city.id, existing.id), { replace: true });
+      return;
+    }
+    const plan: SavedPlan = { id: newPlanId(), name: null, origin: 'copy', sourceKey, createdAt: Date.now(), ...copy };
+    store.save(plan);
+    setCopiedFlag('new');
+    trackEvent('shared_plan_copy');
+    navigateInPage(planPath(city.id, plan.id), { replace: true });
   };
 
   return (
@@ -863,37 +1076,13 @@ function SharedPlan({ ids }: { ids: string[] }) {
               variant={events.length > 0 ? 'text' : 'contained'}
               disableElevation
               startIcon={<CasinoIcon />}
-              onClick={() => router.replace(pathname as Route)}
+              href={withBasePath(planPath(city.id))}
+              onClick={followInPage(planPath(city.id))}
             >
               {t.WEEK_SHARED_CTA}
             </Button>
           </div>
           <PlanShareDialog open={sharing} onClose={() => setSharing(false)} events={events} source="shared_plan" />
-          <Dialog
-            open={replacing !== null}
-            onClose={() => setReplacing(null)}
-            aria-labelledby="week-replace-title"
-            aria-describedby="week-replace-body"
-          >
-            <DialogTitle id="week-replace-title">{t.WEEK_SHARED_REPLACE_TITLE}</DialogTitle>
-            <DialogContent>
-              <p id="week-replace-body" className={styles.replaceBody}>
-                {replacing && t.WEEK_SHARED_REPLACE_BODY(replacing.mine)}
-              </p>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setReplacing(null)}>{t.WEEK_SHARED_CANCEL}</Button>
-              <Button
-                variant="contained"
-                disableElevation
-                onClick={() => {
-                  if (replacing) adopt(replacing.plan);
-                }}
-              >
-                {t.WEEK_SHARED_REPLACE_CONFIRM}
-              </Button>
-            </DialogActions>
-          </Dialog>
         </>
       )}
       <Snackbar open={toast !== null} autoHideDuration={4000} onClose={() => setToast(null)} message={toast} />
