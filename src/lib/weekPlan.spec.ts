@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Event } from '@/types/event.types';
+import { eventFactory } from '@/test-utils/eventFactory';
 import {
   baseWeight,
   chosenInOrder,
@@ -42,30 +43,7 @@ function seeded(seed: number): () => number {
   };
 }
 
-let nextId = 1;
-
-function makeEvent(overrides: Partial<Event> = {}): Event {
-  const id = String(nextId++);
-  return {
-    id,
-    eventKey: `key-${id}`,
-    name: `Koncert ${id}`,
-    description: '',
-    categoryMain: 'Muzyka',
-    categorySub: 'Koncert',
-    date: TODAY,
-    startTime: '19:00',
-    endTime: '',
-    durationMin: null,
-    location: { name: `Klub ${id}`, city: 'Szczecin', lat: null, lng: null },
-    price: { amount: 40, currency: 'PLN', label: '40 zł', showLabel: false },
-    url: '',
-    imageUrl: '',
-    sources: ['test'],
-    updatedAt: null,
-    ...overrides,
-  };
-}
+const makeEvent = eventFactory(TODAY);
 
 function cand(event: Partial<Event> = {}, extra: Partial<PlanCandidate> = {}): PlanCandidate {
   return {

@@ -85,6 +85,9 @@ export default function ShareEvent({ event }: Readonly<ShareEventProps>) {
     x: t.SHARE_TARGET_X,
     linkedin: t.SHARE_TARGET_LINKEDIN,
     email: t.SHARE_TARGET_EMAIL,
+    messenger: t.SHARE_TARGET_MESSENGER,
+    telegram: t.SHARE_TARGET_TELEGRAM,
+    sms: t.SHARE_TARGET_SMS,
   };
 
   const menuOpen = Boolean(anchorEl);

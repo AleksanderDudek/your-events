@@ -102,8 +102,24 @@ function withUtm(url: string, source: string): string {
   return u.toString();
 }
 
-export type ShareTarget = 'whatsapp' | 'facebook' | 'x' | 'linkedin' | 'email';
+export type ShareTarget =
+  | 'whatsapp'
+  | 'facebook'
+  | 'x'
+  | 'linkedin'
+  | 'email'
+  | 'messenger'
+  | 'telegram'
+  | 'sms';
+/** The targets the "Poleć" dialog offers — the app is recommended in public. */
 export const SHARE_TARGETS: readonly ShareTarget[] = ['whatsapp', 'facebook', 'x', 'linkedin', 'email'];
+
+/**
+ * Targets that exist only as an app on a phone: Messenger has no web intent
+ * without a registered Facebook app id, and `sms:` does nothing on most
+ * desktops. Offer them where the pointer is a finger.
+ */
+export const PHONE_ONLY_TARGETS: ReadonlySet<ShareTarget> = new Set(['messenger', 'sms']);
 
 /**
  * Web intents for when the native share sheet is missing (most desktops) or
@@ -128,6 +144,18 @@ export function shareTargetUrl(
       return `https://www.linkedin.com/sharing/share-offsite/?url=${enc(link)}`;
     case 'email':
       return `mailto:?subject=${enc(subject)}&body=${enc(text)}`;
+    case 'messenger':
+      // The app builds a card from the page's og: tags; prefilled text is not supported.
+      return `fb-messenger://share/?link=${enc(link)}`;
+    case 'telegram': {
+      // Telegram puts the URL under the text itself; a text that already ends
+      // with it would show the link twice.
+      const bare = text.split(url).join('').trim();
+      return `https://t.me/share/url?url=${enc(link)}${bare ? `&text=${enc(bare)}` : ''}`;
+    }
+    case 'sms':
+      // `?&body=` is the spelling both iOS and Android accept.
+      return `sms:?&body=${enc(text)}`;
   }
 }
 

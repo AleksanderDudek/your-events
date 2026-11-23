@@ -30,12 +30,14 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import ChildCareIcon from '@mui/icons-material/ChildCare';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import SavingsIcon from '@mui/icons-material/Savings';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import { useCategories } from '@/components/service/useCategories';
 import { fetchEventsByIds, fetchPlanCandidates } from '@/components/service/eventsApi';
 import { eventsKeys } from '@/components/service/queryKeys';
-import { copyText, hasNativeShare, nativeShare } from '@/components/service/webShare';
+import { trackEvent } from '@/lib/analytics';
+import { planCostLabel, planFromEvents, sortPlanEvents } from '@/lib/planShare';
 import { toLocalDateString } from '@/lib/dateWindows';
 import { formatDateShort } from '@/lib/utils';
 import { eventPath } from '@/lib/slug';
@@ -48,7 +50,6 @@ import {
   decodePlanParam,
   defaultSettings,
   emptyPlan,
-  encodePlanParam,
   MAX_SLOTS_PER_DAY,
   Mood,
   MOODS,
@@ -69,6 +70,7 @@ import {
 } from '@/lib/weekPlan';
 import { Event } from '@/types/event.types';
 import PlanEventCard from './PlanEventCard';
+import PlanShareDialog from './PlanShareDialog';
 import styles from './WeekPlanView.module.scss';
 
 export const WEEK_PLAN_STORAGE_PREFIX = 'go-to-city.week-plan.';
@@ -82,13 +84,40 @@ function readStored(cityId: string, today: string): StoredPlan | null {
   }
 }
 
-function writeStored(cityId: string, state: PlanState): void {
+function writeStored(cityId: string, { settings, chosen }: StoredPlan): void {
   try {
-    const stored: StoredPlan = { settings: state.settings, chosen: state.chosen };
+    const stored: StoredPlan = { settings, chosen };
     window.localStorage.setItem(WEEK_PLAN_STORAGE_PREFIX + cityId, JSON.stringify(stored));
   } catch {
     // Storage full or blocked — the plan still works, it just will not survive a reload.
   }
+}
+
+// Set by "Skopiuj do mojego planu" for the planner it hands over to, which
+// says "copied" once and clears it. Session-scoped: a later visit is quiet.
+const COPIED_FLAG = 'go-to-city.week-plan.copied';
+
+function setCopiedFlag(): void {
+  try {
+    window.sessionStorage.setItem(COPIED_FLAG, '1');
+  } catch {
+    // No toast, then — the copy itself is in localStorage.
+  }
+}
+
+function takeCopiedFlag(): boolean {
+  try {
+    const set = window.sessionStorage.getItem(COPIED_FLAG) === '1';
+    window.sessionStorage.removeItem(COPIED_FLAG);
+    return set;
+  } catch {
+    return false;
+  }
+}
+
+/** A chosen event the week's read did not bring, read on its own by id. */
+function pinnedCandidate(event: Event): PlanCandidate {
+  return { event, popularity: 1, imageKind: null, seasons: [], audience: [], isLastDay: false, soldOut: false };
 }
 
 // "Today" exists only in the visitor's browser: the static HTML is built once
@@ -128,11 +157,8 @@ function dayLabel(t: Messages, date: string, locale: string): string {
   return `${t.WEEKDAY_LONG[weekdayOf(date)]}, ${formatDateShort(date, locale)}`;
 }
 
-/** "ok. 125 zł + 1 bez ceny", "za darmo", "cena w opisie". */
 function costLabel(t: Messages, cost: PlanCost): string {
-  if (cost.paid === 0) return cost.unknown > 0 ? t.WEEK_COST_UNKNOWN : t.WEEK_COST_FREE;
-  const amount = t.WEEK_COST_AMOUNT(Math.round(cost.total));
-  return cost.unknown > 0 ? `${amount} ${t.WEEK_COST_PLUS_UNKNOWN(cost.unknown)}` : amount;
+  return planCostLabel(t, cost);
 }
 
 // Long enough to read "Wybrane!" on the card before the dialog closes.
@@ -180,7 +206,39 @@ function Planner({ today }: { today: string }) {
     // previous candidates (a subset) keep the board and the dialog working.
     placeholderData: keepPreviousData,
   });
-  const candidates = useMemo(() => new Map((data ?? []).map((c) => [c.event.id, c])), [data]);
+  const fetched = useMemo(() => new Map((data ?? []).map((c) => [c.event.id, c])), [data]);
+
+  // Chosen events the week's read does not carry — a copied plan's gym class
+  // while "Aktywnie" is off, a concert that has since sold out — are read by
+  // id, so a decision is never dropped just because the draw would not offer it.
+  const missingIds = useMemo(
+    () =>
+      data
+        ? [...new Set(Object.values(state.chosen))]
+            .filter((id) => !fetched.has(id))
+            .sort((a, b) => a.localeCompare(b))
+        : [],
+    [data, fetched, state.chosen]
+  );
+  const pinned = useQuery({
+    queryKey: eventsKeys.sharedPlan(city.id, missingIds),
+    queryFn: () => fetchEventsByIds(city.id, missingIds),
+    enabled: missingIds.length > 0,
+    staleTime: 10 * 60_000,
+    placeholderData: keepPreviousData,
+  });
+  const candidates = useMemo(() => {
+    const merged = new Map(fetched);
+    for (const event of pinned.data ?? []) if (!merged.has(event.id)) merged.set(event.id, pinnedCandidate(event));
+    return merged;
+  }, [fetched, pinned.data]);
+  // Until the by-id read answers, an absent choice may just be unread.
+  const pinnedSettled = missingIds.length === 0 || (pinned.isSuccess && !pinned.isPlaceholderData);
+
+  const [copiedToast, setCopiedToast] = useState(false);
+  useEffect(() => {
+    if (takeCopiedFlag()) setCopiedToast(true);
+  }, []);
 
   const dispatch = useCallback(
     (action: PlanAction) => setState((s) => planReducer(s, action, { candidates, rng: Math.random })),
@@ -190,7 +248,7 @@ function Planner({ today }: { today: string }) {
   // New candidates (first load, classes switched on): draw the open slots
   // again around them. A stored choice whose event is gone drops out first.
   useEffect(() => {
-    if (!data) return;
+    if (!data || !pinnedSettled) return;
     setState((s) => {
       const chosen = Object.fromEntries(Object.entries(s.chosen).filter(([, id]) => candidates.has(id)));
       return planReducer({ ...s, chosen }, { type: 'settings', settings: s.settings }, {
@@ -198,7 +256,7 @@ function Planner({ today }: { today: string }) {
         rng: Math.random,
       });
     });
-  }, [data, candidates]);
+  }, [data, candidates, pinnedSettled]);
 
   useEffect(() => writeStored(city.id, state), [city.id, state]);
 
@@ -367,6 +425,13 @@ function Planner({ today }: { today: string }) {
       />
 
       <SummaryBar chosen={chosen} total={slots.length} />
+
+      <Snackbar
+        open={copiedToast}
+        autoHideDuration={5000}
+        onClose={() => setCopiedToast(false)}
+        message={t.WEEK_SHARED_COPIED}
+      />
     </>
   );
 }
@@ -623,27 +688,21 @@ interface SummaryBarProps {
   total: number;
 }
 
-function SummaryBar({ chosen, total }: SummaryBarProps) {
-  const { t, locale } = useTranslation();
-  const { city } = useCity();
-  const pathname = usePathname();
-  const [copied, setCopied] = useState(false);
-
-  const ics = useMemo(
-    () => (chosen.length > 0 ? icsDataUri(buildIcsCalendar(chosen.map((e) => toCalendarEvent(e, t.CALENDAR_END_GUESS)))) : ''),
-    [chosen, t]
+function usePlanIcs(events: Event[]): string {
+  const { t } = useTranslation();
+  return useMemo(
+    () =>
+      events.length > 0
+        ? icsDataUri(buildIcsCalendar(events.map((e) => toCalendarEvent(e, t.CALENDAR_END_GUESS))))
+        : '',
+    [events, t]
   );
+}
 
-  const share = async () => {
-    // Origin + this page's own path, so a base path (the dev deployment) is kept.
-    const url = `${window.location.origin}${pathname}?plan=${encodePlanParam(chosen.map((e) => e.id))}`;
-    const text = t.WEEK_SHARE_TEXT(city.locativeForm[locale]);
-    if (hasNativeShare()) {
-      const outcome = await nativeShare({ title: t.WEEK_TITLE, text, url });
-      if (outcome === 'shared' || outcome === 'cancelled') return;
-    }
-    if (await copyText(url)) setCopied(true);
-  };
+function SummaryBar({ chosen, total }: SummaryBarProps) {
+  const { t } = useTranslation();
+  const [sharing, setSharing] = useState(false);
+  const ics = usePlanIcs(chosen);
 
   return (
     <div className={styles.summary} role="region" aria-label={t.WEEK_SUMMARY_LABEL}>
@@ -674,16 +733,16 @@ function SummaryBar({ chosen, total }: SummaryBarProps) {
             {t.WEEK_CALENDAR}
           </Button>
         )}
-        <Button variant="outlined" startIcon={<ShareIcon />} disabled={chosen.length === 0} onClick={share}>
+        <Button
+          variant="outlined"
+          startIcon={<ShareIcon />}
+          disabled={chosen.length === 0}
+          onClick={() => setSharing(true)}
+        >
           {t.WEEK_SHARE}
         </Button>
       </div>
-      <Snackbar
-        open={copied}
-        autoHideDuration={3000}
-        onClose={() => setCopied(false)}
-        message={t.WEEK_LINK_COPIED}
-      />
+      <PlanShareDialog open={sharing} onClose={() => setSharing(false)} events={chosen} source="plan" />
     </div>
   );
 }
@@ -702,11 +761,32 @@ function SharedPlan({ ids }: { ids: string[] }) {
   });
 
   const today = toLocalDateString(new Date());
-  const events = (data ?? [])
-    .filter((e) => e.date >= today)
-    .sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`));
+  const events = useMemo(() => sortPlanEvents((data ?? []).filter((e) => e.date >= today)), [data, today]);
   const missing = data ? ids.length - events.length : 0;
   const days = [...new Set(events.map((e) => e.date))];
+  const ics = usePlanIcs(events);
+  const [sharing, setSharing] = useState(false);
+  const [replacing, setReplacing] = useState<{ plan: StoredPlan; mine: number } | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // The recipient's own copy: into their planner, where everything can change.
+  const adopt = (plan: StoredPlan) => {
+    writeStored(city.id, plan);
+    setCopiedFlag();
+    trackEvent('shared_plan_copy');
+    router.replace(pathname as Route);
+  };
+
+  const copyToMine = () => {
+    const plan = planFromEvents(events, today);
+    if (!plan) {
+      setToast(t.WEEK_SHARED_NOTHING_TO_COPY);
+      return;
+    }
+    const mine = Object.keys(readStored(city.id, today)?.chosen ?? {}).length;
+    if (mine > 0) setReplacing({ plan, mine });
+    else adopt(plan);
+  };
 
   return (
     <>
@@ -757,8 +837,30 @@ function SharedPlan({ ids }: { ids: string[] }) {
             </>
           )}
           <div className={styles.sharedCta}>
+            {events.length > 0 && (
+              <>
+                <Button
+                  variant="contained"
+                  size="large"
+                  disableElevation
+                  startIcon={<ContentCopyIcon />}
+                  onClick={copyToMine}
+                >
+                  {t.WEEK_SHARED_COPY}
+                </Button>
+                <p className={styles.sharedCtaHint}>{t.WEEK_SHARED_COPY_HINT}</p>
+                <div className={styles.sharedCtaRow}>
+                  <Button variant="outlined" startIcon={<EventIcon />} href={ics} download={`${t.WEEK_CALENDAR_FILE}.ics`}>
+                    {t.WEEK_CALENDAR}
+                  </Button>
+                  <Button variant="outlined" startIcon={<ShareIcon />} onClick={() => setSharing(true)}>
+                    {t.WEEK_SHARED_FORWARD}
+                  </Button>
+                </div>
+              </>
+            )}
             <Button
-              variant="contained"
+              variant={events.length > 0 ? 'text' : 'contained'}
               disableElevation
               startIcon={<CasinoIcon />}
               onClick={() => router.replace(pathname as Route)}
@@ -766,8 +868,35 @@ function SharedPlan({ ids }: { ids: string[] }) {
               {t.WEEK_SHARED_CTA}
             </Button>
           </div>
+          <PlanShareDialog open={sharing} onClose={() => setSharing(false)} events={events} source="shared_plan" />
+          <Dialog
+            open={replacing !== null}
+            onClose={() => setReplacing(null)}
+            aria-labelledby="week-replace-title"
+            aria-describedby="week-replace-body"
+          >
+            <DialogTitle id="week-replace-title">{t.WEEK_SHARED_REPLACE_TITLE}</DialogTitle>
+            <DialogContent>
+              <p id="week-replace-body" className={styles.replaceBody}>
+                {replacing && t.WEEK_SHARED_REPLACE_BODY(replacing.mine)}
+              </p>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setReplacing(null)}>{t.WEEK_SHARED_CANCEL}</Button>
+              <Button
+                variant="contained"
+                disableElevation
+                onClick={() => {
+                  if (replacing) adopt(replacing.plan);
+                }}
+              >
+                {t.WEEK_SHARED_REPLACE_CONFIRM}
+              </Button>
+            </DialogActions>
+          </Dialog>
         </>
       )}
+      <Snackbar open={toast !== null} autoHideDuration={4000} onClose={() => setToast(null)} message={toast} />
     </>
   );
 }
