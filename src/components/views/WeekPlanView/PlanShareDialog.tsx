@@ -76,7 +76,7 @@ function usePlanPdf(events: readonly Event[], planUrl: string, open: boolean) {
     if (request === null || order === null) return;
     let cancelled = false;
     let objectUrl: string | null = null;
-    (async () => {
+    void (async () => {
       try {
         const { buildPlanPdf, fetchPlanPdfFonts } = await import('@/lib/planPdf');
         const origin = window.location.origin;

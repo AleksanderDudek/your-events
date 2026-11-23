@@ -212,7 +212,12 @@ function Planner({ today }: { today: string }) {
   // while "Aktywnie" is off, a concert that has since sold out — are read by
   // id, so a decision is never dropped just because the draw would not offer it.
   const missingIds = useMemo(
-    () => (data ? [...new Set(Object.values(state.chosen))].filter((id) => !fetched.has(id)).sort() : []),
+    () =>
+      data
+        ? [...new Set(Object.values(state.chosen))]
+            .filter((id) => !fetched.has(id))
+            .sort((a, b) => a.localeCompare(b))
+        : [],
     [data, fetched, state.chosen]
   );
   const pinned = useQuery({

@@ -67,7 +67,7 @@ const TIME_COLUMN = 74;
 export function hexColor(color: string, fallback: RGB): RGB {
   const match = color.trim().match(/^#?([0-9a-f]{6})$/i);
   if (!match) return fallback;
-  const n = parseInt(match[1], 16);
+  const n = Number.parseInt(match[1], 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
