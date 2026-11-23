@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { skipFirstVisitPrompts } from '../e2e/support/helpers';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // These specs run against the STATIC EXPORT (`next build` + a plain file
@@ -49,6 +50,12 @@ async function goToPage(page: P, n: number): Promise<void> {
 }
 
 test.describe('Static export: paging and view mode stay independent', () => {
+  // The onboarding sheet is a modal that opens on any city page: left open it
+  // hides the rest of the page (aria-hidden), and every click below timed out.
+  test.beforeEach(async ({ page }) => {
+    await skipFirstVisitPrompts(page);
+  });
+
   // The exact regression: land on a filtered permalink, change the view, then
   // page. The push used to be replaced by the cold-load query.
   test('paging works after a cold load on a filtered URL', async ({ page }) => {
@@ -96,7 +103,8 @@ test.describe('Static export: paging and view mode stay independent', () => {
   test('changing the page size returns to page 1', async ({ page }) => {
     await gotoList(page, '?page=2');
 
-    await page.getByRole('combobox').first().click();
+    // The page-size select (it shows 15); the first combobox is the sort.
+    await page.getByRole('combobox').filter({ hasText: /^15$/ }).first().click();
     await page.getByRole('option', { name: '30' }).first().click();
 
     await expect.poll(() => currentPage(page)).toBe('1');
