@@ -21,6 +21,9 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import XIcon from '@mui/icons-material/X';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import EmailIcon from '@mui/icons-material/Email';
+import TelegramIcon from '@mui/icons-material/Telegram';
+import SmsIcon from '@mui/icons-material/Sms';
+import ChatIcon from '@mui/icons-material/Chat';
 import { useTranslation } from '@/i18n';
 import { useCity } from '@/config/CityProvider';
 import { hideShareStrip, useShareDialog } from '@/components/service/usePromoShare';
@@ -44,6 +47,9 @@ const TARGET_ICONS: Record<ShareTarget, React.ReactNode> = {
   x: <XIcon fontSize="small" />,
   linkedin: <LinkedInIcon fontSize="small" />,
   email: <EmailIcon fontSize="small" />,
+  messenger: <ChatIcon fontSize="small" />,
+  telegram: <TelegramIcon fontSize="small" />,
+  sms: <SmsIcon fontSize="small" />,
 };
 
 function prefersReducedMotion(): boolean {
@@ -156,6 +162,9 @@ export default function ShareDialog() {
     x: t.SHARE_TARGET_X,
     linkedin: t.SHARE_TARGET_LINKEDIN,
     email: t.SHARE_TARGET_EMAIL,
+    messenger: t.SHARE_TARGET_MESSENGER,
+    telegram: t.SHARE_TARGET_TELEGRAM,
+    sms: t.SHARE_TARGET_SMS,
   };
 
   const showImageOnly =

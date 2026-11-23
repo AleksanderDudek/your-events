@@ -10,6 +10,7 @@ import {
   fitCaption,
   promoCaption,
   shareTargetUrl,
+  PHONE_ONLY_TARGETS,
   toHashtag,
 } from './share';
 import { CITIES } from '@/config/cities';
@@ -125,6 +126,36 @@ describe('shareTargetUrl', () => {
 
   it('builds a link for every target', () => {
     for (const target of SHARE_TARGETS) expect(shareTargetUrl(target, input)).toBeTruthy();
+  });
+
+  describe('chat apps', () => {
+    const plan = {
+      text: 'Mój tydzień:\n• 19:00 Koncert\n\nCały plan:\nhttps://idznamiasto.pl/szczecin/moj-tydzien/?plan=1.2',
+      url: 'https://idznamiasto.pl/szczecin/moj-tydzien/?plan=1.2',
+      subject: 'Plan',
+      utm: false,
+    };
+
+    it('hands Messenger the link, which it turns into a card', () => {
+      expect(shareTargetUrl('messenger', plan)).toBe(
+        `fb-messenger://share/?link=${encodeURIComponent(plan.url)}`
+      );
+    });
+
+    it('gives Telegram the link once, not in the text as well', () => {
+      const tg = new URL(shareTargetUrl('telegram', plan));
+      expect(tg.origin).toBe('https://t.me');
+      expect(tg.searchParams.get('url')).toBe(plan.url);
+      expect(tg.searchParams.get('text')).toBe('Mój tydzień:\n• 19:00 Koncert\n\nCały plan:');
+    });
+
+    it('puts the whole message into an SMS', () => {
+      expect(shareTargetUrl('sms', plan)).toBe(`sms:?&body=${encodeURIComponent(plan.text)}`);
+    });
+
+    it('marks the targets that need a phone', () => {
+      expect([...PHONE_ONLY_TARGETS].sort()).toEqual(['messenger', 'sms']);
+    });
   });
 });
 
