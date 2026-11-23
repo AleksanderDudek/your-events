@@ -43,6 +43,11 @@ export const metadata: Metadata = {
   },
   // X falls back to og:image for the picture; this asks for the large card.
   twitter: { card: 'summary_large_image' },
+  // W3C TDMRep: the text-and-data-mining rights reservation (EU Directive
+  // 2019/790, Art. 4(3)) on every page, for a crawler that reads pages but not
+  // robots.txt. The same reservation is in /.well-known/tdmrep.json and
+  // robots.txt — see src/lib/robotsTxt.ts.
+  other: { 'tdm-reservation': '1' },
 };
 
 export default function RootLayout({
