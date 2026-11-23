@@ -79,7 +79,7 @@ export const TEXT = {
   // The other switchable city, as it appears in the switcher's option list.
   cityOther: /Szczecin/,
   // SEO: the events-list document <title> (a title template appends the brand).
-  metaEventsTitle: /Wydarzenia w Wroc/,
+  metaEventsTitle: /Wydarzenia we Wroc/,
   // "Rozwijaj z nami" — the city-agnostic community page.
   growNav: 'Rozwijaj z nami',
   growPunch: 'Otwierasz i wiesz.',
