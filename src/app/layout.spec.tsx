@@ -82,6 +82,15 @@ function collectHeadHrefs(root: Element): string[] {
     .filter((href): href is string => typeof href === 'string');
 }
 
+describe('RootLayout metadata: AI and data-mining opt-out', () => {
+  it('reserves text and data mining on every page, in every environment', async () => {
+    for (const noindex of [false, true]) {
+      const { metadata } = await loadLayout({ noindex });
+      expect(metadata.other).toMatchObject({ 'tdm-reservation': '1' });
+    }
+  });
+});
+
 describe('RootLayout metadata.robots', () => {
   it('is undefined when the environment is indexable', async () => {
     const { metadata } = await loadLayout({ noindex: false });
