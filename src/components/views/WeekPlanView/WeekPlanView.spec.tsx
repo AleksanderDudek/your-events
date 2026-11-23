@@ -184,7 +184,9 @@ describe('WeekPlanView', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Udostępnij plan' });
     const link = within(dialog).getByRole('textbox', { name: 'Link do planu' }) as HTMLInputElement;
-    expect(link.value).toMatch(/\/szczecin\/moj-tydzien\?plan=\d+(\.\d+)*$/);
+    // usePathname() leaves the base path out; a link without it 404s on GitHub Pages.
+    expect(link.value.startsWith(`${window.location.origin}/your-events/szczecin/moj-tydzien?plan=`)).toBe(true);
+    expect(link.value).toMatch(/\?plan=\d+(\.\d+)*$/);
     expect(link.value.split('=')[1].split('.')).toHaveLength(DAYS.length);
 
     const whatsapp = within(dialog).getByRole('link', { name: 'WhatsApp' });

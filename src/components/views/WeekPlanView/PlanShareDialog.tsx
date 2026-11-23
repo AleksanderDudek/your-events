@@ -155,7 +155,8 @@ export default function PlanShareDialog({ open, onClose, events, source }: PlanS
 
   const sorted = useMemo(() => sortPlanEvents(events), [events]);
   // Built in the browser only — the dialog never opens on the server.
-  const url = open ? planShareUrl(`${window.location.origin}${pathname}`, sorted) : '';
+  // usePathname() is without the base path (/your-events on GitHub Pages).
+  const url = open ? planShareUrl(`${window.location.origin}${withBasePath(pathname)}`, sorted) : '';
   const text = open
     ? planShareText(sorted, { t, locale, cityLocative: city.locativeForm[locale], url })
     : '';
