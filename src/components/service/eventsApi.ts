@@ -10,6 +10,7 @@ import { defaultDateWindow } from '@/lib/dateWindows';
 import { isSeasonUpcoming, parseSeasonSlug, seasonsInWindow } from '@/lib/seasons';
 import { OfferedSeason, Season } from '@/types/season.types';
 import { PlanCandidate, ROUTINE_CATEGORIES } from '@/lib/weekPlan';
+import { isSearchQuery, searchDocuments } from '@/lib/search';
 
 interface SupabaseEventRow {
   id: number;
@@ -42,6 +43,13 @@ interface SupabaseEventRow {
 // scan has to fetch.
 type ClientFilterRow = Pick<SupabaseEventRow, 'id' | 'lat' | 'lng' | 'is_free' | 'price' | 'price_label'>;
 const CLIENT_FILTER_COLUMNS = 'id,lat,lng,is_free,price,price_label';
+
+// With a search, a scan also reads the text it matches in (see @/lib/search):
+// ~250 bytes a row in all, against ~2.4 KB for a whole one — descriptions
+// are what make rows heavy, and they are not searched.
+type ScanRow = ClientFilterRow &
+  Partial<Pick<SupabaseEventRow, 'name' | 'venue' | 'category_main' | 'category_sub'>>;
+const SEARCH_COLUMNS = `${CLIENT_FILTER_COLUMNS},name,venue,category_main,category_sub`;
 
 // A "descriptive" label carries meaningful words beyond a bare number + currency
 // (e.g. "Karnet od 189 zł"), so it should be shown verbatim rather than reduced
@@ -179,12 +187,8 @@ function buildFilteredQuery<Columns extends string = '*'>(
 ) {
   let query = supabase.from('events').select(columns, withCount ? { count: 'exact' } : undefined);
 
-  // People search either for what ("jazz") or for where ("Filharmonia"), so one
-  // box matches both columns. This `or=` group ANDs with the category one below.
-  if (filters.search) {
-    const term = quoteForOr(`%${filters.search}%`);
-    query = query.or(`name.ilike.${term},venue.ilike.${term}`);
-  }
+  // Free text is not matched here: ILIKE knows no Polish letters, inflection or
+  // typos. A search runs as a client filter on a scan (see hasClientFilters).
 
   const { topLevelMains, subPairs } = categoryFilter;
   const hasMains = topLevelMains.length > 0;
@@ -287,11 +291,16 @@ function applyOrder<T>(query: T, filters: EventFilters): T {
   }
 }
 
+function hasSearch(filters: EventFilters): boolean {
+  return isSearchQuery(filters.search);
+}
+
 // The filters with no column to compare against: free entry is derived from
-// three price columns, and a circle is not a range. Both run on raw rows, so a
-// scan can apply them to its six columns without building whole events.
+// three price columns, a circle is not a range, and a search forgives what SQL
+// cannot (see @/lib/search). All run on raw rows, so a scan can apply them to
+// its few columns without building whole events.
 function hasClientFilters(filters: EventFilters): boolean {
-  return filters.freeOnly || filters.near !== null;
+  return filters.freeOnly || filters.near !== null || hasSearch(filters);
 }
 
 function matchesClientFilters(row: ClientFilterRow, filters: EventFilters): boolean {
@@ -317,20 +326,26 @@ const SCAN_MAX_PAGES = 20;
 // The map reads whole rows, ~2.4 KB each, so its runaway guard is tighter.
 const MAP_SCAN_MAX_PAGES = 5;
 
-/**
- * The ids of every event passing the client filters, in list order.
- *
- * Only the columns those filters read are fetched — ~95 bytes a row against
- * ~2.4 KB for a whole one (measured on Wrocław's 5 km box: 7 KB gzipped
- * against 505 KB) — so the total and the page boundaries are found without
- * downloading every match in full.
- */
-async function scanMatchingIds(
+// A scan's rows, kept for a minute. Typing a search, paging through results
+// and switching to the map all ask the same scan again with only the search
+// text or the page changed — neither of which the database sees.
+const SCAN_CACHE_TTL_MS = 60_000;
+const SCAN_CACHE_MAX = 12;
+const scanCache = new Map<string, { at: number; rows: Promise<ScanRow[]> }>();
+
+/** For tests: forget every cached scan. */
+export function clearScanCache(): void {
+  scanCache.clear();
+}
+
+/** Every row the database-side filters let through, in list order. */
+async function readScan(
   supabase: ReturnType<typeof getSupabaseForCity>,
   filters: EventFilters,
-  categoryFilter: ResolvedCategoryFilter
-): Promise<number[]> {
-  const matches: ClientFilterRow[] = [];
+  categoryFilter: ResolvedCategoryFilter,
+  columns: string
+): Promise<ScanRow[]> {
+  const rows: ScanRow[] = [];
   for (let page = 0; ; page += 1) {
     // Reaching the cap with pages still full would mean a wrong total and
     // unreachable pages — fail loudly rather than serve them.
@@ -341,19 +356,99 @@ async function scanMatchingIds(
     // `id` breaks ties, so rows sharing a date and time cannot trade places
     // between two pages of the scan and be counted twice or not at all.
     const { data, error } = await buildFilteredQuery(supabase, filters, categoryFilter, {
-      columns: CLIENT_FILTER_COLUMNS,
+      columns,
       withCount: false,
     })
       .order('id', { ascending: true })
       .range(from, from + SCAN_PAGE_SIZE - 1);
     if (error) throw new ServerError(error.message);
 
-    const batch = (data as ClientFilterRow[] | null) ?? [];
-    for (const row of batch) {
-      if (matchesClientFilters(row, filters)) matches.push(row);
-    }
+    const batch = (data as unknown as ScanRow[] | null) ?? [];
+    rows.push(...batch);
     if (batch.length < SCAN_PAGE_SIZE) break;
   }
+  return rows;
+}
+
+function cachedScan(
+  supabase: ReturnType<typeof getSupabaseForCity>,
+  cityId: string,
+  filters: EventFilters,
+  categoryFilter: ResolvedCategoryFilter,
+  columns: string,
+  fresh: boolean
+): Promise<ScanRow[]> {
+  // Everything the database is asked, and nothing it is not: the search text,
+  // the page and the view are applied to the rows afterwards.
+  const key = JSON.stringify([
+    cityId,
+    columns,
+    { ...filters, search: '', page: 0, pageSize: 0, viewMode: null },
+    categoryFilter,
+  ]);
+  const now = Date.now();
+  const hit = scanCache.get(key);
+  if (!fresh && hit && now - hit.at < SCAN_CACHE_TTL_MS) return hit.rows;
+
+  const rows = readScan(supabase, filters, categoryFilter, columns);
+  scanCache.delete(key);
+  scanCache.set(key, { at: now, rows });
+  // A failed read is not an answer worth keeping.
+  rows.catch(() => {
+    if (scanCache.get(key)?.rows === rows) scanCache.delete(key);
+  });
+  while (scanCache.size > SCAN_CACHE_MAX) {
+    scanCache.delete(scanCache.keys().next().value as string);
+  }
+  return rows;
+}
+
+interface ScanOptions {
+  /** Bypass the cache: the last read is suspected stale. */
+  fresh?: boolean;
+  /** Only rows that can become a pin. */
+  requireCoords?: boolean;
+}
+
+/**
+ * The ids of every event passing the client filters, in list order.
+ *
+ * Only the columns those filters read are fetched — ~95 bytes a row against
+ * ~2.4 KB for a whole one (measured on Wrocław's 5 km box: 7 KB gzipped
+ * against 505 KB) — so the total and the page boundaries are found without
+ * downloading every match in full.
+ */
+async function scanMatchingIds(
+  supabase: ReturnType<typeof getSupabaseForCity>,
+  cityId: string,
+  filters: EventFilters,
+  categoryFilter: ResolvedCategoryFilter,
+  { fresh = false, requireCoords = false }: ScanOptions = {}
+): Promise<number[]> {
+  const search = hasSearch(filters);
+  const rows = await cachedScan(
+    supabase,
+    cityId,
+    filters,
+    categoryFilter,
+    search ? SEARCH_COLUMNS : CLIENT_FILTER_COLUMNS,
+    fresh
+  );
+  // The search runs over the cached rows as they are, so its index is built
+  // once per scan rather than once per keystroke.
+  const found = search
+    ? searchDocuments(filters.search, rows, (r) => [
+        r.name,
+        r.venue,
+        r.category_main,
+        r.category_sub,
+      ])
+    : rows;
+  const matches = found.filter(
+    (row) =>
+      matchesClientFilters(row, filters) &&
+      (!requireCoords || (row.lat !== null && row.lng !== null))
+  );
 
   const near = filters.near;
   if (filters.sort === 'distance' && near) {
@@ -371,6 +466,9 @@ async function scanMatchingIds(
   return matches.map((row) => row.id);
 }
 
+// Ids per `in=(...)` request: ~1.5 KB of URL, well inside every proxy's limit.
+const IDS_PER_REQUEST = 200;
+
 /** Whole rows for `ids`, in the order given — `in` answers in whatever order it likes. */
 async function fetchRowsInOrder(
   supabase: ReturnType<typeof getSupabaseForCity>,
@@ -378,9 +476,18 @@ async function fetchRowsInOrder(
   cityName: string
 ): Promise<Event[]> {
   if (ids.length === 0) return [];
-  const { data, error } = await supabase.from('events').select('*').in('id', ids);
-  if (error) throw new ServerError(error.message);
-  const byId = new Map(((data as SupabaseEventRow[] | null) ?? []).map((row) => [row.id, row]));
+  const chunks: number[][] = [];
+  for (let i = 0; i < ids.length; i += IDS_PER_REQUEST) {
+    chunks.push(ids.slice(i, i + IDS_PER_REQUEST));
+  }
+  const results = await Promise.all(
+    chunks.map((chunk) => supabase.from('events').select('*').in('id', chunk))
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw new ServerError(failed.error.message);
+  const byId = new Map(
+    results.flatMap((r) => (r.data as SupabaseEventRow[] | null) ?? []).map((row) => [row.id, row])
+  );
   // An id whose row vanished between the scan and now is skipped; the caller
   // decides whether a short page is worth another look.
   return ids.flatMap((id) => {
@@ -392,13 +499,15 @@ async function fetchRowsInOrder(
 /** One scan, then whole rows for the ids that fall on the page. */
 async function fetchScannedPage(
   supabase: ReturnType<typeof getSupabaseForCity>,
+  cityId: string,
   filters: EventFilters,
   categoryFilter: ResolvedCategoryFilter,
   cityName: string,
   from: number,
-  to: number
+  to: number,
+  fresh: boolean
 ): Promise<{ events: Event[]; total: number; complete: boolean }> {
-  const ids = await scanMatchingIds(supabase, filters, categoryFilter);
+  const ids = await scanMatchingIds(supabase, cityId, filters, categoryFilter, { fresh });
   const pageIds = ids.slice(from, to + 1);
   const events = await fetchRowsInOrder(supabase, pageIds, cityName);
   return { events, total: ids.length, complete: events.length === pageIds.length };
@@ -419,13 +528,15 @@ export async function fetchEvents(
   // paging, so such a list is found in two steps: every matching id (the
   // scan), then whole rows for this page only.
   if (hasClientFilters(filters)) {
-    const page = await fetchScannedPage(supabase, filters, categoryFilter, cityName, from, to);
+    const scan = [supabase, city.id, filters, categoryFilter, cityName, from, to] as const;
+    const page = await fetchScannedPage(...scan, false);
     if (page.complete) return { events: page.events, total: page.total };
     // Rows the scan found are gone by the time the page is read. Ids churn —
     // the scraper rewrites rows under new ones — so a rewrite landing between
-    // the two requests can empty a page the count still calls full. One fresh
-    // read settles it; if that is short too, a row really was deleted.
-    const retry = await fetchScannedPage(supabase, filters, categoryFilter, cityName, from, to);
+    // the two requests (or since the scan was cached) can empty a page the
+    // count still calls full. One fresh read settles it; if that is short too,
+    // a row really was deleted.
+    const retry = await fetchScannedPage(...scan, true);
     return { events: retry.events, total: retry.total };
   }
 
@@ -463,8 +574,19 @@ export async function fetchMapEvents(
   const supabase = getSupabaseForCity(city.id);
   const cityName = city.displayName.pl;
 
-  // The filters with no column behind them (free entry, the circle) run here,
-  // as in fetchEvents. Cutting the rows at MAP_EVENT_LIMIT before them would
+  // A search reads the light scan the list reads (usually already cached), and
+  // whole rows only for the matches: scanning whole rows to search them would
+  // pull the city's every description, ~2.4 KB a row.
+  if (hasSearch(filters)) {
+    const ids = await scanMatchingIds(supabase, city.id, filters, categoryFilter, {
+      requireCoords: true,
+    });
+    const events = await fetchRowsInOrder(supabase, ids.slice(0, MAP_EVENT_LIMIT), cityName);
+    return { events, total: ids.length };
+  }
+
+  // The other filters with no column behind them (free entry, the circle) run
+  // here, as in fetchEvents. Cutting the rows at MAP_EVENT_LIMIT before them would
   // drop matches the list still counts — and the header would blame the gap
   // on missing coordinates — so this read pages through every candidate, as
   // the list's scan does. For a circle the box keeps that to a page or two.

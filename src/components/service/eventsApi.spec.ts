@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
+  clearScanCache,
   fetchEvents,
   fetchEvent,
   fetchCategories,
@@ -189,6 +190,8 @@ function setup() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Scans are cached for a minute; every case starts from an empty cache.
+  clearScanCache();
 });
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -447,12 +450,35 @@ describe('eventsApi', () => {
     it('applies the same filters as the list, so the two cannot disagree', async () => {
       const s = setup();
 
-      await fetchMapEvents('szczecin', makeFilters({ search: 'jazz', dateFrom: '2026-03-01' }));
+      await fetchMapEvents('szczecin', makeFilters({ dateFrom: '2026-03-01', categories: [] }));
 
-      expect(s.eventsBuilder.or).toHaveBeenCalledWith(
-        expect.stringContaining('name.ilike')
-      );
       expect(s.eventsBuilder.gte).toHaveBeenCalledWith('date', '2026-03-01');
+    });
+
+    it('searches the light scan, then reads whole rows only for mappable matches', async () => {
+      const s = setup();
+      s.results.eventsQueue.push(
+        {
+          data: [
+            makeRow({ id: 1, name: 'Koncert jazzowy' }),
+            makeRow({ id: 2, name: 'Jazz bez współrzędnych', lat: null, lng: null }),
+            makeRow({ id: 3, name: 'Joga' }),
+          ],
+          count: null,
+          error: null,
+        },
+        { data: [makeRow({ id: 1, name: 'Koncert jazzowy' })], count: null, error: null }
+      );
+
+      const { events, total } = await fetchMapEvents('szczecin', makeFilters({ search: 'jazz' }));
+
+      expect(s.eventsBuilders[0].select).toHaveBeenCalledWith(
+        expect.stringContaining('name,venue,category_main,category_sub'),
+        undefined
+      );
+      expect(s.eventsBuilders[1].in).toHaveBeenCalledWith('id', [1]);
+      expect(events.map((e) => e.id)).toEqual(['1']);
+      expect(total).toBe(1);
     });
 
     it('reports the count of mappable matches', async () => {
@@ -480,48 +506,117 @@ describe('eventsApi', () => {
       expect(total).toBe(1);
     });
 
-    it('matches a search term against both the event name and the venue', async () => {
-      const s = setup();
+    describe('search', () => {
+      const rows = () => [
+        makeRow({ id: 1, name: 'Koncert w Filharmonii', venue: 'Filharmonia', category_main: 'Muzyka', category_sub: 'Koncert' }),
+        makeRow({ id: 2, name: 'Kot Prot', venue: 'Multikino', category_main: 'Film', category_sub: 'Seans kinowy' }),
+        makeRow({ id: 3, name: 'Stand-up: Kowalski', venue: 'Klub Wędrówki', category_main: 'Teatr i Widowiska', category_sub: 'Kabaret / Stand-up' }),
+      ];
 
-      await fetchEvents('szczecin', makeFilters({ search: 'jazz' }));
+      it('never sends the text to the database', async () => {
+        const s = setup();
+        s.results.events = { data: rows(), count: null, error: null };
 
-      expect(s.eventsBuilder.or).toHaveBeenCalledWith('name.ilike."%jazz%",venue.ilike."%jazz%"');
-    });
+        await fetchEvents('szczecin', makeFilters({ search: 'jazz, blues (live)' }));
 
-    it('quotes a multi-word search term so commas and spaces do not split the OR group', async () => {
-      const s = setup();
-
-      await fetchEvents('szczecin', makeFilters({ search: 'jazz, blues (live)' }));
-
-      expect(s.eventsBuilder.or).toHaveBeenCalledWith(
-        'name.ilike."%jazz, blues (live)%",venue.ilike."%jazz, blues (live)%"'
-      );
-    });
-
-    it('escapes quotes and backslashes in the search term', async () => {
-      const s = setup();
-
-      await fetchEvents('szczecin', makeFilters({ search: 'a"b\\c' }));
-
-      expect(s.eventsBuilder.or).toHaveBeenCalledWith(
-        'name.ilike."%a\\"b\\\\c%",venue.ilike."%a\\"b\\\\c%"'
-      );
-    });
-
-    it('keeps the search OR separate from the category OR', async () => {
-      const s = setup();
-
-      await fetchEvents('szczecin', makeFilters({ search: 'jazz' }), {
-        topLevelMains: [],
-        subPairs: [{ main: 'dance', sub: 'dance-hip-hop' }],
+        for (const b of s.eventsBuilders) {
+          for (const call of b.or.mock.calls) expect(String(call[0])).not.toContain('ilike');
+        }
       });
 
-      // Two `or=` params — PostgREST ANDs them: (name|venue) AND (category).
-      expect(s.eventsBuilder.or).toHaveBeenCalledTimes(2);
-      expect(s.eventsBuilder.or).toHaveBeenCalledWith('name.ilike."%jazz%",venue.ilike."%jazz%"');
-      expect(s.eventsBuilder.or).toHaveBeenCalledWith(
-        'and(category_main.eq."dance",category_sub.eq."dance-hip-hop")'
-      );
+      it('scans the text columns, then reads whole rows for the page only', async () => {
+        const s = setup();
+        s.results.eventsQueue.push(
+          { data: rows(), count: null, error: null },
+          { data: [rows()[0]], count: null, error: null }
+        );
+
+        const { events, total } = await fetchEvents('szczecin', makeFilters({ search: 'filharmonii' }));
+
+        expect(s.eventsBuilders[0].select).toHaveBeenCalledWith(
+          'id,lat,lng,is_free,price,price_label,name,venue,category_main,category_sub',
+          undefined
+        );
+        expect(s.eventsBuilders[1].in).toHaveBeenCalledWith('id', [1]);
+        expect(events.map((e) => e.id)).toEqual(['1']);
+        expect(total).toBe(1);
+      });
+
+      it('forgives missing Polish letters, inflection and typos', async () => {
+        for (const [query, id] of [
+          ['wedrowki', 3],
+          ['koncerty', 1],
+          ['filharmonja', 1],
+          ['standup', 3],
+          ['kino', 2],
+        ] as const) {
+          clearScanCache();
+          const s = setup();
+          s.results.eventsQueue.push(
+            { data: rows(), count: null, error: null },
+            { data: rows().filter((r) => r.id === id), count: null, error: null }
+          );
+          const { total } = await fetchEvents('szczecin', makeFilters({ search: query }));
+          expect({ query, total, ids: s.eventsBuilders[1]?.in.mock.calls[0]?.[1] }).toEqual({
+            query,
+            total: 1,
+            ids: [id],
+          });
+        }
+      });
+
+      it('composes with the database filters (category, dates)', async () => {
+        const s = setup();
+        s.results.events = { data: rows(), count: null, error: null };
+
+        await fetchEvents('szczecin', makeFilters({ search: 'jazz', dateFrom: '2026-03-01' }), {
+          topLevelMains: [],
+          subPairs: [{ main: 'dance', sub: 'dance-hip-hop' }],
+        });
+
+        expect(s.eventsBuilders[0].or).toHaveBeenCalledTimes(1);
+        expect(s.eventsBuilders[0].or).toHaveBeenCalledWith(
+          'and(category_main.eq."dance",category_sub.eq."dance-hip-hop")'
+        );
+        expect(s.eventsBuilders[0].gte).toHaveBeenCalledWith('date', '2026-03-01');
+      });
+
+      it('reuses one scan while the query is typed and the pages are turned', async () => {
+        const s = setup();
+        s.results.events = { data: rows(), count: null, error: null };
+
+        await fetchEvents('szczecin', makeFilters({ search: 'kon' }));
+        await fetchEvents('szczecin', makeFilters({ search: 'koncert' }));
+        await fetchEvents('szczecin', makeFilters({ search: 'koncert', page: 2 }));
+
+        const scans = s.eventsBuilders.filter((b) =>
+          b.select.mock.calls.some((c) => String(c[0]).includes('category_sub'))
+        );
+        expect(scans).toHaveLength(1);
+      });
+
+      it('scans again when a database filter changes', async () => {
+        const s = setup();
+        s.results.events = { data: rows(), count: null, error: null };
+
+        await fetchEvents('szczecin', makeFilters({ search: 'koncert' }));
+        await fetchEvents('szczecin', makeFilters({ search: 'koncert', dateFrom: '2026-04-01' }));
+
+        const scans = s.eventsBuilders.filter((b) =>
+          b.select.mock.calls.some((c) => String(c[0]).includes('category_sub'))
+        );
+        expect(scans).toHaveLength(2);
+      });
+
+      it('treats a query of nothing but punctuation as no search', async () => {
+        const s = setup();
+        s.results.events = { data: [makeRow()], count: 1, error: null };
+
+        const { total } = await fetchEvents('szczecin', makeFilters({ search: ' !!! ' }));
+
+        expect(s.eventsBuilders).toHaveLength(1);
+        expect(total).toBe(1);
+      });
     });
 
     it('orders by date then time_start', async () => {
