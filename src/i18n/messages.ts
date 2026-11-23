@@ -17,6 +17,16 @@ function monthsPl(n: number): string {
 }
 
 // "1 wydarzenie", "3 wydarzenia", "5 wydarzeń" — the same rule as monthsPl.
+/**
+ * "w Szczecinie", but "we Wrocławiu": Polish takes "we" before a word that
+ * starts with w or f followed by a consonant, where "w" alone would not be
+ * sayable. Locatives of the cities served: Szczecinie, Wrocławiu, Warszawie,
+ * Krakowie, Łodzi, Poznaniu.
+ */
+export function inCityPl(locative: string): string {
+  return /^[wf][^aąeęioóuy]/i.test(locative) ? `we ${locative}` : `w ${locative}`;
+}
+
 function eventsPl(n: number): string {
   if (n === 1) return '1 wydarzenie';
   const ones = n % 10;
@@ -26,7 +36,7 @@ function eventsPl(n: number): string {
 
 const pl = {
   APP_NAME: 'Idź na miasto',
-  APP_TAGLINE: (cityLocative: string) => `Odkryj wydarzenia w ${cityLocative}`,
+  APP_TAGLINE: (cityLocative: string) => `Odkryj wydarzenia ${inCityPl(cityLocative)}`,
   LANG_LABEL: 'Język',
   LANG_PL: 'Polski',
   LANG_EN: 'Angielski',
@@ -171,9 +181,9 @@ const pl = {
   RECURRENCE_WEEKLY: 'Co tydzień',
   RECURRENCE_BIWEEKLY: 'Co dwa tygodnie',
   RECURRENCE_MONTHLY: 'Co miesiąc',
-  META_EVENTS_TITLE: (cityLocative: string) => `Wydarzenia w ${cityLocative}`,
+  META_EVENTS_TITLE: (cityLocative: string) => `Wydarzenia ${inCityPl(cityLocative)}`,
   META_DESCRIPTION: (cityLocative: string) =>
-    `Odkryj najlepsze wydarzenia w ${cityLocative} — taniec, fitness, warsztaty kulinarne, koncerty i więcej.`,
+    `Odkryj najlepsze wydarzenia ${inCityPl(cityLocative)} — taniec, fitness, warsztaty kulinarne, koncerty i więcej.`,
   LOADING: 'Ładowanie...',
   LOADING_EVENTS: 'Wczytywanie wydarzeń…',
   CALENDAR_ADD: 'Dodaj do kalendarza',
@@ -195,7 +205,7 @@ const pl = {
   HOME_HERO_HEADLINE_PREFIX: 'Idź na',
   HOME_HERO_HEADLINE_GENERIC_WORD: 'miasto',
   HOME_HERO_SUB: (cityLocative: string) =>
-    `Sprawdź, co się dzieje w ${cityLocative} — teraz, w ten weekend, albo zaplanuj treningi.`,
+    `Sprawdź, co się dzieje ${inCityPl(cityLocative)} — teraz, w ten weekend, albo zaplanuj treningi.`,
   HOME_CTA_BROWSE_ALL: 'Przeglądaj wszystkie wydarzenia',
   HOME_NOW_TITLE: 'Co się dzieje teraz na mieście?',
   HOME_NOW_SUB: 'Wydarzenia w najbliższe 4 godziny',
@@ -391,7 +401,7 @@ const pl = {
   SHARE_TILE_BADGE: 'Poleć znajomym',
   SHARE_TILE_TITLE: 'Więcej was, więcej się dzieje',
   SHARE_TILE_SUB: (cityLocative: string) =>
-    `Znajomi wiedzą, co gra, więc jest z kim iść. A pełne sale to kolejne wydarzenia w ${cityLocative}.`,
+    `Znajomi wiedzą, co gra, więc jest z kim iść. A pełne sale to kolejne wydarzenia ${inCityPl(cityLocative)}.`,
   SHARE_TILE_CTA: 'Wyślij znajomym',
   SHARE_GROW_TITLE: 'Poleć znajomym',
   SHARE_GROW_BODY:
@@ -435,7 +445,7 @@ const pl = {
   ONBOARDING_SHEET_LABEL: 'Wprowadzenie',
   ONBOARDING_TITLE: 'Witaj w Idź na miasto',
   ONBOARDING_BODY: (cityLocative: string) =>
-    `Zbieramy wydarzenia w ${cityLocative} w jednym miejscu. Oto, co możesz tu zrobić.`,
+    `Zbieramy wydarzenia ${inCityPl(cityLocative)} w jednym miejscu. Oto, co możesz tu zrobić.`,
   ONBOARDING_BULLET_FILTER: 'Szukaj i filtruj — po dacie, kategorii, cenie',
   ONBOARDING_BULLET_VIEW: 'Przeglądaj jako siatkę, listę albo mapę',
   ONBOARDING_BULLET_PRESET: 'Zapisz swoje filtry i wracaj do nich jednym kliknięciem',
@@ -500,9 +510,9 @@ const pl = {
   HOME_WEEK_TITLE: 'Ułóż swój tydzień',
   HOME_WEEK_SUB: 'Wybierz dni, a my podsuniemy, gdzie iść',
   HOME_WEEK_CTA: 'Zaskocz mnie',
-  WEEK_META_TITLE: (cityLocative: string) => `Twój tydzień w ${cityLocative}`,
+  WEEK_META_TITLE: (cityLocative: string) => `Twój tydzień ${inCityPl(cityLocative)}`,
   WEEK_META_DESCRIPTION: (cityLocative: string) =>
-    `Wybierz dni tygodnia, a podsuniemy wydarzenia w ${cityLocative}. Pomiń, co nie pasuje, i zapisz plan w kalendarzu.`,
+    `Wybierz dni tygodnia, a podsuniemy wydarzenia ${inCityPl(cityLocative)}. Pomiń, co nie pasuje, i zapisz plan w kalendarzu.`,
   WEEK_TITLE: 'Twój tydzień',
   WEEK_SURPRISE: 'Zaskocz mnie',
   WEEK_SURPRISE_HINT: 'Wylosujemy wydarzenie na każdy pusty termin. Albo kliknij termin i wybierz sam.',
@@ -515,7 +525,7 @@ const pl = {
   WEEK_CLOSE: 'Zamknij',
   WEEK_SUMMARY_LABEL: 'Twój plan',
   WEEK_SUB: (cityLocative: string) =>
-    `Wybierz dni, a dobierzemy wydarzenia w ${cityLocative}. Nie pasuje? Pomiń — pojawi się następne.`,
+    `Wybierz dni, a dobierzemy wydarzenia ${inCityPl(cityLocative)}. Nie pasuje? Pomiń — pojawi się następne.`,
   WEEK_DAYS_LABEL: 'Które dni?',
   WEEK_MOODS_LABEL: 'Na co masz ochotę?',
   WEEK_MOODS_HINT: 'Nic nie zaznaczysz — losujemy ze wszystkiego.',
@@ -567,7 +577,7 @@ const pl = {
   WEEK_CALENDAR: 'Dodaj do kalendarza',
   WEEK_CALENDAR_FILE: 'moj-tydzien',
   WEEK_SHARE: 'Udostępnij plan',
-  WEEK_SHARE_TEXT: (cityLocative: string) => `Mój tydzień w ${cityLocative} — zobacz, gdzie idę:`,
+  WEEK_SHARE_TEXT: (cityLocative: string) => `Mój tydzień ${inCityPl(cityLocative)} — zobacz, gdzie idę:`,
   WEEK_LINK_COPIED: 'Link do planu skopiowany',
   WEEK_RESET: 'Wyczyść plan',
   WEEK_SHARED_TITLE: 'Plan, który ktoś Ci podesłał',
