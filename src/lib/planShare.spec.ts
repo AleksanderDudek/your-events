@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { eventFactory } from '@/test-utils/eventFactory';
 import { messages } from '@/i18n';
-import { parseStoredPlan } from '@/lib/weekPlan';
+import { parsePlans, serializePlans, type SavedPlan } from '@/lib/weekPlans';
 import {
   groupPlanByDay,
   planFromEvents,
@@ -109,12 +109,14 @@ describe('planFromEvents (copying a shared plan)', () => {
     });
   });
 
-  it('survives the planner’s own storage check unchanged', () => {
-    const plan = planFromEvents(
+  it('survives the plan list’s own storage check unchanged', () => {
+    const copy = planFromEvents(
       [makeEvent({ date: '2026-11-24', startTime: '10:00' }), makeEvent({ date: '2026-11-25', startTime: '' })],
       TODAY
     )!;
-    expect(parseStoredPlan(JSON.stringify(plan), TODAY)).toEqual(plan);
+    expect(copy.start).toBe('2026-11-24');
+    const saved = { id: 'abcd1234', name: null, origin: 'copy', sourceKey: null, createdAt: 1, ...copy };
+    expect(parsePlans(serializePlans([saved as SavedPlan]), TODAY)).toEqual([saved]);
   });
 
   it('keeps a day to the planner’s three slots', () => {
@@ -124,12 +126,18 @@ describe('planFromEvents (copying a shared plan)', () => {
     expect(Object.keys(plan.chosen)).toHaveLength(3);
   });
 
-  it('leaves out what has passed or lies beyond this week', () => {
+  it('starts at the first day still ahead and keeps the 7 days from there', () => {
     const past = makeEvent({ date: '2026-11-22' });
+    expect(planFromEvents([past], TODAY)).toBeNull();
+    // A link from a rolling week: Thursday to Wednesday, opened on Saturday.
+    const sat = makeEvent({ date: '2026-11-28' });
+    const wed = makeEvent({ date: '2026-12-02' });
     const far = makeEvent({ date: '2026-12-10' });
-    expect(planFromEvents([past, far], TODAY)).toBeNull();
-    const kept = makeEvent({ date: '2026-11-29' });
-    expect(Object.values(planFromEvents([past, kept, far], TODAY)!.chosen)).toEqual([kept.id]);
+    const copy = planFromEvents([past, sat, wed, far], '2026-11-28')!;
+    expect(copy.start).toBe('2026-11-28');
+    expect(Object.values(copy.chosen)).toEqual([sat.id, wed.id]);
+    // A plan for a later week is copied as that week.
+    expect(planFromEvents([far], TODAY)!.start).toBe('2026-12-10');
   });
 });
 

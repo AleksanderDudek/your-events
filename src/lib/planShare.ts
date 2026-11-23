@@ -11,13 +11,13 @@ import {
   encodePlanParam,
   MAX_SLOTS_PER_DAY,
   planCost,
-  planDates,
   slotId,
   type DaySettings,
   type PlanCost,
   type StoredPlan,
   weekdayOf,
 } from '@/lib/weekPlan';
+import { windowDates } from '@/lib/weekPlans';
 
 /** By day, then by start time; an event with no time (an exhibition) leads its day. */
 export function sortPlanEvents(events: readonly Event[]): Event[] {
@@ -99,15 +99,25 @@ export function planShareText(
 
 /**
  * A recipient's own copy of a shared plan, in the shape the planner stores:
- * one day per date still ahead in this week, one slot per event (the day's
- * first three), each slot set to its event's time of day, every slot decided.
- * Null when nothing of the plan is still ahead.
+ * a 7-day window from the plan's first day still ahead, one day per date in
+ * it, one slot per event (the day's first three), each slot set to its
+ * event's time of day, every slot decided. Null when nothing is still ahead.
+ *
+ * The window starts at the first event rather than on a Monday: a link made
+ * before plans had weeks covers a rolling 7 days (Thursday to Wednesday), and
+ * a Monday-aligned window would cut it in two.
  */
-export function planFromEvents(events: readonly Event[], today: string): StoredPlan | null {
-  const window = new Set(planDates(today));
+export function planFromEvents(
+  events: readonly Event[],
+  today: string
+): (StoredPlan & { start: string }) | null {
+  const ahead = groupPlanByDay(events).filter((day) => day.date >= today);
+  if (ahead.length === 0) return null;
+  const start = ahead[0].date;
+  const window = new Set(windowDates(start));
   const days: DaySettings[] = [];
   const chosen: Record<string, string> = {};
-  for (const day of groupPlanByDay(events)) {
+  for (const day of ahead) {
     if (!window.has(day.date)) continue;
     const kept = day.events.slice(0, MAX_SLOTS_PER_DAY);
     days.push({ date: day.date, parts: kept.map((e) => dayPartOf(e.startTime) ?? 'any') });
@@ -115,7 +125,7 @@ export function planFromEvents(events: readonly Event[], today: string): StoredP
       chosen[slotId(day.date, index)] = event.id;
     });
   }
-  return days.length > 0 ? { settings: { days, moods: [], freeOnly: false }, chosen } : null;
+  return { start, settings: { days, moods: [], freeOnly: false }, chosen };
 }
 
 /** "idznamiasto-plan-szczecin-2026-11-28.pdf". */

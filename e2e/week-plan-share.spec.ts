@@ -79,7 +79,7 @@ test.describe('Sharing a week plan', () => {
     expect(texts[1]).toContain('?plan=');
   });
 
-  test('a recipient opens the link and copies the plan to their own', async ({ page, browser }) => {
+  test('a recipient opens the link and copies it as a new plan of their own', async ({ page, browser }) => {
     await buildPlan(page);
     await page.getByRole('button', { name: 'Udostępnij plan' }).click();
     const link = await page
@@ -97,12 +97,19 @@ test.describe('Sharing a week plan', () => {
     await skipFirstVisitPrompts(friend);
     await friend.goto(new URL(link).pathname + new URL(link).search);
     await expect(friend.getByRole('heading', { name: 'Plan, który ktoś Ci podesłał' })).toBeVisible();
-    await friend.getByRole('button', { name: 'Skopiuj do mojego planu' }).click();
+    await friend.getByRole('button', { name: 'Skopiuj do moich planów' }).click();
 
-    await expect(friend).toHaveURL(new RegExp(`${PLAN_PATH}$`));
+    // A new plan of their own, at its own address, with everything in it.
+    await expect(friend).toHaveURL(new RegExp(`${PLAN_PATH}\\?id=[a-z0-9]{8}$`));
     await expect(friend.getByText('Plan skopiowany. Zmieniaj śmiało.')).toBeVisible();
+    await expect(friend.getByRole('heading', { level: 1, name: 'Plan od znajomych' })).toBeVisible();
     const board = friend.getByRole('list', { name: 'Twój tydzień' });
     for (const name of names) await expect(board.getByRole('article', { name: name! })).toBeVisible();
+
+    // Listed with their plans.
+    await friend.getByRole('link', { name: 'Twoje plany' }).click();
+    await expect(friend).toHaveURL(new RegExp(`${PLAN_PATH}$`));
+    await expect(friend.getByRole('list', { name: 'Twoje plany' }).getByRole('link')).toHaveCount(1);
     await context.close();
   });
 });
