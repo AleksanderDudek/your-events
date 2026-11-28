@@ -21,6 +21,7 @@ import { AVAILABLE_CITIES } from '@/config/cities';
 import WeekdayPicker from '@/components/ui/WeekdayPicker/WeekdayPicker';
 import { MAX_NAME_LENGTH, emptyPresetFilters } from '@/lib/presets';
 import { formatDistance } from '@/lib/utils';
+import { isPermanentSection } from '@/lib/seasons';
 import { useSeasonName } from '@/components/service/useSeasons';
 import { DEFAULT_WINDOW_MONTHS } from '@/lib/dateWindows';
 import type { FilterPreset, PresetDateWindow } from '@/types/preset.types';
@@ -269,7 +270,7 @@ export default function PresetEditorDialog({
         {filters.season && (
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              {t.SEASON_SECTION_LABEL}
+              {isPermanentSection(filters.season) ? t.SECTION_LABEL : t.SEASON_SECTION_LABEL}
             </Typography>
             <Chip
               label={seasonName(filters.season)}

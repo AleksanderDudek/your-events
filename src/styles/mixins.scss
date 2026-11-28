@@ -84,6 +84,11 @@ $bp-xl: 1536px;
     background:
       radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.28) 0%, transparent 55%),
       linear-gradient(135deg, #7f1d1d 0%, #b91c1c 45%, #166534 100%);
+  } @else if $theme == studenci {
+    // Navy to teal, both dark enough for white text (10.4:1 and 5.4:1).
+    background:
+      radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.22) 0%, transparent 55%),
+      linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0e7490 100%);
   } @else {
     background:
       radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.25) 0%, transparent 55%),

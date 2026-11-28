@@ -15,6 +15,7 @@ import NightlifeIcon from '@mui/icons-material/Nightlife';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import CasinoIcon from '@mui/icons-material/Casino';
+import SchoolIcon from '@mui/icons-material/School';
 import { useTranslation } from '@/i18n';
 import { Translated } from '@/i18n/translation';
 import { useCity } from '@/config/CityProvider';
@@ -23,7 +24,7 @@ import EventsMap from '@/components/common/EventsMap/EventsMap';
 import { openShareDialog } from '@/components/service/usePromoShare';
 import { useEvents } from '@/components/service/useEvents';
 import { useSeasons } from '@/components/service/useSeasons';
-import { seasonTheme } from '@/lib/seasons';
+import { isPermanentSection, seasonTheme } from '@/lib/seasons';
 import { formatDateShort } from '@/lib/utils';
 import {
   buildArtUrl,
@@ -35,6 +36,7 @@ import {
   buildTodayUrl,
   buildWeekendUrl,
 } from '@/lib/homeFilters';
+import type { OfferedSeason } from '@/types/season.types';
 import styles from './HomeView.module.scss';
 
 interface CtaUrls {
@@ -57,9 +59,13 @@ export default function HomeView() {
   // homepage that's empty, so this resolves to default filters (~15 events).
   const { events: previewEvents } = useEvents();
   // Usually empty. In season (Halloween, Święta) each one on offer gets a
-  // tile of its own at the head of the grid. It only exists in the browser —
-  // the static HTML is the same all year.
-  const { seasons } = useSeasons();
+  // tile of its own at the head of the grid. A year-round section (Studenci,
+  // Szczecin only) comes through the same table but is an audience, not an
+  // occasion: it joins the "Dla …" tiles at the end instead. Both only exist
+  // in the browser — the static HTML is the same all year.
+  const { seasons: offered } = useSeasons();
+  const seasons = offered.filter((season) => !isPermanentSection(season.slug));
+  const sections = offered.filter((season) => isPermanentSection(season.slug));
   // SSR renders the generic word so the static HTML stays stable. After
   // hydration we begin a two-state loop: the generic word ("miasto"/"town")
   // and the selected city's accusative form, alternating every HERO_CYCLE_MS.
@@ -282,6 +288,9 @@ export default function HomeView() {
             </span>
           </Link>
         ))}
+        {sections.map((section) => (
+          <SectionTile key={`section-${section.slug}`} section={section} citySlug={city.id} />
+        ))}
       </section>
 
       <section className={styles.mapSection} aria-label={t.HOME_MAP_TITLE}>
@@ -323,5 +332,36 @@ export default function HomeView() {
         </Button>
       </div>
     </div>
+  );
+}
+
+/**
+ * A year-round section as one more destination tile. "Studenci" has copy of
+ * its own, worded like its neighbours ("Dla tancerzy"); a section the app does
+ * not know yet speaks with the table's name and description.
+ */
+function SectionTile({ section, citySlug }: Readonly<{ section: OfferedSeason; citySlug: string }>) {
+  const { t } = useTranslation();
+  const known = section.slug === 'studenci';
+  return (
+    <Link
+      href={buildSeasonUrl(citySlug, section.slug) as Route}
+      className={`${styles.tile} ${styles.tileSection} ${styles[`season-${seasonTheme(section.slug)}`]}`}
+      data-section={section.slug}
+    >
+      <span className={styles.tileIcon} aria-hidden="true">
+        {known ? <SchoolIcon /> : <CelebrationIcon />}
+      </span>
+      <h2 className={styles.tileTitle}>
+        {known ? t.HOME_STUDENTS_TITLE : <Translated text={section.name} />}
+      </h2>
+      <p className={styles.tileSub}>
+        {known ? t.HOME_STUDENTS_SUB : <Translated text={section.description} />}
+      </p>
+      <span className={styles.tileCta}>
+        <span>{t.SECTION_CTA(section.count)}</span>
+        <ArrowForwardIcon fontSize="small" />
+      </span>
+    </Link>
   );
 }

@@ -35,6 +35,20 @@ const HALLOWEEN = {
   upcoming: false,
 };
 
+// The year-round section, as the pipeline keeps it in the seasons table.
+const STUDENCI = {
+  ...HALLOWEEN,
+  slug: 'studenci',
+  name: 'Studenci',
+  emoji: '🎓',
+  description: 'Wykłady otwarte, konferencje, koła naukowe.',
+  dateFrom: '2026-11-27',
+  dateTo: '2027-11-28',
+  showFrom: '2026-11-27',
+  sort: 50,
+  count: 42,
+};
+
 // Swappable per test: outside a season the hook answers with nothing.
 const seasonMocks = vi.hoisted(() => ({ seasons: [] as unknown[] }));
 vi.mock('@/components/service/useSeasons', () => ({
@@ -126,5 +140,34 @@ describe('HomeView', () => {
     expect(season.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(share.compareDocumentPosition(now) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(share).toHaveTextContent('w Szczecinie');
+  });
+
+  describe('a year-round section (Studenci)', () => {
+    it('is a "Dla …" tile after the regular ones, not a seasonal one', () => {
+      seasonMocks.seasons = [STUDENCI];
+      render(<HomeView />);
+      const tile = screen.getByRole('link', { name: /Dla studentów/ });
+      expect(tile).toHaveAttribute('href', '/szczecin/wydarzenia?season=studenci');
+      expect(tile).toHaveTextContent('Zobacz 42 wydarzenia');
+      expect(tile).not.toHaveTextContent('Sezonowe');
+      const dance = screen.getByRole('link', { name: /Dla tancerzy/ });
+      expect(dance.compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(screen.queryByText('Zobacz program')).not.toBeInTheDocument();
+    });
+
+    it('sits beside a running season without taking its place at the head', () => {
+      seasonMocks.seasons = [HALLOWEEN, STUDENCI];
+      render(<HomeView />);
+      expect(screen.getAllByRole('link')[0]).toHaveTextContent('Halloween');
+      const dance = screen.getByRole('link', { name: /Dla tancerzy/ });
+      const students = screen.getByRole('link', { name: /Dla studentów/ });
+      expect(dance.compareDocumentPosition(students) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('passes accessibility check', async () => {
+      seasonMocks.seasons = [HALLOWEEN, STUDENCI];
+      const { container } = render(<HomeView />);
+      expect(await axe(container)).toHaveNoViolations();
+    });
   });
 });

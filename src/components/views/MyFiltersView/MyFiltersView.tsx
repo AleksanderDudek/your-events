@@ -33,6 +33,7 @@ import {
 } from '@/lib/presets';
 import { getCity } from '@/config/cities';
 import { formatDistance } from '@/lib/utils';
+import { isPermanentSection } from '@/lib/seasons';
 import type { FilterPreset } from '@/types/preset.types';
 import styles from './MyFiltersView.module.scss';
 import PresetEditorDialog from './PresetEditorDialog';
@@ -103,7 +104,12 @@ export default function MyFiltersView() {
     }
     if (preset.filters.freeOnly) parts.push(t.PRESETS_SUMMARY_FREE);
     if (preset.filters.season) {
-      parts.push(t.PRESETS_SUMMARY_SEASON(seasonName(preset.filters.season)));
+      const { season } = preset.filters;
+      parts.push(
+        isPermanentSection(season)
+          ? t.PRESETS_SUMMARY_SECTION(seasonName(season))
+          : t.PRESETS_SUMMARY_SEASON(seasonName(season))
+      );
     }
     if (preset.filters.near) {
       parts.push(

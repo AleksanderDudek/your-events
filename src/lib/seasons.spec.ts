@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  isPermanentSection,
   isSeasonInWindow,
   isSeasonUpcoming,
   parseSeasonSlug,
@@ -90,7 +91,16 @@ describe('seasonTheme', () => {
   it('styles the known seasons and falls back for new ones', () => {
     expect(seasonTheme('halloween')).toBe('halloween');
     expect(seasonTheme('swieta')).toBe('swieta');
+    expect(seasonTheme('studenci')).toBe('studenci');
     expect(seasonTheme('walentynki')).toBe('default');
+  });
+});
+
+describe('isPermanentSection', () => {
+  it('tells the year-round sections from the seasons', () => {
+    expect(isPermanentSection('studenci')).toBe(true);
+    expect(isPermanentSection('swieta')).toBe(false);
+    expect(isPermanentSection('halloween')).toBe(false);
   });
 });
 

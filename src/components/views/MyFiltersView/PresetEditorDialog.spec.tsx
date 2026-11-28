@@ -165,3 +165,31 @@ describe('PresetEditorDialog and a saved point', () => {
     expect(onSave.mock.calls[0][0].filters.near).toBeNull();
   });
 });
+
+describe('PresetEditorDialog season heading', () => {
+  function renderWithSeason(season: string) {
+    const draft = blankDraft();
+    render(
+      <LocaleProvider>
+        <PresetEditorDialog
+          open
+          draft={{ ...draft, filters: { ...draft.filters, season } }}
+          onSave={vi.fn()}
+          onCancel={vi.fn()}
+        />
+      </LocaleProvider>
+    );
+  }
+
+  it('heads a season "Sezonowe"', () => {
+    renderWithSeason('swieta');
+    expect(screen.getByText('Sezonowe')).toBeInTheDocument();
+    expect(screen.getByText('Święta')).toBeInTheDocument();
+  });
+
+  it('heads a year-round section "Sekcja"', () => {
+    renderWithSeason('studenci');
+    expect(screen.getByText('Sekcja')).toBeInTheDocument();
+    expect(screen.queryByText('Sezonowe')).not.toBeInTheDocument();
+  });
+});
