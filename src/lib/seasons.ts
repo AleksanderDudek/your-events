@@ -51,6 +51,21 @@ export function seasonNameFromSlug(slug: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/**
+ * A section that runs all year ("Studenci") rather than a season. The pipeline
+ * gives such a section a window of about a year from the push day, so a span
+ * past half a year can only be one — a season lasts weeks.
+ */
+const PERMANENT_MIN_DAYS = 183;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function isPermanentSeason(season: Pick<Season, 'dateFrom' | 'dateTo'>): boolean {
+  const from = Date.parse(season.dateFrom);
+  const to = Date.parse(season.dateTo);
+  if (Number.isNaN(from) || Number.isNaN(to)) return false;
+  return (to - from) / DAY_MS >= PERMANENT_MIN_DAYS;
+}
+
 /** The visual theme a season's tile and toggle use. Unknown seasons get the neutral one. */
 export type SeasonTheme = 'halloween' | 'swieta' | 'default';
 

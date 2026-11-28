@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  isPermanentSeason,
   isSeasonInWindow,
   isSeasonUpcoming,
   parseSeasonSlug,
@@ -98,5 +99,18 @@ describe('seasonNameFromSlug', () => {
   it('makes a readable name out of a slug', () => {
     expect(seasonNameFromSlug('halloween')).toBe('Halloween');
     expect(seasonNameFromSlug('dzien-dziecka')).toBe('Dzien dziecka');
+  });
+});
+
+describe('isPermanentSeason', () => {
+  it('tells an all-year section from a season', () => {
+    expect(isPermanentSeason(HALLOWEEN)).toBe(false);
+    expect(isPermanentSeason(SWIETA)).toBe(false);
+    // The pipeline writes an all-year section from the day before the push, for a year.
+    expect(isPermanentSeason({ dateFrom: '2026-11-27', dateTo: '2027-11-28' })).toBe(true);
+  });
+
+  it('is false for a window it cannot read', () => {
+    expect(isPermanentSeason({ dateFrom: '', dateTo: '2027-11-28' })).toBe(false);
   });
 });

@@ -23,7 +23,7 @@ import EventsMap from '@/components/common/EventsMap/EventsMap';
 import { openShareDialog } from '@/components/service/usePromoShare';
 import { useEvents } from '@/components/service/useEvents';
 import { useSeasons } from '@/components/service/useSeasons';
-import { seasonTheme } from '@/lib/seasons';
+import { isPermanentSeason, seasonTheme } from '@/lib/seasons';
 import { formatDateShort } from '@/lib/utils';
 import {
   buildArtUrl,
@@ -228,7 +228,7 @@ export default function HomeView() {
             )}
             <span className={styles.seasonBadge}>
               <span aria-hidden="true">{season.emoji || <CelebrationIcon fontSize="inherit" />}</span>
-              {t.SEASON_SECTION_LABEL}
+              {isPermanentSeason(season) ? t.PERMANENT_SECTION_LABEL : t.SEASON_SECTION_LABEL}
             </span>
             <h2 className={styles.tileTitle}>
               <Translated text={season.name} />

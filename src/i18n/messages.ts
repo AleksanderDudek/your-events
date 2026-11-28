@@ -238,6 +238,8 @@ const pl = {
   // Seasonal sections (Halloween, Święta). The name and description come from
   // the database, in Polish.
   SEASON_SECTION_LABEL: 'Sezonowe',
+  // The badge of an all-year section (Studenci) - not a season.
+  PERMANENT_SECTION_LABEL: 'Tematyczne',
   SEASON_EVENTS_COUNT: (n: number) => eventsPl(n),
   SEASON_STARTS: (date: string) => `Startuje ${date}`,
   SEASON_CTA: 'Zobacz program',
@@ -843,6 +845,7 @@ const en: Messages = {
   HOME_DANCE_SUB: 'Classes, workshops and dance nights',
   HOME_DANCE_CTA: 'Go dancing',
   SEASON_SECTION_LABEL: 'Seasonal',
+  PERMANENT_SECTION_LABEL: 'Themed',
   SEASON_EVENTS_COUNT: (n: number) => (n === 1 ? '1 event' : `${n} events`),
   SEASON_STARTS: (date: string) => `Starts ${date}`,
   SEASON_CTA: "See what's on",

@@ -105,6 +105,18 @@ describe('HomeView', () => {
     );
   });
 
+  it('badges a season as seasonal and an all-year section as themed', () => {
+    seasonMocks.seasons = [
+      HALLOWEEN,
+      { ...HALLOWEEN, slug: 'studenci', name: 'Studenci', emoji: '🎓', dateFrom: '2026-11-27', dateTo: '2027-11-28' },
+    ];
+    render(<HomeView />);
+    expect(screen.getByRole('link', { name: /Halloween/ })).toHaveTextContent('Sezonowe');
+    const studenci = screen.getByRole('link', { name: /Studenci/ });
+    expect(studenci).toHaveTextContent('Tematyczne');
+    expect(studenci).not.toHaveTextContent('Sezonowe');
+  });
+
   it('says when an announced season starts', () => {
     seasonMocks.seasons = [{ ...HALLOWEEN, upcoming: true }];
     render(<HomeView />);
