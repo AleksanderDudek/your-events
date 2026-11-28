@@ -177,6 +177,13 @@ describe('weights', () => {
     expect(baseWeight(cand({}, { isLastDay: true }), [])).toBeGreaterThan(baseWeight(cand(), []));
   });
 
+  it('gives a year-round section no seasonal boost', () => {
+    expect(baseWeight(cand({}, { seasons: ['studenci'] }), [])).toBe(baseWeight(cand(), []));
+    expect(baseWeight(cand({}, { seasons: ['studenci', 'swieta'] }), [])).toBe(
+      baseWeight(cand({}, { seasons: ['swieta'] }), [])
+    );
+  });
+
   it('rules out repeats and same-day clashes, and favours a nearby second event', () => {
     const slot = { id: slotId(TODAY, 1), date: TODAY, part: 'any' as const };
     const here = { name: 'A', city: '', lat: 53.43, lng: 14.55 };

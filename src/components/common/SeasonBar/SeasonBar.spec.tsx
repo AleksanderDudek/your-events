@@ -17,6 +17,17 @@ const HALLOWEEN: OfferedSeason = {
   upcoming: false,
 };
 
+const STUDENCI: OfferedSeason = {
+  ...HALLOWEEN,
+  slug: 'studenci',
+  name: 'Studenci',
+  emoji: '🎓',
+  description: 'Wykłady otwarte, konferencje, koła naukowe.',
+  dateTo: '2027-11-28',
+  sort: 50,
+  count: 12,
+};
+
 const mocks = vi.hoisted(() => ({ seasons: [] as unknown[] }));
 vi.mock('@/components/service/useSeasons', () => ({
   useSeasons: () => ({ seasons: mocks.seasons, isLoading: false }),
@@ -68,5 +79,17 @@ describe('SeasonBar', () => {
     expect(await axe(container)).toHaveNoViolations();
     rerender(<SeasonBar value="halloween" onChange={vi.fn()} />);
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('names the group by what it holds: seasons, or sections as well', () => {
+    const { rerender } = render(<SeasonBar value={null} onChange={vi.fn()} />);
+    expect(screen.getByRole('group', { name: 'Sezonowe' })).toBeInTheDocument();
+    mocks.seasons = [HALLOWEEN, STUDENCI];
+    rerender(<SeasonBar value={null} onChange={vi.fn()} />);
+    expect(screen.getByRole('group', { name: 'Sekcje tematyczne' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Studenci: 12 wydarzeń' })).toHaveAttribute(
+      'data-season',
+      'studenci'
+    );
   });
 });

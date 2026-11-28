@@ -131,6 +131,13 @@ describe('MyFiltersView', () => {
     expect(screen.getByText(/sezon: Święta/)).toBeInTheDocument();
   });
 
+  it('calls a year-round section a section, not a season', () => {
+    seed([preset({ filters: { ...preset().filters, season: 'studenci' } })]);
+    render(<MyFiltersView />);
+    expect(screen.getByText(/sekcja: studenci/)).toBeInTheDocument();
+    expect(screen.queryByText(/sezon:/)).not.toBeInTheDocument();
+  });
+
   it('says "all events" for a preset that filters nothing', () => {
     seed([
       preset({

@@ -79,6 +79,13 @@
   }
 }
 
+.season-studenci {
+  --season-ring: linear-gradient(135deg, #1e3a8a, #0e7490);
+  &[aria-pressed='true'] {
+    @include season-gradient(studenci);
+  }
+}
+
 .season-default {
   --season-ring: linear-gradient(135deg, var(--color-accent-primary), #8b5cf6);
   &[aria-pressed='true'] {

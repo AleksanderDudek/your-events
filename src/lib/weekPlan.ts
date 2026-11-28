@@ -1,6 +1,7 @@
 import { Event } from '@/types/event.types';
 import { shiftDateString, utcMidnight } from '@/lib/calendar/warsawTime';
 import { distanceMeters } from '@/lib/geo';
+import { isPermanentSection } from '@/lib/seasons';
 
 // "Twój tydzień": the visitor picks a few days, and each day's slots are filled
 // from a short, weighted-random shortlist they can skip through. Everything in
@@ -171,7 +172,9 @@ export function baseWeight(candidate: PlanCandidate, moods: readonly Mood[]): nu
   if (candidate.imageKind === 'photo' || candidate.imageKind === 'poster') weight *= 1.5;
   else if (candidate.imageKind === 'logo' || candidate.imageKind === 'placeholder') weight *= 0.7;
   weight *= 1 + 0.4 * Math.min(Math.max(candidate.popularity - 1, 0), 5);
-  if (candidate.seasons.length > 0) weight *= 1.5;
+  // The season of the moment (Święta, Sylwester) sells a plan; a year-round
+  // section does not — "Studenci" tags open lectures as well as parties.
+  if (candidate.seasons.some((slug) => !isPermanentSection(slug))) weight *= 1.5;
   if (candidate.isLastDay) weight *= 1.3;
   return weight;
 }

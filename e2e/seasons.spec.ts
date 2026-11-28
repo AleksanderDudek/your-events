@@ -19,24 +19,31 @@ const CORS = {
   'access-control-expose-headers': 'Content-Range',
 };
 
-async function offerSeason(page: Page, count = 42): Promise<void> {
-  await page.route(/\/rest\/v1\/seasons\?/, (route) =>
-    route.fulfill({
-      headers: CORS,
-      json: [
-        {
-          slug: 'halloween',
-          name: 'Halloween',
-          emoji: '🎃',
-          description: 'Bale przebierańców i warsztaty z dyniami.',
-          date_from: daysFromNow(-3),
-          date_to: daysFromNow(5),
-          show_from: daysFromNow(-8),
-          sort: 10,
-        },
-      ],
-    })
-  );
+const HALLOWEEN_ROW = {
+  slug: 'halloween',
+  name: 'Halloween',
+  emoji: '🎃',
+  description: 'Bale przebierańców i warsztaty z dyniami.',
+  date_from: daysFromNow(-3),
+  date_to: daysFromNow(5),
+  show_from: daysFromNow(-8),
+  sort: 10,
+};
+
+// The pipeline's year-round section: renewed daily, from yesterday to a year on.
+const STUDENCI_ROW = {
+  slug: 'studenci',
+  name: 'Studenci',
+  emoji: '🎓',
+  description: 'Wykłady otwarte, konferencje, koła naukowe, koncerty uczelni.',
+  date_from: daysFromNow(-1),
+  date_to: daysFromNow(365),
+  show_from: daysFromNow(-1),
+  sort: 50,
+};
+
+async function offerSeason(page: Page, count = 42, rows: object[] = [HALLOWEEN_ROW]): Promise<void> {
+  await page.route(/\/rest\/v1\/seasons\?/, (route) => route.fulfill({ headers: CORS, json: rows }));
   // The count is a HEAD request; PostgREST answers it in Content-Range.
   await page.route(/\/rest\/v1\/events\?select=id&seasons=cs\./, (route) =>
     route.fulfill({ status: 200, headers: { ...CORS, 'content-range': `*/${count}` }, body: '' })
@@ -93,6 +100,29 @@ test.describe('Seasonal sections', () => {
     await toggle.click();
     await expect(page).not.toHaveURL(/season=/);
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('a year-round section is a "Dla studentów" tile and a toggle on the list', async ({
+    page,
+  }) => {
+    await offerSeason(page, 12, [STUDENCI_ROW]);
+    await page.goto(`/${CITY}`);
+
+    const tile = page.locator('a[data-section="studenci"]');
+    await expect(tile).toBeVisible({ timeout: 15000 });
+    await expect(tile).toContainText('Dla studentów');
+    await expect(tile).toContainText('Zobacz 12 wydarzeń');
+    // Not the seasonal tile at the head of the grid.
+    await expect(page.locator('a[data-season]')).toHaveCount(0);
+    await expect(tile).toHaveAttribute('href', /season=studenci/);
+
+    await tile.click();
+    await expect(page).toHaveURL(/season=studenci/);
+    await expect(page.getByRole('group', { name: 'Sekcje tematyczne' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Studenci: 12 wydarzeń' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 
   test('a season in a link that is not on offer still shows as a removable chip', async ({

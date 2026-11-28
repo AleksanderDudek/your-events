@@ -5,7 +5,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import { useTranslation } from '@/i18n';
 import { Translated, useTranslated } from '@/i18n/translation';
 import { useSeasons } from '@/components/service/useSeasons';
-import { seasonTheme } from '@/lib/seasons';
+import { isPermanentSection, seasonTheme } from '@/lib/seasons';
 import { OfferedSeason } from '@/types/season.types';
 import styles from './SeasonBar.module.scss';
 
@@ -52,7 +52,8 @@ function SeasonToggle({
 /**
  * The seasonal quick filter above the results: one toggle per season on offer
  * (usually none, and then nothing renders). It sits on the page rather than in
- * the filter drawer so on a phone it is one tap away.
+ * the filter drawer so on a phone it is one tap away. A year-round section
+ * (Studenci) gets a toggle here too, and then the group is not "Sezonowe".
  *
  * The count is the season's whole programme from today on, not the current
  * result — the results header says that.
@@ -63,9 +64,12 @@ export default function SeasonBar({ value, onChange }: Readonly<SeasonBarProps>)
   const descriptionId = useId();
   if (seasons.length === 0) return null;
   const selected = seasons.find((season) => season.slug === value);
+  const label = seasons.some((season) => isPermanentSection(season.slug))
+    ? t.SECTIONS_LABEL
+    : t.SEASON_SECTION_LABEL;
 
   return (
-    <div className={styles.bar} role="group" aria-label={t.SEASON_SECTION_LABEL}>
+    <div className={styles.bar} role="group" aria-label={label}>
       <div className={styles.toggles}>
         {seasons.map((season) => {
           const pressed = season.slug === value;

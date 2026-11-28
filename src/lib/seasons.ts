@@ -51,9 +51,27 @@ export function seasonNameFromSlug(slug: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/**
+ * Year-round sections that ride on the seasons mechanism: the pipeline keeps a
+ * row for them in the `seasons` table (window renewed daily, a year ahead) and
+ * tags their events in `events.seasons`, just like Święta — but they name an
+ * audience, not a time of year. A student concert stays Muzyka and is in
+ * "Studenci" too, which a category could not do.
+ *
+ * Mirrors STALE in the pipeline's pipeline/seasons.py: a new section there
+ * belongs here as well, or it is offered as if it were a season.
+ */
+const PERMANENT_SECTIONS: ReadonlySet<string> = new Set(['studenci']);
+
+export function isPermanentSection(slug: string): boolean {
+  return PERMANENT_SECTIONS.has(slug);
+}
+
 /** The visual theme a season's tile and toggle use. Unknown seasons get the neutral one. */
-export type SeasonTheme = 'halloween' | 'swieta' | 'default';
+export type SeasonTheme = 'halloween' | 'swieta' | 'studenci' | 'default';
+
+const THEMED: ReadonlySet<string> = new Set<SeasonTheme>(['halloween', 'swieta', 'studenci']);
 
 export function seasonTheme(slug: string): SeasonTheme {
-  return slug === 'halloween' || slug === 'swieta' ? slug : 'default';
+  return THEMED.has(slug) ? (slug as SeasonTheme) : 'default';
 }

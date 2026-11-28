@@ -310,8 +310,30 @@
   @include season-gradient(swieta);
 }
 
+.season-studenci::before {
+  @include season-gradient(studenci);
+}
+
 .season-default::before {
   @include season-gradient(default);
+}
+
+// A year-round section ("Dla studentów") is one more destination tile, after
+// the regular ones. Four columns leave it alone on its row, so there it takes
+// the whole row; three columns fit it exactly.
+.tileSection {
+  @include motion-safe {
+    animation: seasonIn 400ms ease-out backwards;
+  }
+
+  @include lg {
+    grid-column: 1 / -1;
+    min-height: 0;
+
+    .tileSub {
+      flex: 0 1 auto;
+    }
+  }
 }
 
 .seasonWatermark {
